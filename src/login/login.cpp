@@ -25,6 +25,7 @@
 #include <config/core.hpp>
 
 #include "account.hpp"
+#include "password.hpp"
 #include "ipban.hpp"
 #include "loginchrif.hpp"
 #include "loginclif.hpp"
@@ -442,42 +443,24 @@ int32 login_mmo_auth(struct login_session_data* sd, bool isServer) {
  * @return true if matching else false
  */
 bool login_check_password( struct login_session_data& sd, struct mmo_account& acc ){
-	if( sd.passwdenc == 0 ){
-		return 0 == strcmp( sd.passwd, acc.pass );
+	// Preserve internal rAthena server authentication.
+	if (acc.sex == 'S') {
+		return sd.passwdenc == 0 &&
+			strcmp(sd.passwd, acc.pass) == 0;
 	}
 
-	// password mode set to 1 -> md5(md5key, refpass) enable with <passwordencrypt></passwordencrypt>
-	if( sd.passwdenc & 0x01 ){
-		std::string pwd;
-
-		pwd.append( sd.md5key, sd.md5keylen );
-		pwd.append( acc.pass );
-
-		char md5str[32 + 1];
-
-		MD5_String( pwd.c_str(), md5str );
-
-		if( 0 == strcmp( sd.passwd, md5str ) ){
-			return true;
-		}
+	// Player accounts must use ordinary password authentication.
+	// Reject legacy client-side MD5 challenge-response modes.
+	if (sd.passwdenc != 0) {
+		return false;
 	}
 
-	// password mode set to 2 -> md5(refpass, md5key) enable with <passwordencrypt2></passwordencrypt2>
-	if( sd.passwdenc & 0x02 ){
-		std::string pwd;
-
-		pwd.append( acc.pass );
-		pwd.append( sd.md5key, sd.md5keylen );
-
-		char md5str[32 + 1];
-
-		MD5_String( pwd.c_str(), md5str );
-
-		if( 0 == strcmp( sd.passwd, md5str ) ){
-			return true;
-		}
+	// Verify the Argon2id password hash.
+	if (strncmp(acc.pass, "$argon2id$", 10) == 0) {
+		return password::verify_argon2id(sd.passwd, acc.pass);
 	}
 
+	// Reject passwords that have not been migrated.
 	return false;
 }
 
