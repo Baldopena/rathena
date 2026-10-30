@@ -25,6 +25,7 @@
 #include <config/core.hpp>
 
 #include "account.hpp"
+#include "password.hpp"
 #include "ipban.hpp"
 #include "loginchrif.hpp"
 #include "loginclif.hpp"
@@ -251,7 +252,10 @@ int32 login_mmo_auth_new(const char* userid, const char* pass, const char sex, c
 	memset(&acc, '\0', sizeof(acc));
 	acc.account_id = -1; // assigned by account db
 	safestrncpy(acc.userid, userid, sizeof(acc.userid));
-	safestrncpy(acc.pass, pass, sizeof(acc.pass));
+	if( !password::hash_argon2id( pass, acc.pass, sizeof( acc.pass ) ) ){
+		ShowError( "Account creation failed: unable to hash password for account '%s'.\n", userid );
+		return 1;
+	}
 	acc.sex = sex;
 	safestrncpy(acc.email, "a@a.com", sizeof(acc.email));
 	acc.expiration_time = ( login_config.start_limited_time != -1 ) ? time(nullptr) + login_config.start_limited_time : 0;
@@ -442,42 +446,24 @@ int32 login_mmo_auth(struct login_session_data* sd, bool isServer) {
  * @return true if matching else false
  */
 bool login_check_password( struct login_session_data& sd, struct mmo_account& acc ){
-	if( sd.passwdenc == 0 ){
-		return 0 == strcmp( sd.passwd, acc.pass );
+	// Preserve internal rAthena server authentication.
+	if (acc.sex == 'S') {
+		return sd.passwdenc == 0 &&
+			strcmp(sd.passwd, acc.pass) == 0;
 	}
 
-	// password mode set to 1 -> md5(md5key, refpass) enable with <passwordencrypt></passwordencrypt>
-	if( sd.passwdenc & 0x01 ){
-		std::string pwd;
-
-		pwd.append( sd.md5key, sd.md5keylen );
-		pwd.append( acc.pass );
-
-		char md5str[32 + 1];
-
-		MD5_String( pwd.c_str(), md5str );
-
-		if( 0 == strcmp( sd.passwd, md5str ) ){
-			return true;
-		}
+	// Player accounts must use ordinary password authentication.
+	// Reject legacy client-side MD5 challenge-response modes.
+	if (sd.passwdenc != 0) {
+		return false;
 	}
 
-	// password mode set to 2 -> md5(refpass, md5key) enable with <passwordencrypt2></passwordencrypt2>
-	if( sd.passwdenc & 0x02 ){
-		std::string pwd;
-
-		pwd.append( acc.pass );
-		pwd.append( sd.md5key, sd.md5keylen );
-
-		char md5str[32 + 1];
-
-		MD5_String( pwd.c_str(), md5str );
-
-		if( 0 == strcmp( sd.passwd, md5str ) ){
-			return true;
-		}
+	// Verify the Argon2id password hash.
+	if (strncmp(acc.pass, "$argon2id$", 10) == 0) {
+		return password::verify_argon2id(sd.passwd, acc.pass);
 	}
 
+	// Reject passwords that have not been migrated.
 	return false;
 }
 
@@ -642,8 +628,12 @@ bool login_config_read(const char* cfgName, bool normal) {
 			login_config.password_min_length = cap_value(atoi(w2), 0, PASSWD_LENGTH - 1);
 		else if(!strcmpi(w1, "start_limited_time"))
 			login_config.start_limited_time = atoi(w2);
-		else if(!strcmpi(w1, "use_MD5_passwords"))
-			login_config.use_md5_passwds = (bool)config_switch(w2);
+		else if(!strcmpi(w1, "use_MD5_passwords")) {
+			if( config_switch(w2) ) {
+				ShowError( "use_MD5_passwords is incompatible with Argon2id authentication. MD5 remains disabled.\n" );
+			}
+			login_config.use_md5_passwds = false;
+		}
 		else if(!strcmpi(w1, "group_id_to_connect"))
 			login_config.group_id_to_connect = atoi(w2);
 		else if(!strcmpi(w1, "min_group_id_to_connect"))
