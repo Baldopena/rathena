@@ -274,6 +274,13 @@ static bool logclif_parse_reqauth_raw( int32 fd, login_session_data& sd ){
 	sd.clienttype = p->clienttype;
 
 	ShowStatus( "Request for connection of %s (ip: %s)\n", sd.userid, ip );
+
+	// Require a null terminator within the 24-byte password field.
+	if( memchr( p->password, '\0', sizeof( p->password ) ) == nullptr ){
+		logclif_auth_failed( &sd, 3 );
+		return true;
+	}
+
 	safestrncpy( sd.passwd, p->password, PASSWD_LENGTH );
 
 	if( login_config.use_md5_passwds ){
