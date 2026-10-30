@@ -714,6 +714,12 @@ int32 logchrif_parse_reqvipdata(int32 fd) {
 			}
 		}
 	}
+#else
+	if( RFIFOREST(fd) < 15 )
+		return 0;
+
+	RFIFOSKIP(fd, 15);
+	ShowWarning("VIP request ignored because VIP support is disabled.\n");
 #endif
 	return 1;
 }
