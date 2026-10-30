@@ -252,7 +252,10 @@ int32 login_mmo_auth_new(const char* userid, const char* pass, const char sex, c
 	memset(&acc, '\0', sizeof(acc));
 	acc.account_id = -1; // assigned by account db
 	safestrncpy(acc.userid, userid, sizeof(acc.userid));
-	safestrncpy(acc.pass, pass, sizeof(acc.pass));
+	if( !password::hash_argon2id( pass, acc.pass, sizeof( acc.pass ) ) ){
+		ShowError( "Account creation failed: unable to hash password for account '%s'.\n", userid );
+		return 1;
+	}
 	acc.sex = sex;
 	safestrncpy(acc.email, "a@a.com", sizeof(acc.email));
 	acc.expiration_time = ( login_config.start_limited_time != -1 ) ? time(nullptr) + login_config.start_limited_time : 0;
