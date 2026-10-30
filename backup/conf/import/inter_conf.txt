@@ -1,0 +1,29 @@
+// Login Server Database
+login_server_db: rathena
+login_server_id: rathena
+login_server_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H
+
+// IP Ban Database
+ipban_db_db: rathena
+ipban_db_id: rathena
+ipban_db_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H
+
+// Character Server Database
+char_server_db: rathena
+char_server_id: rathena
+char_server_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H
+
+// Map Server Database
+map_server_db: rathena
+map_server_id: rathena
+map_server_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H
+
+// Web Server Database
+web_server_db: rathena
+web_server_id: rathena
+web_server_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H
+
+// Log Database
+log_db_db: rathena
+log_db_id: rathena
+log_db_pw: 20IHUhGYyi8Y8ZMtcyHNiWN2+UuQbJ8H

@@ -1,0 +1,397 @@
+//===== Grass Ro: Black Jack Dealer ==========================
+//= Replacement based on rAthena's original blackjack.txt.
+//= Initial bets: 1,000 / 10,000 / 100,000 / 1,000,000 / Custom.
+//= Custom range: 1,000 - 1,000,000 Zeny.
+//= Double Down: one additional equal stake; total up to 2,000,000.
+//= Standard win: 1:1 net profit. Push: refund. Loss: wager lost.
+//= Abandoned rounds: wager already deducted; never refunded.
+//= Dealer hides hole card, stands on 17; 5-card hand cap.
+//= Existing house rule: player may stay only at 13+ (unless 5 cards).
+//= Important: test on staging before production. No crash-atomicity.
+//============================================================
+
+cmd_in02,188,89,1	script	Black Jack Dealer::blackjack	57,{
+L_Menu:
+	mes "[Black Jack Dealer]";
+	mes "Welcome to Grass Ro Black Jack!";
+	next;
+	switch (select("Play Black Jack:How to play:Leave")) {
+	case 1:
+		break;
+	case 2:
+		mes "[Black Jack Dealer]";
+		mes "Get as close to 21 as you can without going over.";
+		mes "Aces count as 1 or 11; face cards count as 10.";
+		mes "The dealer stands on 17 or higher.";
+		mes "You must have 13 or more to stay, unless you have 5 cards.";
+		next;
+		mes "[Black Jack Dealer]";
+		mes "A normal win pays 1:1 profit; a tie returns your bet.";
+		mes "Natural Black Jack is paid 1:1, not 3:2.";
+		mes "Double Down adds a second equal stake, gives exactly one card, then ends your turn.";
+		mes "No splits or insurance. A maximum of five cards per hand.";
+		next;
+		goto L_Menu;
+	default:
+		close;
+	}
+
+	// A previous unfinished round has already lost its escrowed stake.
+	// The flag is temporary per character; no money is refunded here.
+	if (@BJ_active) {
+		logmes "[GrassRoBJ] Previous round abandoned; wager forfeited; previous round=" + @BJ_round + "; staked=" + @BJ_stake;
+		@BJ_active = 0;
+		@BJ_stake = 0;
+	}
+
+	mes "[Black Jack Dealer]";
+	mes "^FF0000WARNING: WAGERS ARE FORFEITED ON ABANDONMENT.^000000";
+	mes "Your stake is deducted BEFORE any cards are dealt.";
+	mes "Closing this window, disconnecting, warping away (including @go), or otherwise leaving an unfinished round means losing the ENTIRE active stake.";
+	mes "^FF0000Connection failures also count. No automatic refund.^000000";
+	mes "Maximum initial bet: ^0000FF1,000,000 Zeny^000000.";
+	mes "Maximum with Double Down: ^0000FF2,000,000 Zeny^000000.";
+	next;
+	mes "[Black Jack Dealer]";
+	mes "Do you understand and accept the full-forfeiture policy?";
+	if (select("I AGREE - Continue:Decline - Leave") != 1)
+		close;
+
+L_Bet:
+	mes "[Black Jack Dealer]";
+	mes "Choose an initial wager:";
+	next;
+	.@option = select("1,000 Zeny:10,000 Zeny:100,000 Zeny:1,000,000 Zeny:Custom amount:Cancel");
+	switch (.@option) {
+	case 1: .@bet = 1000; break;
+	case 2: .@bet = 10000; break;
+	case 3: .@bet = 100000; break;
+	case 4: .@bet = 1000000; break;
+	case 5:
+		mes "[Black Jack Dealer]";
+		mes "Enter a whole-number bet from 1,000 to 1,000,000 Zeny.";
+		next;
+		input .@bet;
+		break;
+	default:
+		close;
+	}
+
+	if (.@bet < 1000 || .@bet > 1000000) {
+		mes "[Black Jack Dealer]";
+		mes "Invalid wager. Allowed range: 1,000 to 1,000,000 Zeny.";
+		close;
+	}
+	if (Zeny < .@bet) {
+		mes "[Black Jack Dealer]";
+		mes "You do not have enough Zeny for this wager.";
+		close;
+	}
+	// Reserve enough headroom for a possible Double Down win.
+	// A doubled win would leave the player with initial balance + 2*bet.
+	if (Zeny > MAX_ZENY - (2 * .@bet)) {
+		mes "[Black Jack Dealer]";
+		mes "Your Zeny balance is too close to the server limit to safely pay a possible win.";
+		close;
+	}
+
+	mes "[Black Jack Dealer]";
+	mes "^FF0000FINAL BET CONFIRMATION^000000";
+	mes "You are about to stake ^0000FF" + .@bet + " Zeny^000000.";
+	mes "The amount will be deducted immediately.";
+	mes "If you abandon the unfinished round, you lose the stake.";
+	next;
+	if (select("CONFIRM - Pay wager:Cancel - Keep my Zeny") != 1)
+		close;
+
+	// Re-check immediately before charging. No script-dialogue pause after this point.
+	if (Zeny < .@bet || Zeny > MAX_ZENY - (2 * .@bet)) {
+		mes "[Black Jack Dealer]";
+		mes "Your current balance no longer qualifies. No wager was charged.";
+		close;
+	}
+
+	// Charge stake BEFORE dealing cards. Leaving midgame keeps this deduction.
+	Zeny -= .@bet;
+	.@stake = .@bet;
+	@BJ_round++;
+	if (@BJ_round <= 0) @BJ_round = 1;
+	.@myRound = @BJ_round;
+	@BJ_active = 1;
+	@BJ_stake = .@stake;
+	logmes "[GrassRoBJ] BET round=" + .@myRound + "; initial=" + .@bet + "; remaining=" + Zeny;
+
+	// Remember the original player position to reject successful warps
+	// while dialogue remains active (including warps within Prontera).
+	getmapxy .@startMap$, .@startX, .@startY, BL_PC;
+
+	// @BJ_ variables are attached to the CHARACTER, not shared globally.
+	// Subroutines have separate .@ scopes, so their shared per-round
+	// card arrays and totals use character-temporary @BJ_ variables.
+	deletearray @BJ_used[0],14;
+	deletearray @BJ_player[0],5;
+	deletearray @BJ_dealer[0],5;
+	@BJ_pCount = 0;
+	@BJ_dCount = 0;
+	callsub S_Draw, 0;
+	callsub S_Draw, 1;
+	callsub S_Draw, 0;
+	callsub S_Draw, 1;
+
+L_Turn:
+	// Reject an invalidated round or an actual change of position.
+	if (!@BJ_active || @BJ_round != .@myRound) end;
+	getmapxy .@checkMap$, .@checkX, .@checkY, BL_PC;
+	if (.@checkMap$ != .@startMap$ || .@checkX != .@startX || .@checkY != .@startY) {
+		logmes "[GrassRoBJ] FORFEIT (moved/warped) round=" + .@myRound + "; stake=" + .@stake;
+		@BJ_active = 0;
+		@BJ_stake = 0;
+		end;
+	}
+
+	callsub S_Score;
+	// Two-card naturals settle immediately; both naturals push.
+	if (@BJ_pCount == 2 && @BJ_dCount == 2 && (@BJ_pTotal == 21 || @BJ_dTotal == 21)) {
+		if (@BJ_pTotal == @BJ_dTotal) goto L_Push;
+		if (@BJ_pTotal == 21) goto L_Win;
+		goto L_Loss;
+	}
+	if (@BJ_pTotal > 21) goto L_Loss;
+	if (@BJ_pCount >= 5) goto L_DealerTurn;
+
+	mes "[Black Jack Dealer]";
+	callsub S_Show, 0;
+	mes "Current stake: ^0000FF" + .@stake + " Zeny^000000.";
+	next;
+	if (@BJ_pCount == 2)
+		.@choice = select("Hit:Stay:Double Down");
+	else
+		.@choice = select("Hit:Stay");
+
+	if (.@choice == 1) {
+		callsub S_Draw, 0;
+		goto L_Turn;
+	}
+	if (.@choice == 2) {
+		if (@BJ_pTotal < 13) {
+			mes "[Black Jack Dealer]";
+			mes "You need at least 13 to stay. Please hit.";
+			next;
+			goto L_Turn;
+		}
+		goto L_DealerTurn;
+	}
+
+	// Double Down only on the initial two-card hand.
+	if (.@choice == 3 && @BJ_pCount == 2) {
+		if (Zeny < .@bet) {
+			mes "[Black Jack Dealer]";
+			mes "You need another " + .@bet + " Zeny to Double Down.";
+			next;
+			goto L_Turn;
+		}
+		mes "[Black Jack Dealer]";
+		mes "^FF0000CONFIRM DOUBLE DOWN^000000";
+		mes "Pay an additional ^0000FF" + .@bet + " Zeny^000000?";
+		mes "Your total stake becomes ^0000FF" + (.@bet * 2) + " Zeny^000000.";
+		mes "You receive exactly ONE more card and cannot Hit or Stay afterward.";
+		next;
+		if (select("CONFIRM Double Down:Cancel Double Down") != 1)
+			goto L_Turn;
+		// Recheck state and location after the confirmation pause.
+		if (!@BJ_active || @BJ_round != .@myRound) end;
+		getmapxy .@checkMap$, .@checkX, .@checkY, BL_PC;
+		if (.@checkMap$ != .@startMap$ || .@checkX != .@startX || .@checkY != .@startY) {
+			logmes "[GrassRoBJ] FORFEIT (moved before double) round=" + .@myRound + "; stake=" + .@stake;
+			@BJ_active = 0;
+			@BJ_stake = 0;
+			end;
+		}
+		if (Zeny < .@bet) {
+			mes "[Black Jack Dealer]";
+			mes "Insufficient funds. No additional Zeny was charged.";
+			next;
+			goto L_Turn;
+		}
+		Zeny -= .@bet;
+		.@stake += .@bet;
+		@BJ_stake = .@stake;
+		logmes "[GrassRoBJ] DOUBLE round=" + .@myRound + "; total_stake=" + .@stake + "; remaining=" + Zeny;
+		callsub S_Draw, 0;
+		callsub S_Score;
+		if (@BJ_pTotal > 21) goto L_Loss;
+		goto L_DealerTurn;
+	}
+	goto L_Turn;
+
+L_DealerTurn:
+	callsub S_Score;
+	while (@BJ_dTotal < 17 && @BJ_dCount < 5) {
+		callsub S_Draw, 1;
+		callsub S_Score;
+	}
+	if (@BJ_dTotal > 21 || @BJ_pTotal > @BJ_dTotal) goto L_Win;
+	if (@BJ_pTotal == @BJ_dTotal) goto L_Push;
+	goto L_Loss;
+
+L_Win:
+	.@result$ = "WIN";
+	.@payment = .@stake * 2;
+	goto L_Settle;
+L_Push:
+	.@result$ = "PUSH";
+	.@payment = .@stake;
+	goto L_Settle;
+L_Loss:
+	.@result$ = "LOSS";
+	.@payment = 0;
+	goto L_Settle;
+
+L_Settle:
+	// Settle once, BEFORE showing the final dialogue.
+	if (!@BJ_active || @BJ_round != .@myRound) end;
+	getmapxy .@checkMap$, .@checkX, .@checkY, BL_PC;
+	if (.@checkMap$ != .@startMap$ || .@checkX != .@startX || .@checkY != .@startY) {
+		logmes "[GrassRoBJ] FORFEIT (moved before settlement) round=" + .@myRound + "; stake=" + .@stake;
+		@BJ_active = 0;
+		@BJ_stake = 0;
+		end;
+	}
+	// Payout guard: never overrun the server's current Zeny limit.
+	if (.@payment > 0 && Zeny > MAX_ZENY - .@payment) {
+		// This should be unreachable under normal play due to the bet-time cap.
+		// Do NOT pay partially or retry automatically: flag for GM review.
+		logmes "[GrassRoBJ] PAYOUT BLOCKED round=" + .@myRound + "; payment=" + .@payment + "; balance=" + Zeny;
+		@BJ_active = 0;
+		@BJ_stake = 0;
+		mes "[Black Jack Dealer]";
+		mes "^FF0000Payout blocked by the Zeny cap.^000000";
+		mes "Contact a GM with the time of this round for manual review.";
+		close;
+	}
+	@BJ_active = 0;
+	@BJ_stake = 0;
+	if (.@payment > 0) Zeny += .@payment;
+	logmes "[GrassRoBJ] SETTLED round=" + .@myRound + "; result=" + .@result$ + "; stake=" + .@stake + "; payment=" + .@payment + "; balance=" + Zeny;
+
+	mes "[Black Jack Dealer]";
+	callsub S_Score;
+	callsub S_Show, 1;
+	if (.@result$ == "WIN") mes "^008800You won!^000000 Net profit: " + .@stake + " Zeny.";
+	if (.@result$ == "PUSH") mes "^0000FFPush!^000000 Your full stake was returned.";
+	if (.@result$ == "LOSS") mes "^FF0000You lost.^000000 Your full stake was forfeited.";
+	mes "Current balance: " + Zeny + " Zeny.";
+	next;
+	if (select("Play another round:Leave") == 1)
+		goto L_Menu;
+	close;
+
+// Draw one card from a 52-card deck: ranks 1..13, at most 4 of each.
+// getarg(0): 0 = player, 1 = dealer.
+S_Draw:
+	.@rank = rand(1,13);
+	while (@BJ_used[.@rank] >= 4)
+		.@rank = rand(1,13);
+	@BJ_used[.@rank]++;
+	if (getarg(0) == 0) {
+		@BJ_player[@BJ_pCount] = .@rank;
+		@BJ_pCount++;
+	} else {
+		@BJ_dealer[@BJ_dCount] = .@rank;
+		@BJ_dCount++;
+	}
+	return;
+
+// Count each Ace initially as 11, then reduce as many as needed to avoid bust.
+S_Score:
+	@BJ_pTotal = 0;
+	@BJ_dTotal = 0;
+	.@aces = 0;
+	for (.@i = 0; .@i < @BJ_pCount; .@i++) {
+		.@rank = @BJ_player[.@i];
+		if (.@rank == 1) { @BJ_pTotal += 11; .@aces++; }
+		else if (.@rank >= 10) @BJ_pTotal += 10;
+		else @BJ_pTotal += .@rank;
+	}
+	while (@BJ_pTotal > 21 && .@aces > 0) {
+		@BJ_pTotal -= 10;
+		.@aces--;
+	}
+	.@aces = 0;
+	for (.@i = 0; .@i < @BJ_dCount; .@i++) {
+		.@rank = @BJ_dealer[.@i];
+		if (.@rank == 1) { @BJ_dTotal += 11; .@aces++; }
+		else if (.@rank >= 10) @BJ_dTotal += 10;
+		else @BJ_dTotal += .@rank;
+	}
+	while (@BJ_dTotal > 21 && .@aces > 0) {
+		@BJ_dTotal -= 10;
+		.@aces--;
+	}
+	return;
+
+// Display the original rAthena-style three-line ASCII playing cards.
+// getarg(0): 0 hides the dealer's hole card, 1 reveals all cards.
+// Card rows wrap after three cards, matching the classic presentation.
+S_Show:
+	for (.@hand = 0; .@hand < 2; .@hand++) {
+		if (.@hand == 0) {
+			mes "- Here are the ^FF5533DEALER'S^000000 cards:";
+			.@count = @BJ_dCount;
+		} else {
+			mes " ";
+			mes "- Here are ^5533FFYOUR^000000 cards:";
+			.@count = @BJ_pCount;
+		}
+
+		.@top$ = "";
+		.@center$ = "";
+		.@bottom$ = "";
+		for (.@i = 0; .@i < .@count; .@i++) {
+			// Hide only the dealer's second card until the round is settled.
+			if (.@hand == 0 && !getarg(0) && .@i == 1) {
+				.@face$ = " ? ";
+			} else {
+				if (.@hand == 0)
+					.@rank = @BJ_dealer[.@i];
+				else
+					.@rank = @BJ_player[.@i];
+				switch (.@rank) {
+				case 1: .@face$ = " A "; break;
+				case 10: .@face$ = "10 "; break;
+				case 11: .@face$ = " J "; break;
+				case 12: .@face$ = " Q "; break;
+				case 13: .@face$ = " K "; break;
+				default: .@face$ = " " + .@rank + " "; break;
+				}
+			}
+
+			.@top$ += " .-----.";
+			.@center$ += " | " + .@face$ + " |";
+			.@bottom$ += " '-----'";
+
+			// Match the original layout: maximum three cards per row.
+			if (.@i % 3 == 2 || .@i == .@count - 1) {
+				mes .@top$;
+				mes .@center$;
+				mes .@bottom$;
+				.@top$ = "";
+				.@center$ = "";
+				.@bottom$ = "";
+			}
+		}
+
+		if (.@hand == 0) {
+			if (getarg(0))
+				mes " The DEALER has: ^FF5533" + @BJ_dTotal + "^000000";
+			else
+				mes " The DEALER has: ^FF5533?^000000 (hidden card)";
+		} else {
+			mes " YOU have: ^5533FF" + @BJ_pTotal + "^000000";
+		}
+	}
+	return;
+}
+
+// Both dealer NPCs execute the same script.
+prontera,165,154,2	duplicate(blackjack)	Black Jack Dealer#prt	573

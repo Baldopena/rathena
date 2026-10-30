@@ -1,0 +1,19 @@
+
+//============================================================
+// Grass Ro - Custom Prontera Kafra
+// Sprite: 4_MAL_KAFRA
+// Services: Standard Prontera Kafra
+//============================================================
+
+prontera,165,172,2	script	Kafra Employee::gr_kaf_prt	4_MAL_KAFRA,{
+	callfunc "F_KafSet";
+
+	mes "[Kafra Employee]";
+	mes "Welcome to Grass Ro!";
+	mes "How may I help you today?";
+
+	callfunc "F_Kafra",5,0,0,40,800;
+
+	savepoint "prontera",157,181,1,1;
+	callfunc "F_KafEnd",0,1,"in the city of Prontera";
+}

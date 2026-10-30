@@ -61,6 +61,8 @@ Body:
     Level: 0
     Commands:
       # Informational commands
+      gstorage: true
+      storage: true
       commands: true
       charcommands: true
       help: true

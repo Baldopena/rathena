@@ -1,0 +1,91 @@
+prontera,131,217,5	script	Broadcaster	113,{
+
+	.@cost = 100000;
+	.@cooldown = 120;
+
+	mes "[Broadcaster]";
+	mes "Welcome to the Broadcast Service!";
+	mes "Send an announcement to all online players.";
+	mes " ";
+	mes "Broadcast Fee: ^FF0000100,000 Zeny^000000";
+	mes "Cooldown: 2 minutes";
+	mes "Your Zeny: " + Zeny;
+
+	// Check cooldown
+	.@now = gettimetick(2);
+
+	if (BroadcastCooldown > .@now) {
+		mes " ";
+		mes "Please wait " + (BroadcastCooldown - .@now) + " seconds before broadcasting again.";
+		close;
+	}
+
+	// Check Zeny balance
+	if (Zeny < .@cost) {
+		mes " ";
+		mes "You don't have enough Zeny!";
+		mes "You need 100,000 Zeny to broadcast.";
+		close;
+	}
+
+	mes " ";
+	mes "Would you like to broadcast a message?";
+
+	if (select("Yes:No") == 2)
+		close;
+
+	next;
+
+	mes "[Broadcaster]";
+	mes "Enter your announcement:";
+	input .@message$;
+
+	if (.@message$ == "") {
+		mes "Your message cannot be empty.";
+		close;
+	}
+
+	next;
+
+	mes "[Broadcaster]";
+	mes "Message Preview:";
+	mes " ";
+	mes .@message$;
+	mes " ";
+	mes "Cost: 100,000 Zeny";
+	mes " ";
+	mes "Confirm broadcast?";
+
+	if (select("Broadcast:Cancel") == 2) {
+		mes "Broadcast cancelled.";
+		mes "No Zeny was deducted.";
+		close;
+	}
+
+	// Recheck Zeny before charging
+	if (Zeny < .@cost) {
+		mes "You no longer have enough Zeny.";
+		close;
+	}
+
+	// Recheck cooldown before broadcasting
+	if (BroadcastCooldown > gettimetick(2)) {
+		mes "Your broadcast cooldown is still active.";
+		close;
+	}
+
+	// Deduct broadcast fee
+	Zeny -= .@cost;
+
+	// Save persistent cooldown
+	BroadcastCooldown = gettimetick(2) + .@cooldown;
+
+	// Send global announcement
+	announce "[Broadcast] " + strcharinfo(0) + ": " + .@message$, bc_all, 0x00FF00;
+
+	mes "[Broadcaster]";
+	mes "Your announcement has been broadcast!";
+	mes "100,000 Zeny has been deducted.";
+	mes "Remaining Zeny: " + Zeny;
+	close;
+}

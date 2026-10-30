@@ -1,0 +1,2337 @@
+//===== Grass RO rAthena Script ===================================
+//= Unified Warper — Phase 1 v1.6 Travelling Bush (sprite 527) + grouped field regions
+//= Grass RO | Pre-Renewal | roBrowserLegacy
+//= Deployment: npc/custom/grass_ro_unified_warper.txt (one file)
+//= IMPORTANT: Test in an isolated rAthena environment before live use.
+//= Reward CLAIMING is deliberately DISABLED by design (D-01).
+//= No SQL tables or source modifications required.
+//=
+//= Stable destination IDs: GENERATED BELOW. NEVER REORDER OR REASSIGN
+//= existing IDs once discovery progression has been enabled in production.
+//= Script references: rAthena doc/script_commands.txt and stock warper.txt
+//=================================================================
+
+// Return the canonical map-key ID (same policy/price for duplicated castle maps).
+function	script	GRO_Key	{
+	.@id = getarg(0);
+	if (.@id < 1 || .@id > $@GRO_Count) return 0;
+	return $@GRO_Key[.@id];
+}
+
+// Account-wide 30-bit bitmask, avoids sign bit and per-floor registries.
+function	script	GRO_HasDiscovery	{
+	.@id = getarg(0);
+	if (.@id < 1 || .@id > $@GRO_Count || $@GRO_Cat[.@id] != 3) return 0;
+	.@n = $@GRO_DiscoveryID[.@id] - 1;
+	if (.@n < 0) return 0;
+	return (##GRO_Discovered[.@n / 30] & (1 << (.@n % 30))) != 0;
+}
+
+// Eligibility is dynamically checked against castle ownership, not a cached flag.
+function	script	GRO_OwnsRealm	{
+	.@realm = getarg(0);
+	.@guild = getcharid(2);
+	if (.@guild <= 0) return 0;
+	switch (.@realm) {
+		case 1: .@prefix$ = "prtg_cas0"; break;
+		case 2: .@prefix$ = "gefg_cas0"; break;
+		case 3: .@prefix$ = "payg_cas0"; break;
+		case 4: .@prefix$ = "aldeg_cas0"; break;
+		case 5: .@prefix$ = "arug_cas0"; break;
+		case 6: .@prefix$ = "schg_cas0"; break;
+		default: return 0;
+	}
+	for (.@n = 1; .@n <= 5; ++.@n) {
+		if (GetCastleData(.@prefix$ + .@n, CD_GUILD_ID) == .@guild) return 1;
+	}
+	return 0;
+}
+
+// Access result: 0 OK, 1 map/cell unavailable, 2 restricted, 3 GM-only,
+// 4 WoE grounds, 5 guild ownership, 6 undiscovered, 7 MVP policy.
+function	script	GRO_Access	{
+	.@id = getarg(0);
+	if (.@id < 1 || .@id > $@GRO_Count) return 1;
+	.@map$ = $@GRO_Map$[.@id];
+	.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
+	.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+	if (mapname2id(.@map$) < 0 || .@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) return 1;
+	.@key = callfunc("GRO_Key",.@id);
+	.@policy = $GRO_Policy[.@key];
+	if (.@policy < 0 || .@policy > 3 || .@policy == 2) return 2;
+	if (.@policy == 3 && getgmlevel() < 99) return 3;
+	if ($@GRO_CastleGround[.@id] && $GRO_WoeCastleAllow != 1 && (agitcheck() || agitcheck2() || agitcheck3())) return 4;
+	if ($@GRO_Cat[.@id] == 5 && !callfunc("GRO_OwnsRealm",$@GRO_Realm[.@id])) return 5;
+	if ($@GRO_Cat[.@id] == 3 && $GRO_DiscoveryBypass != 1 && !callfunc("GRO_HasDiscovery",.@id)) return 6;
+	// Only explicit 'Allowed' policies can override global MVP map restrictions.
+	if ($GRO_MvpAllow != 1 && $GRO_MvpMap[.@key] && .@policy != 1) return 7;
+	return 0;
+}
+
+function	script	GRO_Reason	{
+	switch (getarg(0)) {
+		case 0: return "Available";
+		case 1: return "Unavailable / Invalid Cell";
+		case 2: return "Restricted";
+		case 3: return "GM Only";
+		case 4: return "Unavailable During WoE";
+		case 5: return "Guild Ownership Required";
+		case 6: return "Not Discovered";
+		case 7: return "MVP Restriction";
+	}
+	return "Unknown";
+}
+
+function	script	GRO_Fee	{
+	.@id = getarg(0);
+	if (!$GRO_Pricing || .@id < 1 || .@id > $@GRO_Count) return 0;
+	.@key = callfunc("GRO_Key",.@id);
+	if ($GRO_FeeSet[.@key]) return $GRO_MapFee[.@key];
+	switch ($@GRO_Cat[.@id]) {
+		case 1: return $GRO_TownFee;
+		case 2: return $GRO_FieldFee;
+		case 3: return $GRO_DungeonFee + ($@GRO_Depth[.@id] * $GRO_DepthFee);
+		case 4: return $GRO_CastleFee;
+		case 5: return $GRO_GuildFee;
+	}
+	return 0;
+}
+
+function	script	GRO_WarpTo	{
+	clear;
+	.@id = getarg(0);
+	.@error = callfunc("GRO_Access",.@id);
+	if (.@error) {
+		mes "[Travelling Bush]";
+		mes "Cannot warp: ^FF5555" + callfunc("GRO_Reason",.@error) + "^000000.";
+		close;
+	}
+	.@cost = callfunc("GRO_Fee",.@id);
+	if (.@cost < 0 || .@cost > 1000000000) {
+		mes "[Travelling Bush]";
+		mes "Invalid warp fee. Please contact a GM.";
+		close;
+	}
+	mes "[Travelling Bush]";
+	mes "Destination: ^0055FF" + $@GRO_Name$[.@id] + "^000000";
+	mes "Map: " + $@GRO_Map$[.@id];
+	mes "Cost: ^005500" + .@cost + " Zeny^000000";
+	if (select("Confirm Warp:Cancel") != 1) close;
+	// Revalidate after dialog to defeat stale menus, castle changes or GM changes.
+	.@error = callfunc("GRO_Access",.@id);
+	if (.@error) {
+		mes "Destination is no longer available: " + callfunc("GRO_Reason",.@error);
+		close;
+	}
+	.@cost = callfunc("GRO_Fee",.@id);
+	if (.@cost < 0 || .@cost > 1000000000 || Zeny < .@cost) {
+		mes "Insufficient Zeny or invalid fee.";
+		close;
+	}
+	.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
+	.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+	// Last Warp stores the destination ID, never an old price/permission/coordinate.
+	GRO_LastID = .@id;
+	if (.@cost > 0) Zeny -= .@cost;
+	close2;
+	warp $@GRO_Map$[.@id],.@x,.@y;
+	end;
+}
+
+// Category ranges match the immutable Phase 1 destination registry.
+// Do not evaluate full access rules for 150 destinations in one script tick:
+// rAthena's loop protection can terminate the NPC before a menu is shown.
+// Dungeons use the stock Warper pattern: one alphabetical list of dungeon names,
+// followed by one unpaginated floor list for the selected dungeon. This avoids
+// sending a ~139-choice select() payload to roBrowserLegacy in a single packet.
+function	script	GRO_DungeonBrowse	{
+	setarray .@groupFirst[0], 180,183,186,188,190,193,198,202,206;
+	setarray .@groupFirst[9], 209,212,215,217,221,225,241,244,247;
+	setarray .@groupFirst[18], 251,253,256,259,261,264,266,269,271;
+	setarray .@groupFirst[27], 276,280,286,291,296,298,310,313,315;
+	setarray .@groupLast[0], 182,185,187,189,192,197,201,205,208;
+	setarray .@groupLast[9], 211,214,216,220,224,240,243,246,250;
+	setarray .@groupLast[18], 252,255,258,260,263,265,268,270,275;
+	setarray .@groupLast[27], 279,285,290,295,297,309,312,314,318;
+	setarray .@groupName$[0], "Abyss Lake","Amatsu Dungeon","Ant Hell","Ayothaya Dungeon","Biolabs","Byalan Dungeon","Clock Tower","Clock Tower Basement","Coal Mines";
+	setarray .@groupName$[9], "Comodo Beach Dungeon","Cursed Abbey","Einbroch Mine","Geffen Dungeon","Geffenia","Glast Heim","Hidden Maze","Ice Dungeon","Juperos";
+	setarray .@groupName$[18], "Kiel Dungeon","Kunlun Dungeon","Louyang Royal Tomb","Magma Dungeon","Moscovia Dungeon","Nidhogg's Dungeon","Odin Temple","Orc Dungeon","Payon Dungeon";
+	setarray .@groupName$[27], "Prontera Culvert","Pyramid","Rachel Sanctuary","Sphinx","Sunken Ship","Thanatos Tower","Thor Volcano","Toy Factory","Turtle Dungeon";
+	.@gm = (getgmlevel() >= 99);
+	while (1) {
+		clear;
+		.@menu$ = "";
+		.@visible = 0;
+		for (.@g = 0; .@g < getarraysize(.@groupFirst); ++.@g) {
+			// Hide groups that have no loaded maps for ordinary players.
+			.@available = .@gm;
+			if (!.@available) {
+				for (.@i = .@groupFirst[.@g]; .@i <= .@groupLast[.@g]; ++.@i) {
+					if (mapname2id($@GRO_Map$[.@i]) >= 0) { .@available = 1; break; }
+				}
+			}
+			if (!.@available) continue;
+			.@visibleGroup[.@visible] = .@g;
+			.@menu$ += .@groupName$[.@g] + ":";
+			++.@visible;
+		}
+		if (!.@visible) {
+			mes "[Travelling Bush]";
+			mes "No dungeon destinations are available.";
+			return;
+		}
+		.@menu$ += "Back";
+		mes "[Travelling Bush]";
+		mes "Select a dungeon:";
+		.@selected = select(.@menu$);
+		if (.@selected > .@visible) return;
+		.@g = .@visibleGroup[.@selected-1];
+		while (1) {
+			clear;
+			.@floorMenu$ = "";
+			.@floorCount = 0;
+			for (.@id = .@groupFirst[.@g]; .@id <= .@groupLast[.@g]; ++.@id) {
+				if (!.@gm) {
+					.@map$ = $@GRO_Map$[.@id];
+					if (mapname2id(.@map$) < 0) continue;
+					.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
+					.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+					if (.@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) continue;
+					.@policy = $GRO_Policy[$@GRO_Key[.@id]];
+					if (!$GRO_ShowRestricted && (.@policy == 2 || .@policy == 3)) continue;
+				}
+				.@status = callfunc("GRO_Access",.@id);
+				.@label$ = $@GRO_Name$[.@id];
+				if (.@status == 6) {
+					// Red text replaces the old undiscovered suffix.
+					.@label$ = "^FF0000" + .@label$ + "^000000";
+				} else if (.@status) {
+					.@label$ += " [" + callfunc("GRO_Reason",.@status) + "]";
+				} else {
+					if ($GRO_ShowCounts) .@label$ += " ["+getmapusers($@GRO_Map$[.@id])+"]";
+					.@fee = callfunc("GRO_Fee",.@id);
+					if (.@fee > 0) .@label$ += " ("+.@fee+"z)";
+				}
+				.@floorID[.@floorCount] = .@id;
+				.@floorMenu$ += .@label$ + ":";
+				++.@floorCount;
+			}
+			mes "[Travelling Bush]";
+			mes .@groupName$[.@g];
+			if (!.@floorCount) {
+				mes "No dungeon floors are available here.";
+				next;
+				break;
+			}
+			.@floorMenu$ += "Back";
+			.@choice = select(.@floorMenu$);
+			if (.@choice > .@floorCount) break;
+			callfunc "GRO_WarpTo",.@floorID[.@choice-1];
+			return;
+		}
+	}
+}
+
+// Fields follow the stock Warper-style two-level menu: region, then numbered map.
+// This avoids large menus, removes all field pagination, and keeps destination IDs
+// unchanged. Each selected region contains at most 19 or 20 destinations.
+function	script	GRO_FieldBrowse	{
+	setarray .@fieldIDs[0], 30,31,32,33,34,35,36,37,38,39,40,41,42,44,45;
+	setarray .@fieldIDs[15], 46,47,48,49,50,43,52,59,60,61,62,63,64,65,66;
+	setarray .@fieldIDs[30], 53,54,55,56,57,58,51,67,68,69,70,71,72,73,74;
+	setarray .@fieldIDs[45], 75,76,77,78,79,80,81,82,83,87,88,89,90,91,92;
+	setarray .@fieldIDs[60], 93,94,84,85,86,95,96,97,98,99,102,103,104,105,106;
+	setarray .@fieldIDs[75], 107,108,109,100,101,110,111,114,115,116,117,118,119,120,121;
+	setarray .@fieldIDs[90], 112,113,122,127,128,129,130,131,132,133,134,123,124,125,126;
+	setarray .@fieldIDs[105], 135,146,147,148,149,150,151,152,153,136,137,138,139,140,141;
+	setarray .@fieldIDs[120], 142,143,144,145,154,155,156,157,158,159,160,161,162,163,164;
+	setarray .@fieldIDs[135], 165,166,167,168,172,173,174,175,176,177,178,179,169,170,171;
+	setarray .@groupFirst[0], 0,1,3,12,21,37,44,45,48,49,50,53;
+	setarray .@groupFirst[12], 65,67,69,80,92,105,124,127,131,138;
+	setarray .@groupLast[0], 0,2,11,20,36,43,44,47,48,49,52,64;
+	setarray .@groupLast[12], 66,68,79,91,104,123,126,130,137,149;
+	setarray .@groupName$[0], "Amatsu Field","Ayothaya Field","Comodo Field","Einbroch Field","Geffen Field","Hugel Field","Kunlun Field","Lighthalzen Field";
+	setarray .@groupName$[8], "Louyang Field","Lutie Field","Manuk Field","Mjolnir","Moscovia Field","Niflheim Field","Payon Field","Prontera Field";
+	setarray .@groupName$[16], "Rachel Field","Sograt Desert","Splendide Field","Umbala Field","Veins Field","Yuno Field";
+	.@gm = (getgmlevel() >= 99);
+	while (1) {
+		clear;
+		.@menu$ = "";
+		.@visible = 0;
+		for (.@g = 0; .@g < getarraysize(.@groupFirst); ++.@g) {
+			// No expensive access checks until the player selects a region.
+			.@available = .@gm;
+			if (!.@available) {
+				for (.@i = .@groupFirst[.@g]; .@i <= .@groupLast[.@g]; ++.@i) {
+					.@id = .@fieldIDs[.@i];
+					if (mapname2id($@GRO_Map$[.@id]) >= 0) { .@available = 1; break; }
+				}
+			}
+			if (!.@available) continue;
+			.@visibleGroup[.@visible] = .@g;
+			.@menu$ += .@groupName$[.@g] + ":";
+			++.@visible;
+		}
+		if (!.@visible) {
+			mes "[Travelling Bush]";
+			mes "No field destinations are available.";
+			return;
+		}
+		.@menu$ += "Back";
+		mes "[Travelling Bush]";
+		mes "Select a field region:";
+		.@selected = select(.@menu$);
+		if (.@selected > .@visible) return;
+		.@g = .@visibleGroup[.@selected-1];
+		while (1) {
+			clear;
+			.@fieldMenu$ = "";
+			.@fieldCount = 0;
+			for (.@i = .@groupFirst[.@g]; .@i <= .@groupLast[.@g]; ++.@i) {
+				.@id = .@fieldIDs[.@i];
+				if (!.@gm) {
+					.@map$ = $@GRO_Map$[.@id];
+					if (mapname2id(.@map$) < 0) continue;
+					.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
+					.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+					if (.@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) continue;
+					.@policy = $GRO_Policy[$@GRO_Key[.@id]];
+					if (!$GRO_ShowRestricted && (.@policy == 2 || .@policy == 3)) continue;
+				}
+				.@status = callfunc("GRO_Access",.@id);
+				.@label$ = $@GRO_Name$[.@id];
+				if (.@status == 6) {
+					.@label$ = "^FF0000" + .@label$ + "^000000";
+				} else if (.@status) {
+					.@label$ += " [" + callfunc("GRO_Reason",.@status) + "]";
+				} else {
+					if ($GRO_ShowCounts) .@label$ += " ["+getmapusers($@GRO_Map$[.@id])+"]";
+					.@fee = callfunc("GRO_Fee",.@id);
+					if (.@fee > 0) .@label$ += " ("+.@fee+"z)";
+				}
+				.@fieldID[.@fieldCount] = .@id;
+				.@fieldMenu$ += .@label$ + ":";
+				++.@fieldCount;
+			}
+			mes "[Travelling Bush]";
+			mes .@groupName$[.@g];
+			if (!.@fieldCount) {
+				mes "No field maps are available in this region.";
+				next;
+				break;
+			}
+			.@fieldMenu$ += "Back";
+			.@choice = select(.@fieldMenu$);
+			if (.@choice > .@fieldCount) break;
+			callfunc "GRO_WarpTo",.@fieldID[.@choice-1];
+			return;
+		}
+	}
+}
+
+function	script	GRO_Browse	{
+	.@cat = getarg(0);
+	if (.@cat == 2) {
+		callfunc "GRO_FieldBrowse";
+		return;
+	}
+	if (.@cat == 3) {
+		callfunc "GRO_DungeonBrowse";
+		return;
+	}
+	switch (.@cat) {
+		case 1: .@firstID = 1;   .@lastID = 29;  break; // Towns
+		case 3: .@firstID = 180; .@lastID = 318; break; // Dungeon floors
+		case 4: .@firstID = 319; .@lastID = 348; break; // Castle exteriors
+		case 5: .@firstID = 349; .@lastID = 354; break; // Guild dungeons
+		default:
+			clear;
+			mes "[Travelling Bush]";
+			mes "Invalid destination category.";
+			return;
+	}
+	if (getarraysize(@GRO_List)) deletearray @GRO_List[0],getarraysize(@GRO_List);
+	.@gm = (getgmlevel() >= 99);
+	.@count = 0;
+	for (.@id = .@firstID; .@id <= .@lastID; ++.@id) {
+		// Keep this pass inexpensive: map and cell existence, then basic visibility.
+		// Full dynamic rules (discovery, WoE, guild, MVP, price) run per visible page.
+		if (!.@gm) {
+			.@map$ = $@GRO_Map$[.@id];
+			if (mapname2id(.@map$) < 0) continue;
+			.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
+			.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+			if (.@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) continue;
+			.@policy = $GRO_Policy[$@GRO_Key[.@id]];
+			if (!$GRO_ShowRestricted && (.@policy == 2 || .@policy == 3)) continue;
+		}
+		@GRO_List[.@count] = .@id;
+		++.@count;
+	}
+	debugmes "GrassRO browse: category=" + .@cat + " entries=" + .@count;
+	if (!.@count) {
+		clear;
+		mes "[Travelling Bush]";
+		mes "No destinations are available in this category.";
+		return;
+	}
+	.@page = 0;
+	// Towns are intentionally a single menu, matching the stock Warper.
+	// Only castle categories retain pagination; fields/dungeons have grouped menus.
+	.@pageSize = (.@cat == 1 ? .@count : 8);
+	while (1) {
+		clear;
+		.@offset = .@page * .@pageSize;
+		.@last = (.@offset + .@pageSize < .@count ? .@offset + .@pageSize : .@count);
+		.@choices$ = "";
+		for (.@j = .@offset; .@j < .@last; ++.@j) {
+			.@id = @GRO_List[.@j];
+			.@status = callfunc("GRO_Access",.@id);
+			.@line$ = $@GRO_Name$[.@id];
+			if (.@status != 0) {
+				switch (.@status) {
+					case 1: .@line$ += " [Unavailable]"; break;
+					case 2: .@line$ += " [Restricted]"; break;
+					case 3: .@line$ += " [GM Only]"; break;
+					case 4: .@line$ += " [WoE]"; break;
+					case 5: .@line$ += " [Guild]"; break;
+					case 6: .@line$ = "^FF0000" + .@line$ + "^000000"; break;
+					case 7: .@line$ += " [MVP]"; break;
+					default: .@line$ += " [Unavailable]"; break;
+				}
+			} else {
+				if ($GRO_ShowCounts) .@line$ += " ["+getmapusers($@GRO_Map$[.@id])+"]";
+				if (callfunc("GRO_Fee",.@id) > 0) .@line$ += " (" + callfunc("GRO_Fee",.@id) + "z)";
+			}
+			.@choices$ += .@line$ + ":";
+		}
+		.@rows = .@last - .@offset;
+		if (.@cat == 1)
+			.@choices$ += "Back";
+		else
+			.@choices$ += "Previous Page:Next Page:Back";
+		mes "[Travelling Bush]";
+		if (.@cat == 1)
+			mes "Towns (" + .@count + ")";
+		else
+			mes "Destinations " + (.@offset+1) + "-" + .@last + " of " + .@count + ".";
+		.@pick = select(.@choices$);
+		if (.@pick <= .@rows) {
+			callfunc "GRO_WarpTo",@GRO_List[.@offset + .@pick - 1];
+			return;
+		}
+		if (.@cat == 1) return; // The only extra choice is Back.
+		if (.@pick == .@rows+1 && .@page > 0) --.@page;
+		else if (.@pick == .@rows+2 && .@last < .@count) ++.@page;
+		else if (.@pick == .@rows+3) return;
+	}
+}
+
+function	script	GRO_Progress	{
+	.@found = 0;
+	.@total = 0;
+	for (.@i = 1; .@i <= $@GRO_Count; ++.@i) {
+		if ($@GRO_Cat[.@i] != 3 || $GRO_CollectionExcluded[.@i]) continue;
+		++.@total;
+		if (callfunc("GRO_HasDiscovery",.@i)) ++.@found;
+	}
+	return (.@found * 10000) + .@total;
+}
+
+function	script	GRO_Collection	{
+	clear;
+	.@value = callfunc("GRO_Progress");
+	.@total = .@value % 10000;
+	.@found = (.@value - .@total) / 10000;
+	mes "[Grass RO Discovery Collection]";
+	mes "Account-wide discovered floors: ^0055FF" + .@found + " / " + .@total + "^000000";
+	mes "Manual discovery is " + ($GRO_DiscoveryBypass == 1 ? "suspended during soft release." : "active.");
+	mes "Reward claiming: ^FF5555DISABLED^000000 (Transaction Safety Ticket D-01).";
+	if ($GRO_RewardCount) {
+		mes "Published reward versions:";
+		for (.@i = 1; .@i <= $GRO_RewardCount; ++.@i) {
+			mes "v"+.@i+": "+$GRO_RewardName$[.@i]+($GRO_RewardArchived[.@i] ? " [Archived]" : " [Active]");
+		}
+	} else mes "No collection reward versions have been published.";
+	return;
+}
+
+function	script	GRO_LogGM	{
+	logmes "GRO_WARPER GM_ACC=" + getcharid(3) + " GM_CHAR=" + getcharid(0) + " NAME=" + strcharinfo(0) + " " + getarg(0);
+	return;
+}
+
+// Queue a refresh rather than modifying every discovery NPC inside a GM dialog.
+// Each configuration change can safely restart an in-progress batch.
+function	script	GRO_Refresh	{
+	$@GRO_RefreshIndex = 180;
+	$@GRO_RefreshPending = 1;
+	return;
+}
+
+// Run ONLY from the controller's OnTimer200, without a player attached.
+// Three dungeon-floor NPCs per tick prevents script-loop stalls and UI freezing.
+function	script	GRO_RefreshBatch	{
+	if (!$@GRO_RefreshPending) return;
+	.@day = (gettimetick(2) + 28800) / 86400;
+	.@first = $@GRO_RefreshIndex;
+	if (.@first < 180 || .@first > 318) .@first = 180;
+	.@last = .@first + 2;
+	if (.@last > 318) .@last = 318;
+	for (.@i = .@first; .@i <= .@last; ++.@i) {
+		.@npc$ = $@GRO_Poring$[.@i];
+		if (.@npc$ == "") continue;
+		.@key = $@GRO_Key[.@i];
+		if ($GRO_DiscoveryBypass == 1 || $GRO_Policy[.@key] >= 2 ||
+			($GRO_MvpAllow != 1 && $GRO_MvpMap[.@key] && $GRO_Policy[.@key] != 1) ||
+			mapname2id($@GRO_Map$[.@i]) < 0) {
+			disablenpc .@npc$;
+			continue;
+		}
+		.@x = ($GRO_FixedSet[.@i] ? $GRO_FixedX[.@i] : $@GRO_X[.@i]);
+		.@y = ($GRO_FixedSet[.@i] ? $GRO_FixedY[.@i] : $@GRO_Y[.@i]);
+		if ($GRO_Randomize) {
+			if ($GRO_PoringDay[.@i] != .@day || !checkcell($@GRO_Map$[.@i],$GRO_PoringX[.@i],$GRO_PoringY[.@i],cell_chkpass)) {
+				.@valid = 0;
+				for (.@a = 0; .@a < 3; ++.@a) {
+					.@tx = 0;
+					.@ty = 0;
+					getfreecell $@GRO_Map$[.@i],.@tx,.@ty;
+					if (.@tx > 0 && .@ty > 0 && checkcell($@GRO_Map$[.@i],.@tx,.@ty,cell_chkpass)) {
+						.@x = .@tx;
+						.@y = .@ty;
+						.@valid = 1;
+						break;
+					}
+				}
+				if (!.@valid && $GRO_PoringX[.@i] > 0 && $GRO_PoringY[.@i] > 0 && checkcell($@GRO_Map$[.@i],$GRO_PoringX[.@i],$GRO_PoringY[.@i],cell_chkpass)) {
+					.@x = $GRO_PoringX[.@i];
+					.@y = $GRO_PoringY[.@i];
+				}
+				if (!.@valid) debugmes "GrassRO Warper: poring random-cell fallback at "+$@GRO_Map$[.@i];
+				$GRO_PoringX[.@i] = .@x;
+				$GRO_PoringY[.@i] = .@y;
+				$GRO_PoringDay[.@i] = .@day;
+			}
+			.@x = $GRO_PoringX[.@i];
+			.@y = $GRO_PoringY[.@i];
+		}
+		if (.@x > 0 && .@y > 0 && checkcell($@GRO_Map$[.@i],.@x,.@y,cell_chkpass)) {
+			movenpc .@npc$,.@x,.@y;
+			setnpcdisplay .@npc$,$GRO_PoringSprite;
+			enablenpc .@npc$;
+		} else disablenpc .@npc$;
+	}
+	$@GRO_RefreshIndex = .@last + 1;
+	if ($@GRO_RefreshIndex > 318) {
+		for (.@i = 0; .@i < $@GRO_WarperNpcCount; ++.@i)
+			setnpcdisplay $@GRO_WarperNpc$[.@i],$GRO_MainSprite;
+		$@GRO_RefreshDay = .@day;
+		$@GRO_RefreshPending = 0;
+		debugmes "GrassRO Warper: discovery NPC refresh complete for PH day "+.@day;
+	}
+	return;
+}
+
+function	script	GRO_Discover	{
+	clear;
+	.@id = getarg(0);
+	if (.@id < 1 || .@id > $@GRO_Count || $@GRO_Cat[.@id] != 3) end;
+	if ($GRO_DiscoveryBypass == 1 || $GRO_Policy[$@GRO_Key[.@id]] >= 2 ||
+		($GRO_MvpAllow != 1 && $GRO_MvpMap[$@GRO_Key[.@id]] && $GRO_Policy[$@GRO_Key[.@id]] != 1)) {
+		mes "[Strange Poring]";
+		mes "Discovery is currently unavailable.";
+		close;
+	}
+	mes "[Strange Poring]";
+	if (callfunc("GRO_HasDiscovery",.@id)) {
+		mes "You have already discovered ^0055FF" + $@GRO_Name$[.@id] + "^000000.";
+		close;
+	}
+	mes "You found a hidden travel marker on ^0055FF" + $@GRO_Map$[.@id] + "^000000!";
+	mes "Unlock this exact floor for every character on your account?";
+	if (select("Unlock floor:Leave") != 1) close;
+	if ($GRO_DiscoveryBypass == 1 || $GRO_Policy[$@GRO_Key[.@id]] >= 2) close;
+	.@n = $@GRO_DiscoveryID[.@id] - 1;
+	##GRO_Discovered[.@n / 30] |= 1 << (.@n % 30);
+	mes "^008800Discovery unlocked!^000000";
+	close;
+}
+
+function	script	GRO_Main	{
+	while (1) {
+		clear;
+		mes "[Travelling Bush]";
+		mes "Welcome to Grass RO.";
+		.@lastName$ = "None";
+		if (GRO_LastID >= 1 && GRO_LastID <= $@GRO_Count)
+			.@lastName$ = $@GRO_Name$[GRO_LastID];
+		.@choice$ = "Last Warp ^777777[" + .@lastName$ + "]^000000:Towns:Fields:Dungeons:Guild Castles:Guild Dungeons:Discovery Collection / Rewards";
+		if (getgmlevel() >= 99) .@choice$ += ":GM Administration";
+		.@choice$ += ":Close";
+		.@pick = select(.@choice$);
+		if (.@pick == 1) {
+			if (GRO_LastID < 1 || GRO_LastID > $@GRO_Count) mes "You have no previous Unified Warper destination.";
+			else callfunc "GRO_WarpTo",GRO_LastID;
+		}
+		else if (.@pick >= 2 && .@pick <= 6) callfunc "GRO_Browse",.@pick - 1;
+		else if (.@pick == 7) callfunc "GRO_Collection";
+		else if (.@pick == 8 && getgmlevel() >= 99) callfunc "GRO_Admin";
+		else close;
+		next;
+		clear;
+	}
+}
+
+function	script	GRO_ChooseMap	{
+	if (getgmlevel() < 99) return 0;
+	.@count = getarraysize($@GRO_AdminKeyID);
+	.@page = 0;
+	while (1) {
+		clear;
+		.@first = .@page * 14;
+		.@last = (.@first+14 < .@count ? .@first+14 : .@count);
+		.@menu$ = "";
+		for (.@n = .@first; .@n < .@last; ++.@n) {
+			.@id = $@GRO_AdminKeyID[.@n];
+			.@menu$ += $@GRO_Map$[.@id] + ":";
+		}
+		.@menu$ += "Previous Page:Next Page:Cancel";
+		mes "[GM / Map Registry]";
+		mes "Alphabetical maps "+(.@first+1)+"-"+.@last+" of "+.@count;
+		.@pick = select(.@menu$);
+		.@shown = .@last - .@first;
+		if (.@pick <= .@shown) return $@GRO_AdminKeyID[.@first+.@pick-1];
+		if (.@pick == .@shown+1 && .@page > 0) --.@page;
+		else if (.@pick == .@shown+2 && .@last < .@count) ++.@page;
+		else if (.@pick == .@shown+3) return 0;
+		clear;
+	}
+}
+
+
+function	script	GRO_AdminMap	{
+	clear;
+	if (getgmlevel() < 99) return;
+	.@entry = select("Browse maps alphabetically:Exact map-name search:Cancel");
+	if (.@entry == 3) return;
+	if (.@entry == 1) {
+		.@id = callfunc("GRO_ChooseMap");
+		if (!.@id) return;
+		.@search$ = $@GRO_Map$[.@id];
+	} else {
+		mes "Enter an exact registered map name (example: gef_fild13).";
+		input .@search$;
+		.@id = 0;
+		for (.@i = 1; .@i <= $@GRO_Count; ++.@i) {
+			if ($@GRO_Map$[.@i] == .@search$) { .@id = .@i; break; }
+		}
+		if (!.@id) { mes "This map is not in the predefined registry."; return; }
+	}
+	.@key = $@GRO_Key[.@id];
+	while (1) {
+		clear;
+		if (getgmlevel() < 99) return;
+		mes "[GM / " + $@GRO_Map$[.@id] + "]";
+		mes "Selected arrival: " + $@GRO_Name$[.@id] + " (ID " + .@id + ")";
+		mes "Policy: "+$GRO_Policy[.@key]+" (0 inherit, 1 allowed, 2 restricted, 3 GM only)";
+		mes "MVP designation: "+$GRO_MvpMap[.@key];
+		mes "Location: "+($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id])+","+($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
+		mes "Fee override: "+($GRO_FeeSet[.@key] ? $GRO_MapFee[.@key]+"z" : "off");
+		.@pick = select("Set map policy:Edit arrival coordinates:Restore arrival coordinates:Set/clear map fee override:Toggle MVP classification:Toggle collection eligibility:Set Strange Poring fixed location:Select another arrival on this map:Back");
+		if (.@pick == 9) return;
+		if (getgmlevel() < 99) return;
+		if (.@pick == 1) {
+			.@new = select("Inherit Global:Allowed:Restricted:GM Only:Cancel") - 1;
+			if (.@new == 4) continue;
+			.@old = $GRO_Policy[.@key];
+			if (.@new == .@old) continue;
+			mes "Change map policy from "+.@old+" to "+.@new+"?";
+			if (.@new == 1 && $GRO_MvpMap[.@key] && !$GRO_MvpAllow) mes "^FF5555WARNING: Allowed overrides the global MVP warp block for this map.^000000";
+			if (select("Confirm critical change:Cancel") != 1) continue;
+			$GRO_Policy[.@key] = .@new;
+			callfunc "GRO_LogGM","MAP_POLICY map="+.@search$+" old="+.@old+" new="+.@new;
+			callfunc "GRO_Refresh";
+		}
+		else if (.@pick == 2) {
+			mes "Enter X (1-600):";
+			input .@x,1,600;
+			mes "Enter Y (1-600):";
+			input .@y,1,600;
+			if (mapname2id(.@search$) < 0 || !checkcell(.@search$,.@x,.@y,cell_chkpass)) {
+				mes "Invalid/unloaded map or blocked arrival cell. No changes made.";
+				continue;
+			}
+			.@old$ = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id]+","+$GRO_CustomY[.@id] : $@GRO_X[.@id]+","+$@GRO_Y[.@id]);
+			$GRO_CustomX[.@id] = .@x;
+			$GRO_CustomY[.@id] = .@y;
+			$GRO_XSet[.@id] = 1;
+			callfunc "GRO_LogGM","COORD map="+.@search$+" id="+.@id+" old="+.@old$+" new="+.@x+","+.@y;
+		}
+		else if (.@pick == 3) {
+			$GRO_XSet[.@id] = 0;
+			callfunc "GRO_LogGM","COORD_RESTORE map="+.@search$+" id="+.@id;
+		}
+		else if (.@pick == 4) {
+			.@p = select("Set override:Remove override:Cancel");
+			if (.@p == 1) {
+				mes "Enter custom Zeny price (0-100000000):";
+				input .@value,0,100000000;
+				.@old = ($GRO_FeeSet[.@key] ? $GRO_MapFee[.@key] : -1);
+				$GRO_MapFee[.@key] = .@value;
+				$GRO_FeeSet[.@key] = 1;
+				callfunc "GRO_LogGM","FEE_MAP map="+.@search$+" old="+.@old+" new="+.@value;
+			} else if (.@p == 2) {
+				$GRO_FeeSet[.@key] = 0;
+				callfunc "GRO_LogGM","FEE_MAP_RESET map="+.@search$;
+			}
+		}
+		else if (.@pick == 5) {
+			mes "Change whether this map is treated as MVP-protected?";
+			if (select("Confirm:Cancel") != 1) continue;
+			.@old = $GRO_MvpMap[.@key];
+			$GRO_MvpMap[.@key] = !.@old;
+			callfunc "GRO_LogGM","MVP_MAP map="+.@search$+" old="+.@old+" new="+$GRO_MvpMap[.@key];
+			callfunc "GRO_Refresh";
+		}
+		else if (.@pick == 6) {
+			if ($@GRO_Cat[.@id] != 3) { mes "Only dungeon-floor entries count toward collection."; continue; }
+			mes "Permanent catalog inclusion determines the collection denominator. Progress is never erased.";
+			if (select("Confirm toggle:Cancel") != 1) continue;
+			$GRO_CollectionExcluded[.@id] = !$GRO_CollectionExcluded[.@id];
+			callfunc "GRO_LogGM","COLLECTION_CATALOG id="+.@id+" map="+.@search$+" excluded="+$GRO_CollectionExcluded[.@id];
+		}
+		else if (.@pick == 7) {
+			if ($@GRO_Cat[.@id] != 3) { mes "Only dungeon floors have Strange Porings."; continue; }
+			mes "Enter fixed discovery NPC X (1-600):";
+			input .@x,1,600;
+			mes "Enter fixed discovery NPC Y (1-600):";
+			input .@y,1,600;
+			if (mapname2id(.@search$) < 0 || !checkcell(.@search$,.@x,.@y,cell_chkpass)) {
+				mes "Invalid NPC cell. Not saved.";
+				continue;
+			}
+			$GRO_FixedX[.@id] = .@x;
+			$GRO_FixedY[.@id] = .@y;
+			$GRO_FixedSet[.@id] = 1;
+			$GRO_PoringX[.@id] = .@x;
+			$GRO_PoringY[.@id] = .@y;
+			$GRO_PoringDay[.@id] = (gettimetick(2)+28800)/86400;
+			callfunc "GRO_LogGM","PORING_FIXED id="+.@id+" map="+.@search$+" new="+.@x+","+.@y;
+			callfunc "GRO_Refresh";
+		}
+		else if (.@pick == 8) {
+			.@choices$ = "";
+			.@total = 0;
+			for (.@j=1; .@j<=$@GRO_Count; ++.@j) {
+				if ($@GRO_Map$[.@j] != .@search$) continue;
+				@GRO_ArrivalIDs[.@total++] = .@j;
+				.@choices$ += $@GRO_Name$[.@j] + ":";
+			}
+			.@choices$ += "Cancel";
+			.@sel = select(.@choices$);
+			if (.@sel <= .@total) .@id = @GRO_ArrivalIDs[.@sel-1];
+		}
+		clear;
+	}
+}
+
+function	script	GRO_AdminRules	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		mes "[GM / World Rules]";
+		mes "Global MVP warp: " + ($GRO_MvpAllow ? "Allowed" : "Blocked for classified maps");
+		mes "Castle-ground Warp During WoE: " + ($GRO_WoeCastleAllow ? "Allowed" : "Blocked");
+		.@pick = select("Toggle global MVP warp:Toggle WoE castle-ground warp:Back");
+		if (.@pick == 3 || getgmlevel() < 99) return;
+		if (.@pick == 1) {
+			mes "Soft-release default is MVP warps allowed. Blocked mode applies only to explicitly classified MVP maps.";
+			if (select("Confirm MVP rule change:Cancel") != 1) continue;
+			.@old = $GRO_MvpAllow;
+			$GRO_MvpAllow = !.@old;
+			callfunc "GRO_LogGM","MVP_GLOBAL old="+.@old+" new="+$GRO_MvpAllow;
+		}
+		else if (.@pick == 2) {
+			mes "This applies to ANY Unified Warper destination on castle-ground maps, including Fields and Last Warp.";
+			if (select("Confirm WoE policy change:Cancel") != 1) continue;
+			.@old = $GRO_WoeCastleAllow;
+			$GRO_WoeCastleAllow = !.@old;
+			callfunc "GRO_LogGM","WOE_GROUNDS old="+.@old+" new="+$GRO_WoeCastleAllow;
+		}
+		callfunc "GRO_Refresh";
+		clear;
+	}
+}
+
+function	script	GRO_AdminDiscovery	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		mes "[GM / Discovery]";
+		mes "Bypass: " + $GRO_DiscoveryBypass + " (1=suspended/soft release)";
+		mes "Daily random Strange Poring: " + ($GRO_Randomize ? "Enabled" : "Disabled");
+		mes "Strange Poring sprite: " + $GRO_PoringSprite;
+		.@pick = select("Toggle discovery bypass:Toggle daily random placement:Change Strange Poring sprite:Grant/revoke online account discovery:Back");
+		if (.@pick == 5 || getgmlevel() < 99) return;
+		if (.@pick == 1) {
+			mes "Enabling bypass permits direct floor warps but suspends ALL Strange Poring unlocks.";
+			if (select("Confirm critical setting:Cancel") != 1) continue;
+			.@old = $GRO_DiscoveryBypass;
+			$GRO_DiscoveryBypass = !.@old;
+			callfunc "GRO_LogGM","DISCOVERY_BYPASS old="+.@old+" new="+$GRO_DiscoveryBypass;
+			callfunc "GRO_Refresh";
+		}
+		else if (.@pick == 2) {
+			.@old = $GRO_Randomize;
+			$GRO_Randomize = !.@old;
+			callfunc "GRO_LogGM","PORING_RANDOM old="+.@old+" new="+$GRO_Randomize;
+			if ($GRO_DiscoveryBypass != 1)
+				callfunc "GRO_Refresh";
+			else
+				mes "Saved. Random placement remains inactive while discovery bypass is ON.";
+		}
+		else if (.@pick == 3) {
+			mes "Enter numeric NPC sprite class (1-2000):";
+			input .@sprite,1,2000;
+			.@old = $GRO_PoringSprite;
+			$GRO_PoringSprite = .@sprite;
+			callfunc "GRO_LogGM","PORING_SPRITE old="+.@old+" new="+.@sprite;
+			callfunc "GRO_Refresh";
+		}
+		else if (.@pick == 4) callfunc "GRO_AdminUnlock";
+		clear;
+	}
+}
+
+function	script	GRO_AdminUnlock	{
+	clear;
+	if (getgmlevel() < 99) return;
+	mes "[GM / Account Discovery]";
+	mes "This operation supports ONLINE accounts only.";
+	mes "Enter target account ID (0 for exact online character-name lookup):";
+	input .@aid,0,2000000000;
+	if (!.@aid) {
+		mes "Enter the exact online character name:";
+		input .@name$;
+		.@aid = getcharid(3,.@name$);
+	}
+	if (.@aid <= 0) { mes "Account not found online."; return; }
+	mes "Enter the numeric destination ID of the dungeon floor:";
+	input .@id,1,$@GRO_Count;
+	if ($@GRO_Cat[.@id] != 3) { mes "That ID is not an individual dungeon floor."; return; }
+	.@choice = select("Grant discovery:Revoke discovery:Cancel");
+	if (.@choice == 3) return;
+	mes "Target account="+.@aid+", dungeon="+$@GRO_Name$[.@id]+" (ID "+.@id+").";
+	if (select("Confirm account change:Cancel") != 1) return;
+	if (getgmlevel() < 99) return;
+	.@gm = getcharid(3);
+	.@gmchar = getcharid(0);
+	if (!attachrid(.@aid)) { mes "Target account offline or cannot be attached."; return; }
+	.@n = $@GRO_DiscoveryID[.@id] - 1;
+	.@mask = 1 << (.@n % 30);
+	.@before = ##GRO_Discovered[.@n / 30];
+	if (.@choice == 1) ##GRO_Discovered[.@n / 30] |= .@mask;
+	else ##GRO_Discovered[.@n / 30] &= ~.@mask;
+	.@after = ##GRO_Discovered[.@n / 30];
+	// Always switch back to the invoking GM BEFORE any further GM-side actions.
+	if (!attachrid(.@gm)) {
+		debugmes "GrassRO Warper: failed to reattach original GM account "+.@gm+" after online unlock";
+		end;
+	}
+	if (getcharid(0) != .@gmchar || getgmlevel() < 99) {
+		debugmes "GrassRO Warper: GM attachment mismatch on account discovery";
+		end;
+	}
+	callfunc "GRO_LogGM","ACCOUNT_DISCOVERY target="+.@aid+" floor_id="+.@id+" map="+$@GRO_Map$[.@id]+" action="+.@choice+" mask_before="+.@before+" mask_after="+.@after;
+	mes "Account discovery updated successfully.";
+	return;
+}
+
+function	script	GRO_AdminPrices	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		mes "[GM / Warp Fees]";
+		mes "Pricing: "+($GRO_Pricing ? "ON" : "OFF")+". All default prices are zero.";
+		mes "Town="+$GRO_TownFee+" Field="+$GRO_FieldFee+" Dungeon="+$GRO_DungeonFee+" Depth="+$GRO_DepthFee;
+		mes "Castle="+$GRO_CastleFee+" Guild="+$GRO_GuildFee;
+		.@pick = select("Toggle pricing:Set town fee:Set field fee:Set dungeon base fee:Set per-depth increment:Set castle approach fee:Set guild dungeon fee:Back");
+		if (.@pick == 8 || getgmlevel() < 99) return;
+		if (.@pick == 1) {
+			.@old = $GRO_Pricing;
+			$GRO_Pricing = !.@old;
+			callfunc "GRO_LogGM","PRICING old="+.@old+" new="+$GRO_Pricing;
+		} else {
+			mes "Enter price (0-100000000 Zeny):";
+			input .@price,0,100000000;
+			switch (.@pick) {
+				case 2: .@old=$GRO_TownFee; $GRO_TownFee=.@price; break;
+				case 3: .@old=$GRO_FieldFee; $GRO_FieldFee=.@price; break;
+				case 4: .@old=$GRO_DungeonFee; $GRO_DungeonFee=.@price; break;
+				case 5: .@old=$GRO_DepthFee; $GRO_DepthFee=.@price; break;
+				case 6: .@old=$GRO_CastleFee; $GRO_CastleFee=.@price; break;
+				case 7: .@old=$GRO_GuildFee; $GRO_GuildFee=.@price; break;
+			}
+			callfunc "GRO_LogGM","CATEGORY_FEE choice="+.@pick+" old="+.@old+" new="+.@price;
+		}
+		clear;
+	}
+}
+
+function	script	GRO_AdminRewards	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		mes "[GM / Collection Rewards]";
+		mes "Published versions: "+$GRO_RewardCount;
+		mes "CLAIMING IS LOCKED in Phase 1 under D-01.";
+		mes "Draft: "+$GRO_DraftName$+" item="+$GRO_DraftItem+" x"+$GRO_DraftQty+" zeny="+$GRO_DraftZeny;
+		mes "Previous claimants eligible by default: "+$GRO_DraftOldEligible;
+		.@pick = select("Set draft name:Set item ID:Set item amount:Set Zeny:Set up to 3 special warp IDs:Toggle previous-claimant eligibility:Publish new version:Archive published version:Back");
+		if (.@pick == 9 || getgmlevel() < 99) return;
+		if (.@pick == 1) {
+			mes "Draft display name (no colon):";
+			input .@name$;
+			$GRO_DraftName$ = .@name$;
+		}
+		else if (.@pick == 2) { mes "Enter item ID (0=none):"; input $GRO_DraftItem,0,1000000; }
+		else if (.@pick == 3) { mes "Enter item amount (0=none):"; input $GRO_DraftQty,0,10000; }
+		else if (.@pick == 4) { mes "Enter reward Zeny (0-100000000):"; input $GRO_DraftZeny,0,100000000; }
+		else if (.@pick == 5) {
+			for (.@j = 0; .@j < 3; ++.@j) {
+				mes "Special warp slot "+(.@j+1)+": enter destination ID (0=none).";
+				input .@id,0,$@GRO_Count;
+				$GRO_DraftSpecial[.@j] = .@id;
+			}
+		}
+		else if (.@pick == 6) $GRO_DraftOldEligible = !$GRO_DraftOldEligible;
+		else if (.@pick == 7) {
+			if ($GRO_RewardCount >= 16) { mes "Maximum 16 published versions. No changes made."; continue; }
+			mes "Publish immutable reward version "+($GRO_RewardCount+1)+"? Actual claims remain DISABLED.";
+			if (select("Confirm publishing:Cancel") != 1) continue;
+			$GRO_RewardCount += 1;
+			.@v = $GRO_RewardCount;
+			$GRO_RewardName$[.@v] = $GRO_DraftName$;
+			$GRO_RewardItem[.@v] = $GRO_DraftItem;
+			$GRO_RewardQty[.@v] = $GRO_DraftQty;
+			$GRO_RewardZeny[.@v] = $GRO_DraftZeny;
+			$GRO_RewardOldEligible[.@v] = $GRO_DraftOldEligible;
+			for (.@k=0; .@k<3; ++.@k) $GRO_RewardSpecial[.@v*3+.@k] = $GRO_DraftSpecial[.@k];
+			$GRO_RewardArchived[.@v] = 0;
+			callfunc "GRO_LogGM","REWARD_PUBLISH version="+.@v+" item="+$GRO_DraftItem+" qty="+$GRO_DraftQty+" zeny="+$GRO_DraftZeny+" old_eligible="+$GRO_DraftOldEligible;
+		}
+		else if (.@pick == 8) {
+			if (!$GRO_RewardCount) { mes "There are no published versions."; continue; }
+			mes "Enter version to archive (1-"+$GRO_RewardCount+"):";
+			input .@v,1,$GRO_RewardCount;
+			if ($GRO_RewardArchived[.@v]) { mes "Already archived."; continue; }
+			mes "Archive version "+.@v+"? Its historical definition is retained.";
+			if (select("Confirm archive:Cancel") != 1) continue;
+			$GRO_RewardArchived[.@v] = 1;
+			callfunc "GRO_LogGM","REWARD_ARCHIVE version="+.@v;
+		}
+		if (.@pick >= 1 && .@pick <= 6) callfunc "GRO_LogGM","REWARD_DRAFT_EDIT field="+.@pick;
+		clear;
+	}
+}
+
+function	script	GRO_AdminDisplay	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		mes "[GM / Presentation]";
+		mes "Show player counts: "+$GRO_ShowCounts;
+		mes "Show restricted destinations: "+$GRO_ShowRestricted;
+		mes "Main sprite: "+$GRO_MainSprite;
+		.@pick = select("Toggle player counts:Toggle restricted listings:Change Travelling Bush sprite:Back");
+		if (.@pick == 4 || getgmlevel() < 99) return;
+		if (.@pick == 1) $GRO_ShowCounts = !$GRO_ShowCounts;
+		else if (.@pick == 2) $GRO_ShowRestricted = !$GRO_ShowRestricted;
+		else if (.@pick == 3) {
+			mes "Enter NPC sprite ID (1-2000):";
+			input $GRO_MainSprite,1,2000;
+			callfunc "GRO_Refresh";
+		}
+		callfunc "GRO_LogGM","DISPLAY_EDIT choice="+.@pick+" counts="+$GRO_ShowCounts+" restricted="+$GRO_ShowRestricted+" main_sprite="+$GRO_MainSprite;
+		clear;
+	}
+}
+
+function	script	GRO_ResetGeneral	{
+	$GRO_MvpAllow = 1;
+	$GRO_WoeCastleAllow = 0;
+	$GRO_DiscoveryBypass = 1;
+	$GRO_Randomize = 0;
+	$GRO_Pricing = 0;
+	$GRO_TownFee = 0;
+	$GRO_FieldFee = 0;
+	$GRO_DungeonFee = 0;
+	$GRO_DepthFee = 0;
+	$GRO_CastleFee = 0;
+	$GRO_GuildFee = 0;
+	$GRO_ShowCounts = 1;
+	$GRO_ShowRestricted = 1;
+	$GRO_MainSprite = 527;
+	$GRO_PoringSprite = 508;
+	return;
+}
+
+function	script	GRO_ResetMaps	{
+	for (.@i = 1; .@i <= $@GRO_Count; ++.@i) {
+		$GRO_Policy[.@i] = 0;
+		$GRO_XSet[.@i] = 0;
+		$GRO_FeeSet[.@i] = 0;
+		$GRO_CollectionExcluded[.@i] = 0;
+		$GRO_FixedSet[.@i] = 0;
+		$GRO_PoringDay[.@i] = 0;
+		$GRO_MvpMap[.@i] = $@GRO_DefaultMvp[.@i];
+	}
+	return;
+}
+
+function	script	GRO_AdminReset	{
+	clear;
+	if (getgmlevel() < 99) return;
+	mes "[GM / Configuration Recovery]";
+	mes "All reset options PRESERVE account discoveries, earned privileges, and reward claim history.";
+	.@pick = select("Reset individual general setting:Reset general settings category:Reset map settings category:FULL configuration reset:Back");
+	if (.@pick == 5 || getgmlevel() < 99) return;
+	if (.@pick == 1) {
+		.@which = select("Global MVP allow:Castle-ground WoE protection:Discovery bypass:Randomization:Pricing enabled:Player counts:Restricted map listings:Main sprite:Strange Poring sprite:Cancel");
+		if (.@which == 10) return;
+		mes "Restore selected general setting to its soft-release default?";
+		if (select("Confirm:Cancel") != 1) return;
+		switch (.@which) {
+			case 1: $GRO_MvpAllow=1; break;
+			case 2: $GRO_WoeCastleAllow=0; break;
+			case 3: $GRO_DiscoveryBypass=1; break;
+			case 4: $GRO_Randomize=0; break;
+			case 5: $GRO_Pricing=0; break;
+			case 6: $GRO_ShowCounts=1; break;
+			case 7: $GRO_ShowRestricted=1; break;
+			case 8: $GRO_MainSprite=527; break;
+			case 9: $GRO_PoringSprite=508; break;
+		}
+		callfunc "GRO_LogGM","RESET_INDIVIDUAL general="+.@which;
+	} else if (.@pick == 2) {
+		.@category = select("World rules (MVP and WoE):Discovery controls:Warp pricing and category fees:Display and sprites:All general settings:Cancel");
+		if (.@category == 6) return;
+		mes "Restore selected settings category to soft-release defaults?";
+		if (.@category == 1 || .@category == 2 || .@category == 5) mes "^FF5555WARNING: Resetting may reopen MVP maps or re-enable discovery bypass.^000000";
+		if (select("Confirm category reset:Cancel") != 1) return;
+		switch (.@category) {
+			case 1: $GRO_MvpAllow=1; $GRO_WoeCastleAllow=0; break;
+			case 2: $GRO_DiscoveryBypass=1; $GRO_Randomize=0; $GRO_PoringSprite=508; break;
+			case 3:
+				$GRO_Pricing=0; $GRO_TownFee=0; $GRO_FieldFee=0;
+				$GRO_DungeonFee=0; $GRO_DepthFee=0; $GRO_CastleFee=0; $GRO_GuildFee=0;
+				break;
+			case 4: $GRO_ShowCounts=1; $GRO_ShowRestricted=1; $GRO_MainSprite=527; $GRO_PoringSprite=508; break;
+			case 5: callfunc "GRO_ResetGeneral"; break;
+		}
+		callfunc "GRO_LogGM","RESET_CATEGORY general_section="+.@category;
+	} else if (.@pick == 3) {
+		mes "This restores all per-map policies, coordinates, fees, catalog exclusions and MVP classifications to predefined defaults.";
+		if (select("Confirm category reset:Cancel") != 1) return;
+		callfunc "GRO_ResetMaps";
+		callfunc "GRO_LogGM","RESET_CATEGORY maps";
+	} else {
+		mes "^FF5555FULL RESET WARNING^000000";
+		mes "Will restore ALL global and per-map GM configuration to soft-release defaults.";
+		mes "MVP direct warps will be allowed; discovery bypass will be ON; fees will be FREE.";
+		mes "Preserves: account discoveries, existing reward version definitions, archives, and reward histories.";
+		if (select("CONFIRM FULL CONFIG RESET:Cancel") != 1) return;
+		callfunc "GRO_ResetGeneral";
+		callfunc "GRO_ResetMaps";
+		callfunc "GRO_LogGM","RESET_FULL settings_only";
+	}
+	callfunc "GRO_Refresh";
+	mes "Configuration reset complete.";
+	return;
+}
+
+function	script	GRO_Admin	{
+	if (getgmlevel() < 99) return;
+	while (1) {
+		clear;
+		if (getgmlevel() < 99) return;
+		mes "[Travelling Bush / GM Administration]";
+		mes "Predefined destinations: "+$@GRO_Count+". Audit: existing NPC logging.";
+		mes "Configuration recovery guarantees are limited to native rAthena persistence.";
+		.@pick = select("Map lookup and destination settings:World restrictions (MVP / WoE):Discovery and unlocks:Warp prices:Reward version configuration:Appearance:Configuration resets:System status:Back");
+		if (.@pick == 9) return;
+		switch (.@pick) {
+			case 1: callfunc "GRO_AdminMap"; break;
+			case 2: callfunc "GRO_AdminRules"; break;
+			case 3: callfunc "GRO_AdminDiscovery"; break;
+			case 4: callfunc "GRO_AdminPrices"; break;
+			case 5: callfunc "GRO_AdminRewards"; break;
+			case 6: callfunc "GRO_AdminDisplay"; break;
+			case 7: callfunc "GRO_AdminReset"; break;
+			case 8:
+				mes "Server unix time: "+gettimetick(2);
+				mes "PH-day marker: "+((gettimetick(2)+28800)/86400);
+				mes "Last Poring refresh PH-day: "+$@GRO_RefreshDay;
+				mes "Discovery bypass: "+$GRO_DiscoveryBypass;
+				mes "WoE FE/SE/TE: "+agitcheck()+"/"+agitcheck2()+"/"+agitcheck3();
+				mes "Collection claims: permanently LOCKED in Phase 1.";
+				break;
+		}
+		next;
+		clear;
+	}
+}
+
+// Predefined registry is global-temporary; durable settings/progress are $/## vars.
+-	script	GRO_Controller	-1,{
+OnInit:
+	$@GRO_Count = 354;
+	setarray $@GRO_Map$[1],"aldebaran","alberta","amatsu","ayothaya","comodo","einbech","einbroch","geffen","hugel","izlude","jawaii","gonryun";
+	setarray $@GRO_Map$[13],"lighthalzen","louyang","xmas","manuk","mid_camp","morocc","moscovia","nameless_n","niflheim","payon","prontera","rachel";
+	setarray $@GRO_Map$[25],"splendide","thor_camp","umbala","veins","yuno","ama_fild01","ayo_fild01","ayo_fild02","cmd_fild01","cmd_fild02","cmd_fild03","cmd_fild04";
+	setarray $@GRO_Map$[37],"cmd_fild05","cmd_fild06","cmd_fild07","cmd_fild08","cmd_fild09","ein_fild01","ein_fild10","ein_fild03","ein_fild04","ein_fild05","ein_fild06","ein_fild07";
+	setarray $@GRO_Map$[49],"ein_fild08","ein_fild09","gef_fild13","gef_fild01","gef_fild10","gef_fild11","gef_fild12","gef_fild13","gef_fild14","gef_fild15","gef_fild02","gef_fild03";
+	setarray $@GRO_Map$[61],"gef_fild04","gef_fild05","gef_fild06","gef_fild07","gef_fild08","gef_fild09","hu_fild01","hu_fild02","hu_fild03","hu_fild04","hu_fild05","hu_fild06";
+	setarray $@GRO_Map$[73],"hu_fild07","gon_fild01","lhz_fild01","lhz_fild02","lhz_fild03","lou_fild01","xmas_fild01","man_fild01","man_fild02","man_fild03","mjolnir_01","mjolnir_10";
+	setarray $@GRO_Map$[85],"mjolnir_11","mjolnir_12","mjolnir_02","mjolnir_03","mjolnir_04","mjolnir_05","mjolnir_06","mjolnir_07","mjolnir_08","mjolnir_09","mosk_fild01","mosk_fild02";
+	setarray $@GRO_Map$[97],"nif_fild01","nif_fild02","pay_fild01","pay_fild10","pay_fild11","pay_fild02","pay_fild03","pay_fild04","pay_fild05","pay_fild06","pay_fild07","pay_fild08";
+	setarray $@GRO_Map$[109],"pay_fild09","prt_fild00","prt_fild01","prt_fild10","prt_fild11","prt_fild02","prt_fild03","prt_fild04","prt_fild05","prt_fild06","prt_fild07","prt_fild08";
+	setarray $@GRO_Map$[121],"prt_fild09","ra_fild01","ra_fild10","ra_fild11","ra_fild12","ra_fild13","ra_fild02","ra_fild03","ra_fild04","ra_fild05","ra_fild06","ra_fild07";
+	setarray $@GRO_Map$[133],"ra_fild08","ra_fild09","moc_fild01","moc_fild10","moc_fild11","moc_fild12","moc_fild13","moc_fild14","moc_fild15","moc_fild16","moc_fild17","moc_fild18";
+	setarray $@GRO_Map$[145],"moc_fild19","moc_fild02","moc_fild03","moc_fild04","moc_fild05","moc_fild06","moc_fild07","moc_fild08","moc_fild09","spl_fild01","spl_fild02","spl_fild03";
+	setarray $@GRO_Map$[157],"um_fild01","um_fild02","um_fild03","um_fild04","ve_fild01","ve_fild02","ve_fild03","ve_fild04","ve_fild05","ve_fild06","ve_fild07","yuno_fild01";
+	setarray $@GRO_Map$[169],"yuno_fild10","yuno_fild11","yuno_fild12","yuno_fild02","yuno_fild03","yuno_fild04","yuno_fild05","yuno_fild06","yuno_fild07","yuno_fild08","yuno_fild09","abyss_01";
+	setarray $@GRO_Map$[181],"abyss_02","abyss_03","ama_dun01","ama_dun02","ama_dun03","anthell01","anthell02","ayo_dun01","ayo_dun02","lhz_dun01","lhz_dun02","lhz_dun03";
+	setarray $@GRO_Map$[193],"iz_dun01","iz_dun02","iz_dun03","iz_dun04","iz_dun05","c_tower1","c_tower2","c_tower3","c_tower4","alde_dun01","alde_dun02","alde_dun03";
+	setarray $@GRO_Map$[205],"alde_dun04","mjo_dun01","mjo_dun02","mjo_dun03","beach_dun","beach_dun2","beach_dun3","abbey01","abbey02","abbey03","ein_dun01","ein_dun02";
+	setarray $@GRO_Map$[217],"gef_dun00","gef_dun01","gef_dun02","gef_dun03","gefenia01","gefenia02","gefenia03","gefenia04","glast_01","gl_sew04","gl_church","gl_step";
+	setarray $@GRO_Map$[229],"gl_dun01","gl_dun02","gl_prison","gl_prison1","gl_cas01","gl_cas02","gl_knt01","gl_knt02","gl_chyard","gl_sew01","gl_sew02","gl_sew03";
+	setarray $@GRO_Map$[241],"prt_maze01","prt_maze02","prt_maze03","ice_dun01","ice_dun02","ice_dun03","jupe_cave","juperos_01","juperos_02","jupe_core","kh_dun01","kh_dun02";
+	setarray $@GRO_Map$[253],"gon_dun01","gon_dun02","gon_dun03","lou_dun01","lou_dun02","lou_dun03","mag_dun01","mag_dun02","mosk_dun01","mosk_dun02","mosk_dun03","nyd_dun01";
+	setarray $@GRO_Map$[265],"nyd_dun02","odin_tem01","odin_tem02","odin_tem03","orcsdun01","orcsdun02","pay_dun00","pay_dun01","pay_dun02","pay_dun03","pay_dun04","prt_sewb01";
+	setarray $@GRO_Map$[277],"prt_sewb02","prt_sewb03","prt_sewb04","moc_pryd01","moc_pryd02","moc_pryd03","moc_pryd04","moc_pryd05","moc_pryd06","ra_san01","ra_san02","ra_san03";
+	setarray $@GRO_Map$[289],"ra_san04","ra_san05","in_sphinx1","in_sphinx2","in_sphinx3","in_sphinx4","in_sphinx5","treasure01","treasure02","tha_t01","tha_t10","tha_t11";
+	setarray $@GRO_Map$[301],"tha_t12","tha_t02","tha_t03","tha_t04","tha_t05","tha_t06","tha_t07","tha_t08","tha_t09","thor_v01","thor_v02","thor_v03";
+	setarray $@GRO_Map$[313],"xmas_dun01","xmas_dun02","tur_dun01","tur_dun02","tur_dun03","tur_dun04","sch_gld","pay_gld","aru_gld","gef_fild13","pay_gld","aru_gld";
+	setarray $@GRO_Map$[325],"gef_fild13","prt_gld","aru_gld","prt_gld","sch_gld","sch_gld","alde_gld","pay_gld","aru_gld","prt_gld","aru_gld","gef_fild13";
+	setarray $@GRO_Map$[337],"alde_gld","alde_gld","gef_fild13","alde_gld","pay_gld","pay_gld","sch_gld","prt_gld","prt_gld","sch_gld","alde_gld","gef_fild13";
+	setarray $@GRO_Map$[349],"arug_dun01","gld_dun01","gld_dun04","gld_dun02","schg_dun01","gld_dun03";
+	setarray $@GRO_Name$[1],"Al De Baran","Alberta","Amatsu","Ayothaya","Comodo","Einbech","Einbroch","Geffen","Hugel","Izlude","Jawaii","Kunlun";
+	setarray $@GRO_Name$[13],"Lighthalzen","Louyang","Lutie","Manuk","Midgard Camp","Morocc","Moscovia","Nameless Island","Niflheim","Payon","Prontera","Rachel";
+	setarray $@GRO_Name$[25],"Splendide","Thor Camp","Umbala","Veins","Yuno","Amatsu Field 1","Ayothaya Field 1","Ayothaya Field 2","Comodo Field 1","Comodo Field 2","Comodo Field 3","Comodo Field 4";
+	setarray $@GRO_Name$[37],"Comodo Field 5","Comodo Field 6","Comodo Field 7","Comodo Field 8","Comodo Field 9","Einbroch Field 1","Einbroch Field 10","Einbroch Field 3","Einbroch Field 4","Einbroch Field 5","Einbroch Field 6","Einbroch Field 7";
+	setarray $@GRO_Name$[49],"Einbroch Field 8","Einbroch Field 9","Geffen Castle Approach Field","Geffen Field 1","Geffen Field 10","Geffen Field 11","Geffen Field 12","Geffen Field 13","Geffen Field 14","Geffen Field 15","Geffen Field 2","Geffen Field 3";
+	setarray $@GRO_Name$[61],"Geffen Field 4","Geffen Field 5","Geffen Field 6","Geffen Field 7","Geffen Field 8","Geffen Field 9","Hugel Field 1","Hugel Field 2","Hugel Field 3","Hugel Field 4","Hugel Field 5","Hugel Field 6";
+	setarray $@GRO_Name$[73],"Hugel Field 7","Kunlun Field 1","Lighthalzen Field 1","Lighthalzen Field 2","Lighthalzen Field 3","Louyang Field","Lutie Field 1","Manuk Field 1","Manuk Field 2","Manuk Field 3","Mjolnir 1","Mjolnir 10";
+	setarray $@GRO_Name$[85],"Mjolnir 11","Mjolnir 12","Mjolnir 2","Mjolnir 3","Mjolnir 4","Mjolnir 5","Mjolnir 6","Mjolnir 7","Mjolnir 8","Mjolnir 9","Moscovia Field 1","Moscovia Field 2";
+	setarray $@GRO_Name$[97],"Niflheim Field 1","Niflheim Field 2","Payon Field 1","Payon Field 10","Payon Field 11","Payon Field 2","Payon Field 3","Payon Field 4","Payon Field 5","Payon Field 6","Payon Field 7","Payon Field 8";
+	setarray $@GRO_Name$[109],"Payon Field 9","Prontera Field 0","Prontera Field 1","Prontera Field 10","Prontera Field 11","Prontera Field 2","Prontera Field 3","Prontera Field 4","Prontera Field 5","Prontera Field 6","Prontera Field 7","Prontera Field 8";
+	setarray $@GRO_Name$[121],"Prontera Field 9","Rachel Field 1","Rachel Field 10","Rachel Field 11","Rachel Field 12","Rachel Field 13","Rachel Field 2","Rachel Field 3","Rachel Field 4","Rachel Field 5","Rachel Field 6","Rachel Field 7";
+	setarray $@GRO_Name$[133],"Rachel Field 8","Rachel Field 9","Sograt Desert 1","Sograt Desert 10","Sograt Desert 11","Sograt Desert 12","Sograt Desert 13","Sograt Desert 14","Sograt Desert 15","Sograt Desert 16","Sograt Desert 17","Sograt Desert 18";
+	setarray $@GRO_Name$[145],"Sograt Desert 19","Sograt Desert 2","Sograt Desert 3","Sograt Desert 4","Sograt Desert 5","Sograt Desert 6","Sograt Desert 7","Sograt Desert 8","Sograt Desert 9","Splendide Field 1","Splendide Field 2","Splendide Field 3";
+	setarray $@GRO_Name$[157],"Umbala Field 1","Umbala Field 2","Umbala Field 3","Umbala Field 4","Veins Field 1","Veins Field 2","Veins Field 3","Veins Field 4","Veins Field 5","Veins Field 6","Veins Field 7","Yuno Field 1";
+	setarray $@GRO_Name$[169],"Yuno Field 10","Yuno Field 11","Yuno Field 12","Yuno Field 2","Yuno Field 3","Yuno Field 4","Yuno Field 5","Yuno Field 6","Yuno Field 7","Yuno Field 8","Yuno Field 9","Abyss Lake Floor 1";
+	setarray $@GRO_Name$[181],"Abyss Lake Floor 2","Abyss Lake Floor 3","Amatsu Dungeon Floor 1","Amatsu Dungeon Floor 2","Amatsu Dungeon Floor 3","Ant Hell Floor 1","Ant Hell Floor 2","Ayothaya Dungeon Floor 1","Ayothaya Dungeon Floor 2","Biolabs Floor 1","Biolabs Floor 2","Biolabs Floor 3";
+	setarray $@GRO_Name$[193],"Byalan Dungeon 1","Byalan Dungeon 2","Byalan Dungeon 3","Byalan Dungeon 4","Byalan Dungeon 5","Clock Tower 1","Clock Tower 2","Clock Tower 3","Clock Tower 4","Clock Tower Basement Floor 1","Clock Tower Basement Floor 2","Clock Tower Basement Floor 3";
+	setarray $@GRO_Name$[205],"Clock Tower Basement Floor 4","Coal Mines Floor 1","Coal Mines Floor 2","Coal Mines Floor 3","Comodo Beach Dungeon 1","Comodo Beach Dungeon 2","Comodo Beach Dungeon 3","Cursed Abbey Floor 1","Cursed Abbey Floor 2","Cursed Abbey Floor 3","Einbroch Mine Floor 1","Einbroch Mine Floor 2";
+	setarray $@GRO_Name$[217],"Geffen Dungeon 0","Geffen Dungeon 1","Geffen Dungeon 2","Geffen Dungeon 3","Geffenia 1","Geffenia 2","Geffenia 3","Geffenia 4","Glast Heim 1","Glast Heim 10","Glast Heim 11","Glast Heim 12";
+	setarray $@GRO_Name$[229],"Glast Heim 13","Glast Heim 14","Glast Heim 15","Glast Heim 16","Glast Heim 2","Glast Heim 3","Glast Heim 4","Glast Heim 5","Glast Heim 6","Glast Heim 7","Glast Heim 8","Glast Heim 9";
+	setarray $@GRO_Name$[241],"Hidden Maze Floor 1","Hidden Maze Floor 2","Hidden Maze Floor 3","Ice Dungeon Floor 1","Ice Dungeon Floor 2","Ice Dungeon Floor 3","Juperos 1","Juperos 2","Juperos 3","Juperos 4","Kiel Dungeon Floor 1","Kiel Dungeon Floor 2";
+	setarray $@GRO_Name$[253],"Kunlun Dungeon Floor 1","Kunlun Dungeon Floor 2","Kunlun Dungeon Floor 3","Louyang Royal Tomb Floor 1","Louyang Royal Tomb Floor 2","Louyang Royal Tomb Floor 3","Magma Dungeon Floor 1","Magma Dungeon Floor 2","Moscovia Dungeon Floor 1","Moscovia Dungeon Floor 2","Moscovia Dungeon Floor 3","Nidhogg's Dungeon Floor 1";
+	setarray $@GRO_Name$[265],"Nidhogg's Dungeon Floor 2","Odin Temple Floor 1","Odin Temple Floor 2","Odin Temple Floor 3","Orc Dungeon Floor 1","Orc Dungeon Floor 2","Payon Dungeon 0","Payon Dungeon 1","Payon Dungeon 2","Payon Dungeon 3","Payon Dungeon 4","Prontera Culvert Floor 1";
+	setarray $@GRO_Name$[277],"Prontera Culvert Floor 2","Prontera Culvert Floor 3","Prontera Culvert Floor 4","Pyramid Floor 1","Pyramid Floor 2","Pyramid Floor 3","Pyramid Floor 4","Pyramid Floor 5","Pyramid Floor 6","Rachel Sanctuary Floor 1","Rachel Sanctuary Floor 2","Rachel Sanctuary Floor 3";
+	setarray $@GRO_Name$[289],"Rachel Sanctuary Floor 4","Rachel Sanctuary Floor 5","Sphinx 1","Sphinx 2","Sphinx 3","Sphinx 4","Sphinx 5","Sunken Ship Floor 1","Sunken Ship Floor 2","Thanatos Tower Floor 1","Thanatos Tower Floor 10","Thanatos Tower Floor 11";
+	setarray $@GRO_Name$[301],"Thanatos Tower Floor 12","Thanatos Tower Floor 2","Thanatos Tower Floor 3","Thanatos Tower Floor 4","Thanatos Tower Floor 5","Thanatos Tower Floor 6","Thanatos Tower Floor 7","Thanatos Tower Floor 8","Thanatos Tower Floor 9","Thor Volcano Floor 1","Thor Volcano Floor 2","Thor Volcano Floor 3";
+	setarray $@GRO_Name$[313],"Toy Factory Floor 1","Toy Factory Floor 2","Turtle Dungeon 1","Turtle Dungeon 2","Turtle Dungeon 3","Turtle Dungeon 4","Andlangr (exterior)","Bamboo Grove Hill (exterior)","Banadis (exterior)","Bergel (exterior)","Bright Arbor (exterior)","Cyr (exterior)";
+	setarray $@GRO_Name$[325],"Eeyolbriggar (exterior)","Fadhgridh (exterior)","Gefn (exterior)","Gondul (exterior)","Himinn (exterior)","Hljod (exterior)","Hohenschwangau (exterior)","Holy Shadow (exterior)","Horn (exterior)","Kriemhild (exterior)","Mardol (exterior)","Mersetzdeitz (exterior)";
+	setarray $@GRO_Name$[337],"Neuschwanstein (exterior)","Nuenberg (exterior)","Repherion (exterior)","Rothenburg (exterior)","Sacred Altar (exterior)","Scarlet Palace (exterior)","Skidbladnir (exterior)","Skoegul (exterior)","Swanhild (exterior)","Viblainn (exterior)","Wuerzburg (exterior)","Yesnelph (exterior)";
+	setarray $@GRO_Name$[349],"Arunafeltz Guild Dungeon","Baldur Guild Dungeon","Britoniah Guild Dungeon","Luina Guild Dungeon","Schwarzwald Guild Dungeon","Valkyrie Guild Dungeon";
+	setarray $@GRO_Cat[1],1,1,1,1,1,1,1,1,1,1,1,1;
+	setarray $@GRO_Cat[13],1,1,1,1,1,1,1,1,1,1,1,1;
+	setarray $@GRO_Cat[25],1,1,1,1,1,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[37],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[49],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[61],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[73],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[85],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[97],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[109],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[121],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[133],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[145],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[157],2,2,2,2,2,2,2,2,2,2,2,2;
+	setarray $@GRO_Cat[169],2,2,2,2,2,2,2,2,2,2,2,3;
+	setarray $@GRO_Cat[181],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[193],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[205],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[217],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[229],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[241],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[253],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[265],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[277],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[289],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[301],3,3,3,3,3,3,3,3,3,3,3,3;
+	setarray $@GRO_Cat[313],3,3,3,3,3,3,4,4,4,4,4,4;
+	setarray $@GRO_Cat[325],4,4,4,4,4,4,4,4,4,4,4,4;
+	setarray $@GRO_Cat[337],4,4,4,4,4,4,4,4,4,4,4,4;
+	setarray $@GRO_Cat[349],5,5,5,5,5,5;
+	setarray $@GRO_X[1],140,28,198,208,209,63,64,119,96,128,251,160;
+	setarray $@GRO_X[13],158,217,147,282,210,156,223,256,202,179,155,130;
+	setarray $@GRO_X[25],201,246,97,216,157,190,173,212,180,231,191,228;
+	setarray $@GRO_X[37],224,190,234,194,172,142,196,187,185,216,195,272;
+	setarray $@GRO_X[49],173,207,214,46,221,178,136,240,235,211,213,195;
+	setarray $@GRO_X[61],257,188,166,248,195,186,268,222,232,252,196,216;
+	setarray $@GRO_X[73],227,220,240,185,240,229,115,35,35,84,204,245;
+	setarray $@GRO_X[85],180,196,175,208,179,181,195,235,188,205,82,131;
+	setarray $@GRO_X[97],215,167,158,160,194,151,205,186,134,193,200,137;
+	setarray $@GRO_X[109],201,208,190,195,198,240,190,307,239,185,193,187;
+	setarray $@GRO_X[121],210,192,277,221,175,174,235,202,202,225,202,263;
+	setarray $@GRO_X[133],217,87,219,341,198,156,185,223,170,206,208,209;
+	setarray $@GRO_X[145],85,177,194,146,204,275,224,139,101,175,236,188;
+	setarray $@GRO_X[157],217,223,237,202,186,196,222,51,202,150,149,189;
+	setarray $@GRO_X[169],200,195,210,192,221,226,223,187,231,196,183,261;
+	setarray $@GRO_X[181],275,116,228,34,119,35,168,275,24,150,150,140;
+	setarray $@GRO_X[193],168,253,236,32,26,199,148,65,56,297,127,277;
+	setarray $@GRO_X[205],268,52,381,302,266,255,23,51,150,120,22,292;
+	setarray $@GRO_X[217],104,115,106,203,40,203,266,130,370,68,156,12;
+	setarray $@GRO_X[229],133,224,14,150,199,104,150,157,147,258,108,171;
+	setarray $@GRO_X[241],99,93,182,157,151,149,140,53,37,150,28,41;
+	setarray $@GRO_X[253],153,28,68,218,282,165,126,47,189,165,32,61;
+	setarray $@GRO_X[265],60,298,224,266,32,21,21,19,19,155,201,131;
+	setarray $@GRO_X[277],19,180,100,192,10,100,181,94,192,140,32,8;
+	setarray $@GRO_X[289],204,150,288,149,210,10,100,69,102,150,159,19;
+	setarray $@GRO_X[301],130,150,220,59,62,89,35,93,29,21,75,34;
+	setarray $@GRO_X[313],205,129,154,148,132,100,288,204,292,193,121,83;
+	setarray $@GRO_X[325],308,153,299,208,293,137,95,317,68,134,158,305;
+	setarray $@GRO_X[337],48,142,214,264,140,295,71,111,240,97,239,143;
+	setarray $@GRO_X[349],199,119,116,39,200,50;
+	setarray $@GRO_Y[1],131,234,84,166,143,35,200,59,145,114,132,120;
+	setarray $@GRO_Y[13],92,100,134,138,288,93,184,215,174,100,183,110;
+	setarray $@GRO_Y[25],147,68,153,123,51,197,134,150,178,160,172,194;
+	setarray $@GRO_Y[37],203,223,177,175,172,225,200,228,173,173,148,220;
+	setarray $@GRO_Y[49],214,174,75,199,117,218,328,181,235,185,204,212;
+	setarray $@GRO_Y[61],192,171,263,158,191,183,101,193,185,189,106,220;
+	setarray $@GRO_Y[73],197,227,179,235,226,187,145,236,262,365,120,223;
+	setarray $@GRO_Y[85],206,208,193,213,180,240,270,202,215,144,104,147;
+	setarray $@GRO_Y[97],229,234,206,205,150,219,148,247,204,235,177,189;
+	setarray $@GRO_Y[109],224,227,206,149,164,206,143,252,213,188,194,218;
+	setarray $@GRO_Y[121],183,162,181,185,200,197,166,206,208,202,214,196;
+	setarray $@GRO_Y[133],201,121,205,39,216,187,263,222,257,228,238,223;
+	setarray $@GRO_Y[145],97,206,182,297,197,302,170,123,110,186,184,204;
+	setarray $@GRO_Y[157],206,221,215,197,175,370,45,250,324,223,307,224;
+	setarray $@GRO_Y[169],124,226,304,207,157,199,177,232,174,203,214,272;
+	setarray $@GRO_Y[181],270,27,11,41,14,262,170,19,26,288,18,134;
+	setarray $@GRO_Y[193],168,252,204,63,27,159,283,147,155,25,169,178;
+	setarray $@GRO_Y[205],74,17,343,262,67,244,260,14,11,10,14,290;
+	setarray $@GRO_Y[217],99,236,132,200,103,34,168,272,304,277,7,7;
+	setarray $@GRO_Y[229],271,274,70,14,29,25,15,287,15,255,291,283;
+	setarray $@GRO_Y[241],31,20,88,14,155,22,51,247,63,285,226,198;
+	setarray $@GRO_Y[253],53,113,16,196,20,38,68,30,48,30,135,239;
+	setarray $@GRO_Y[265],271,167,149,280,170,185,183,33,63,159,204,247;
+	setarray $@GRO_Y[277],19,169,92,9,192,92,11,96,8,11,21,149;
+	setarray $@GRO_Y[289],218,9,9,81,54,222,99,24,27,39,138,20;
+	setarray $@GRO_Y[301],52,136,158,143,11,221,166,148,107,228,205,272;
+	setarray $@GRO_Y[313],15,133,49,261,189,192,252,266,107,278,233,47;
+	setarray $@GRO_Y[325],240,137,345,240,100,90,249,293,155,65,272,87;
+	setarray $@GRO_Y[337],83,85,75,90,160,116,315,240,128,196,242,240;
+	setarray $@GRO_Y[349],195,93,45,161,124,44;
+	setarray $@GRO_Depth[1],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[13],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[25],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[37],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[49],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[61],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[73],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[85],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[97],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[109],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[121],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[133],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[145],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[157],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[169],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[181],1,2,0,1,2,0,1,0,1,0,1,2;
+	setarray $@GRO_Depth[193],0,1,2,3,4,0,1,2,3,0,1,2;
+	setarray $@GRO_Depth[205],3,0,1,2,0,1,2,0,1,2,0,1;
+	setarray $@GRO_Depth[217],0,1,2,3,0,1,2,3,0,9,10,11;
+	setarray $@GRO_Depth[229],12,13,14,15,1,2,3,4,5,6,7,8;
+	setarray $@GRO_Depth[241],0,1,2,0,1,2,0,1,2,3,0,1;
+	setarray $@GRO_Depth[253],0,1,2,0,1,2,0,1,0,1,2,0;
+	setarray $@GRO_Depth[265],1,0,1,2,0,1,0,1,2,3,4,0;
+	setarray $@GRO_Depth[277],1,2,3,0,1,2,3,4,5,0,1,2;
+	setarray $@GRO_Depth[289],3,4,0,1,2,3,4,0,1,0,9,10;
+	setarray $@GRO_Depth[301],11,1,2,3,4,5,6,7,8,0,1,2;
+	setarray $@GRO_Depth[313],0,1,0,1,2,3,0,0,0,0,0,0;
+	setarray $@GRO_Depth[325],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[337],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Depth[349],0,0,0,0,0,0;
+	setarray $@GRO_Realm[1],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[13],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[25],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[37],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[49],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[61],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[73],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[85],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[97],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[109],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[121],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[133],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[145],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[157],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[169],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[181],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[193],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[205],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[217],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[229],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[241],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[253],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[265],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[277],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[289],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[301],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_Realm[313],0,0,0,0,0,0,6,3,5,2,3,5;
+	setarray $@GRO_Realm[325],2,1,5,1,6,6,4,3,5,1,5,2;
+	setarray $@GRO_Realm[337],4,4,2,4,3,3,6,1,1,6,4,2;
+	setarray $@GRO_Realm[349],5,3,2,4,6,1;
+	setarray $@GRO_Key[1],1,2,3,4,5,6,7,8,9,10,11,12;
+	setarray $@GRO_Key[13],13,14,15,16,17,18,19,20,21,22,23,24;
+	setarray $@GRO_Key[25],25,26,27,28,29,30,31,32,33,34,35,36;
+	setarray $@GRO_Key[37],37,38,39,40,41,42,43,44,45,46,47,48;
+	setarray $@GRO_Key[49],49,50,51,52,53,54,55,51,57,58,59,60;
+	setarray $@GRO_Key[61],61,62,63,64,65,66,67,68,69,70,71,72;
+	setarray $@GRO_Key[73],73,74,75,76,77,78,79,80,81,82,83,84;
+	setarray $@GRO_Key[85],85,86,87,88,89,90,91,92,93,94,95,96;
+	setarray $@GRO_Key[97],97,98,99,100,101,102,103,104,105,106,107,108;
+	setarray $@GRO_Key[109],109,110,111,112,113,114,115,116,117,118,119,120;
+	setarray $@GRO_Key[121],121,122,123,124,125,126,127,128,129,130,131,132;
+	setarray $@GRO_Key[133],133,134,135,136,137,138,139,140,141,142,143,144;
+	setarray $@GRO_Key[145],145,146,147,148,149,150,151,152,153,154,155,156;
+	setarray $@GRO_Key[157],157,158,159,160,161,162,163,164,165,166,167,168;
+	setarray $@GRO_Key[169],169,170,171,172,173,174,175,176,177,178,179,180;
+	setarray $@GRO_Key[181],181,182,183,184,185,186,187,188,189,190,191,192;
+	setarray $@GRO_Key[193],193,194,195,196,197,198,199,200,201,202,203,204;
+	setarray $@GRO_Key[205],205,206,207,208,209,210,211,212,213,214,215,216;
+	setarray $@GRO_Key[217],217,218,219,220,221,222,223,224,225,226,227,228;
+	setarray $@GRO_Key[229],229,230,231,232,233,234,235,236,237,238,239,240;
+	setarray $@GRO_Key[241],241,242,243,244,245,246,247,248,249,250,251,252;
+	setarray $@GRO_Key[253],253,254,255,256,257,258,259,260,261,262,263,264;
+	setarray $@GRO_Key[265],265,266,267,268,269,270,271,272,273,274,275,276;
+	setarray $@GRO_Key[277],277,278,279,280,281,282,283,284,285,286,287,288;
+	setarray $@GRO_Key[289],289,290,291,292,293,294,295,296,297,298,299,300;
+	setarray $@GRO_Key[301],301,302,303,304,305,306,307,308,309,310,311,312;
+	setarray $@GRO_Key[313],313,314,315,316,317,318,319,320,321,51,320,321;
+	setarray $@GRO_Key[325],51,326,321,326,319,319,331,320,321,326,321,51;
+	setarray $@GRO_Key[337],331,331,51,331,320,320,319,326,326,319,331,51;
+	setarray $@GRO_Key[349],349,350,351,352,353,354;
+	setarray $@GRO_DefaultMvp[1],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[13],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[25],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[37],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[49],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[61],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[73],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[85],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[97],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[109],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[121],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[133],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[145],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[157],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[169],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[181],0,1,0,0,0,0,0,0,0,0,0,1;
+	setarray $@GRO_DefaultMvp[193],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[205],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[217],0,0,1,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[229],0,0,0,0,0,0,0,0,1,0,0,0;
+	setarray $@GRO_DefaultMvp[241],0,0,1,0,0,1,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[253],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[265],0,0,0,0,0,0,0,0,0,0,1,0;
+	setarray $@GRO_DefaultMvp[277],0,0,0,0,0,0,0,0,1,0,0,0;
+	setarray $@GRO_DefaultMvp[289],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[301],0,0,0,0,0,0,0,0,0,0,0,1;
+	setarray $@GRO_DefaultMvp[313],0,1,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[325],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[337],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DefaultMvp[349],0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[1],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[13],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[25],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[37],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[49],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[61],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[73],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[85],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[97],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[109],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[121],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[133],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[145],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[157],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[169],0,0,0,0,0,0,0,0,0,0,0,1;
+	setarray $@GRO_DiscoveryID[181],2,3,4,5,6,7,8,9,10,11,12,13;
+	setarray $@GRO_DiscoveryID[193],14,15,16,17,18,19,20,21,22,23,24,25;
+	setarray $@GRO_DiscoveryID[205],26,27,28,29,30,31,32,33,34,35,36,37;
+	setarray $@GRO_DiscoveryID[217],38,39,40,41,42,43,44,45,46,47,48,49;
+	setarray $@GRO_DiscoveryID[229],50,51,52,53,54,55,56,57,58,59,60,61;
+	setarray $@GRO_DiscoveryID[241],62,63,64,65,66,67,68,69,70,71,72,73;
+	setarray $@GRO_DiscoveryID[253],74,75,76,77,78,79,80,81,82,83,84,85;
+	setarray $@GRO_DiscoveryID[265],86,87,88,89,90,91,92,93,94,95,96,97;
+	setarray $@GRO_DiscoveryID[277],98,99,100,101,102,103,104,105,106,107,108,109;
+	setarray $@GRO_DiscoveryID[289],110,111,112,113,114,115,116,117,118,119,120,121;
+	setarray $@GRO_DiscoveryID[301],122,123,124,125,126,127,128,129,130,131,132,133;
+	setarray $@GRO_DiscoveryID[313],134,135,136,137,138,139,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[325],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[337],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_DiscoveryID[349],0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[1],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[13],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[25],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[37],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[49],0,0,1,0,0,0,0,1,0,0,0,0;
+	setarray $@GRO_CastleGround[61],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[73],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[85],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[97],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[109],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[121],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[133],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[145],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[157],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[169],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[181],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[193],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[205],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[217],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[229],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[241],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[253],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[265],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[277],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[289],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[301],0,0,0,0,0,0,0,0,0,0,0,0;
+	setarray $@GRO_CastleGround[313],0,0,0,0,0,0,1,1,1,1,1,1;
+	setarray $@GRO_CastleGround[325],1,1,1,1,1,1,1,1,1,1,1,1;
+	setarray $@GRO_CastleGround[337],1,1,1,1,1,1,1,1,1,1,1,1;
+	setarray $@GRO_CastleGround[349],0,0,0,0,0,0;
+	setarray $@GRO_Poring$[1],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[13],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[25],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[37],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[49],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[61],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[73],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[85],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[97],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[109],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[121],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[133],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[145],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[157],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[169],"","","","","","","","","","","","Strange Poring#GRO_D180";
+	setarray $@GRO_Poring$[181],"Strange Poring#GRO_D181","Strange Poring#GRO_D182","Strange Poring#GRO_D183","Strange Poring#GRO_D184","Strange Poring#GRO_D185","Strange Poring#GRO_D186","Strange Poring#GRO_D187","Strange Poring#GRO_D188","Strange Poring#GRO_D189","Strange Poring#GRO_D190","Strange Poring#GRO_D191","Strange Poring#GRO_D192";
+	setarray $@GRO_Poring$[193],"Strange Poring#GRO_D193","Strange Poring#GRO_D194","Strange Poring#GRO_D195","Strange Poring#GRO_D196","Strange Poring#GRO_D197","Strange Poring#GRO_D198","Strange Poring#GRO_D199","Strange Poring#GRO_D200","Strange Poring#GRO_D201","Strange Poring#GRO_D202","Strange Poring#GRO_D203","Strange Poring#GRO_D204";
+	setarray $@GRO_Poring$[205],"Strange Poring#GRO_D205","Strange Poring#GRO_D206","Strange Poring#GRO_D207","Strange Poring#GRO_D208","Strange Poring#GRO_D209","Strange Poring#GRO_D210","Strange Poring#GRO_D211","Strange Poring#GRO_D212","Strange Poring#GRO_D213","Strange Poring#GRO_D214","Strange Poring#GRO_D215","Strange Poring#GRO_D216";
+	setarray $@GRO_Poring$[217],"Strange Poring#GRO_D217","Strange Poring#GRO_D218","Strange Poring#GRO_D219","Strange Poring#GRO_D220","Strange Poring#GRO_D221","Strange Poring#GRO_D222","Strange Poring#GRO_D223","Strange Poring#GRO_D224","Strange Poring#GRO_D225","Strange Poring#GRO_D226","Strange Poring#GRO_D227","Strange Poring#GRO_D228";
+	setarray $@GRO_Poring$[229],"Strange Poring#GRO_D229","Strange Poring#GRO_D230","Strange Poring#GRO_D231","Strange Poring#GRO_D232","Strange Poring#GRO_D233","Strange Poring#GRO_D234","Strange Poring#GRO_D235","Strange Poring#GRO_D236","Strange Poring#GRO_D237","Strange Poring#GRO_D238","Strange Poring#GRO_D239","Strange Poring#GRO_D240";
+	setarray $@GRO_Poring$[241],"Strange Poring#GRO_D241","Strange Poring#GRO_D242","Strange Poring#GRO_D243","Strange Poring#GRO_D244","Strange Poring#GRO_D245","Strange Poring#GRO_D246","Strange Poring#GRO_D247","Strange Poring#GRO_D248","Strange Poring#GRO_D249","Strange Poring#GRO_D250","Strange Poring#GRO_D251","Strange Poring#GRO_D252";
+	setarray $@GRO_Poring$[253],"Strange Poring#GRO_D253","Strange Poring#GRO_D254","Strange Poring#GRO_D255","Strange Poring#GRO_D256","Strange Poring#GRO_D257","Strange Poring#GRO_D258","Strange Poring#GRO_D259","Strange Poring#GRO_D260","Strange Poring#GRO_D261","Strange Poring#GRO_D262","Strange Poring#GRO_D263","Strange Poring#GRO_D264";
+	setarray $@GRO_Poring$[265],"Strange Poring#GRO_D265","Strange Poring#GRO_D266","Strange Poring#GRO_D267","Strange Poring#GRO_D268","Strange Poring#GRO_D269","Strange Poring#GRO_D270","Strange Poring#GRO_D271","Strange Poring#GRO_D272","Strange Poring#GRO_D273","Strange Poring#GRO_D274","Strange Poring#GRO_D275","Strange Poring#GRO_D276";
+	setarray $@GRO_Poring$[277],"Strange Poring#GRO_D277","Strange Poring#GRO_D278","Strange Poring#GRO_D279","Strange Poring#GRO_D280","Strange Poring#GRO_D281","Strange Poring#GRO_D282","Strange Poring#GRO_D283","Strange Poring#GRO_D284","Strange Poring#GRO_D285","Strange Poring#GRO_D286","Strange Poring#GRO_D287","Strange Poring#GRO_D288";
+	setarray $@GRO_Poring$[289],"Strange Poring#GRO_D289","Strange Poring#GRO_D290","Strange Poring#GRO_D291","Strange Poring#GRO_D292","Strange Poring#GRO_D293","Strange Poring#GRO_D294","Strange Poring#GRO_D295","Strange Poring#GRO_D296","Strange Poring#GRO_D297","Strange Poring#GRO_D298","Strange Poring#GRO_D299","Strange Poring#GRO_D300";
+	setarray $@GRO_Poring$[301],"Strange Poring#GRO_D301","Strange Poring#GRO_D302","Strange Poring#GRO_D303","Strange Poring#GRO_D304","Strange Poring#GRO_D305","Strange Poring#GRO_D306","Strange Poring#GRO_D307","Strange Poring#GRO_D308","Strange Poring#GRO_D309","Strange Poring#GRO_D310","Strange Poring#GRO_D311","Strange Poring#GRO_D312";
+	setarray $@GRO_Poring$[313],"Strange Poring#GRO_D313","Strange Poring#GRO_D314","Strange Poring#GRO_D315","Strange Poring#GRO_D316","Strange Poring#GRO_D317","Strange Poring#GRO_D318","","","","","","";
+	setarray $@GRO_Poring$[325],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[337],"","","","","","","","","","","","";
+	setarray $@GRO_Poring$[349],"","","","","","";
+	$@GRO_WarperNpcCount = 28;
+	setarray $@GRO_AdminKeyID[0],212,213,214,180,181,182,2,202,203,204,205,331,1,183,184,185,30,3,186,187;
+	setarray $@GRO_AdminKeyID[20],321,349,188,189,31,32,4,209,210,211,198,199,200,201,33,34,35,36,37,38;
+	setarray $@GRO_AdminKeyID[40],39,40,41,5,215,216,42,44,45,46,47,48,49,50,43,6,7,217,218,219;
+	setarray $@GRO_AdminKeyID[60],220,52,59,60,61,62,63,64,65,66,53,54,55,51,57,58,221,222,223,224;
+	setarray $@GRO_AdminKeyID[80],8,233,234,227,237,229,230,235,236,231,232,238,239,240,226,228,225,350,352,354;
+	setarray $@GRO_AdminKeyID[100],351,253,254,255,74,12,67,68,69,70,71,72,73,9,244,245,246,291,292,293;
+	setarray $@GRO_AdminKeyID[120],294,295,193,194,195,196,197,10,11,247,250,248,249,251,252,190,191,192,75,76;
+	setarray $@GRO_AdminKeyID[140],77,13,256,257,258,78,14,259,260,80,81,82,16,17,206,207,208,83,87,88;
+	setarray $@GRO_AdminKeyID[160],89,90,91,92,93,94,84,85,86,135,146,147,148,149,150,151,152,153,136,137;
+	setarray $@GRO_AdminKeyID[180],138,139,140,141,142,143,144,145,280,281,282,283,284,285,18,19,261,262,263,95;
+	setarray $@GRO_AdminKeyID[200],96,20,97,98,21,264,265,266,267,268,269,270,271,272,273,274,275,99,102,103;
+	setarray $@GRO_AdminKeyID[220],104,105,106,107,108,109,100,101,320,22,23,110,111,114,115,116,117,118,119,120;
+	setarray $@GRO_AdminKeyID[240],121,112,113,326,241,242,243,276,277,278,279,122,127,128,129,130,131,132,133,134;
+	setarray $@GRO_AdminKeyID[260],123,124,125,126,286,287,288,289,290,24,319,353,154,155,156,25,298,302,303,304;
+	setarray $@GRO_AdminKeyID[280],305,306,307,308,309,299,300,301,26,310,311,312,296,297,315,316,317,318,157,158;
+	setarray $@GRO_AdminKeyID[300],159,160,27,161,162,163,164,165,166,167,28,15,313,314,79,29,168,172,173,174;
+	setarray $@GRO_AdminKeyID[320],175,176,177,178,179,169,170,171;
+	setarray $@GRO_WarperNpc$[0],"Travelling Bush#alb","Travelling Bush#alde","Travelling Bush#ama","Travelling Bush#ayo","Travelling Bush#com","Travelling Bush#einbe","Travelling Bush#einbr","Travelling Bush#gef","Travelling Bush#gon","Travelling Bush#hug","Travelling Bush#izl","Travelling Bush#jaw";
+	setarray $@GRO_WarperNpc$[12],"Travelling Bush#lhz","Travelling Bush#lou","Travelling Bush#man","Travelling Bush#mid","Travelling Bush#mor","Travelling Bush#mos","Travelling Bush#nif","Travelling Bush#pay","Travelling Bush#prt","Travelling Bush#rac","Travelling Bush#spl","Travelling Bush#thor";
+	setarray $@GRO_WarperNpc$[24],"Travelling Bush#umb","Travelling Bush#ve","Travelling Bush#xmas","Travelling Bush#yuno";
+	if ($GRO_ConfigVersion != 1) {
+		callfunc "GRO_ResetGeneral";
+		callfunc "GRO_ResetMaps";
+		$GRO_DraftOldEligible = 1;
+		$GRO_DraftName$ = "Discovery Collection Reward";
+		$GRO_ConfigVersion = 1;
+	}
+	// One-time default-sprite upgrade for previously installed v1.5 configurations.
+	// Preserve any GM-selected non-default sprite and all player progression.
+	if ($GRO_MainSpriteDefaultMigrated != 1) {
+		if ($GRO_MainSprite == 113) $GRO_MainSprite = 527;
+		$GRO_MainSpriteDefaultMigrated = 1;
+	}
+	callfunc "GRO_Refresh";
+	initnpctimer;
+	end;
+OnTimer200:
+	// Request the next daily refresh only after the prior batch finishes.
+	if (!$@GRO_RefreshPending && $@GRO_RefreshDay != (gettimetick(2)+28800)/86400)
+		callfunc "GRO_Refresh";
+	if ($@GRO_RefreshPending)
+		callfunc "GRO_RefreshBatch";
+	initnpctimer;
+	end;
+}
+
+// Travelling Bush NPC spawns copied from stock rAthena npc/custom/warper.txt (non-Renewal towns/hubs).
+// Izlude uses the stock Warper Pre-Renewal placement (132,120).
+// The original nine non-town placements and Renewal-only locations are not added.
+// NPC name changed to Travelling Bush; default main sprite changed to 527.
+alberta,28,240,4	script	Travelling Bush#alb	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+aldebaran,145,118,4	script	Travelling Bush#alde	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+amatsu,203,87,4	script	Travelling Bush#ama	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+ayothaya,209,169,6	script	Travelling Bush#ayo	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+comodo,194,158,4	script	Travelling Bush#com	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+einbech,59,38,6	script	Travelling Bush#einbe	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+einbroch,69,202,4	script	Travelling Bush#einbr	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+geffen,124,72,4	script	Travelling Bush#gef	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+gonryun,162,122,4	script	Travelling Bush#gon	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+hugel,101,151,4	script	Travelling Bush#hug	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+izlude,132,120,4	script	Travelling Bush#izl	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+jawaii,253,138,4	script	Travelling Bush#jaw	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+lighthalzen,162,102,4	script	Travelling Bush#lhz	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+louyang,208,103,6	script	Travelling Bush#lou	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+manuk,274,146,6	script	Travelling Bush#man	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+mid_camp,216,288,4	script	Travelling Bush#mid	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+morocc,159,97,4	script	Travelling Bush#mor	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+moscovia,229,191,4	script	Travelling Bush#mos	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+niflheim,205,179,4	script	Travelling Bush#nif	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+payon,182,108,4	script	Travelling Bush#pay	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+prontera,159,192,4	script	Travelling Bush#prt	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+rachel,135,116,4	script	Travelling Bush#rac	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+splendide,205,153,4	script	Travelling Bush#spl	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+thor_camp,249,76,4	script	Travelling Bush#thor	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+umbala,106,150,3	script	Travelling Bush#umb	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+veins,214,123,4	script	Travelling Bush#ve	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+xmas,150,136,6	script	Travelling Bush#xmas	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+yuno,162,47,4	script	Travelling Bush#yuno	527,{
+	callfunc "GRO_Main";
+	end;
+}
+
+// One Strange Poring NPC for each registered dungeon floor.
+// OnInit/GM controls disable them during soft-release discovery bypass.
+abyss_01,261,272,4	script	Strange Poring#GRO_D180	508,{
+	callfunc "GRO_Discover",180;
+	end;
+}
+
+abyss_02,275,270,4	script	Strange Poring#GRO_D181	508,{
+	callfunc "GRO_Discover",181;
+	end;
+}
+
+abyss_03,116,27,4	script	Strange Poring#GRO_D182	508,{
+	callfunc "GRO_Discover",182;
+	end;
+}
+
+ama_dun01,228,11,4	script	Strange Poring#GRO_D183	508,{
+	callfunc "GRO_Discover",183;
+	end;
+}
+
+ama_dun02,34,41,4	script	Strange Poring#GRO_D184	508,{
+	callfunc "GRO_Discover",184;
+	end;
+}
+
+ama_dun03,119,14,4	script	Strange Poring#GRO_D185	508,{
+	callfunc "GRO_Discover",185;
+	end;
+}
+
+anthell01,35,262,4	script	Strange Poring#GRO_D186	508,{
+	callfunc "GRO_Discover",186;
+	end;
+}
+
+anthell02,168,170,4	script	Strange Poring#GRO_D187	508,{
+	callfunc "GRO_Discover",187;
+	end;
+}
+
+ayo_dun01,275,19,4	script	Strange Poring#GRO_D188	508,{
+	callfunc "GRO_Discover",188;
+	end;
+}
+
+ayo_dun02,24,26,4	script	Strange Poring#GRO_D189	508,{
+	callfunc "GRO_Discover",189;
+	end;
+}
+
+lhz_dun01,150,288,4	script	Strange Poring#GRO_D190	508,{
+	callfunc "GRO_Discover",190;
+	end;
+}
+
+lhz_dun02,150,18,4	script	Strange Poring#GRO_D191	508,{
+	callfunc "GRO_Discover",191;
+	end;
+}
+
+lhz_dun03,140,134,4	script	Strange Poring#GRO_D192	508,{
+	callfunc "GRO_Discover",192;
+	end;
+}
+
+iz_dun01,168,168,4	script	Strange Poring#GRO_D193	508,{
+	callfunc "GRO_Discover",193;
+	end;
+}
+
+iz_dun02,253,252,4	script	Strange Poring#GRO_D194	508,{
+	callfunc "GRO_Discover",194;
+	end;
+}
+
+iz_dun03,236,204,4	script	Strange Poring#GRO_D195	508,{
+	callfunc "GRO_Discover",195;
+	end;
+}
+
+iz_dun04,32,63,4	script	Strange Poring#GRO_D196	508,{
+	callfunc "GRO_Discover",196;
+	end;
+}
+
+iz_dun05,26,27,4	script	Strange Poring#GRO_D197	508,{
+	callfunc "GRO_Discover",197;
+	end;
+}
+
+c_tower1,199,159,4	script	Strange Poring#GRO_D198	508,{
+	callfunc "GRO_Discover",198;
+	end;
+}
+
+c_tower2,148,283,4	script	Strange Poring#GRO_D199	508,{
+	callfunc "GRO_Discover",199;
+	end;
+}
+
+c_tower3,65,147,4	script	Strange Poring#GRO_D200	508,{
+	callfunc "GRO_Discover",200;
+	end;
+}
+
+c_tower4,56,155,4	script	Strange Poring#GRO_D201	508,{
+	callfunc "GRO_Discover",201;
+	end;
+}
+
+alde_dun01,297,25,4	script	Strange Poring#GRO_D202	508,{
+	callfunc "GRO_Discover",202;
+	end;
+}
+
+alde_dun02,127,169,4	script	Strange Poring#GRO_D203	508,{
+	callfunc "GRO_Discover",203;
+	end;
+}
+
+alde_dun03,277,178,4	script	Strange Poring#GRO_D204	508,{
+	callfunc "GRO_Discover",204;
+	end;
+}
+
+alde_dun04,268,74,4	script	Strange Poring#GRO_D205	508,{
+	callfunc "GRO_Discover",205;
+	end;
+}
+
+mjo_dun01,52,17,4	script	Strange Poring#GRO_D206	508,{
+	callfunc "GRO_Discover",206;
+	end;
+}
+
+mjo_dun02,381,343,4	script	Strange Poring#GRO_D207	508,{
+	callfunc "GRO_Discover",207;
+	end;
+}
+
+mjo_dun03,302,262,4	script	Strange Poring#GRO_D208	508,{
+	callfunc "GRO_Discover",208;
+	end;
+}
+
+beach_dun,266,67,4	script	Strange Poring#GRO_D209	508,{
+	callfunc "GRO_Discover",209;
+	end;
+}
+
+beach_dun2,255,244,4	script	Strange Poring#GRO_D210	508,{
+	callfunc "GRO_Discover",210;
+	end;
+}
+
+beach_dun3,23,260,4	script	Strange Poring#GRO_D211	508,{
+	callfunc "GRO_Discover",211;
+	end;
+}
+
+abbey01,51,14,4	script	Strange Poring#GRO_D212	508,{
+	callfunc "GRO_Discover",212;
+	end;
+}
+
+abbey02,150,11,4	script	Strange Poring#GRO_D213	508,{
+	callfunc "GRO_Discover",213;
+	end;
+}
+
+abbey03,120,10,4	script	Strange Poring#GRO_D214	508,{
+	callfunc "GRO_Discover",214;
+	end;
+}
+
+ein_dun01,22,14,4	script	Strange Poring#GRO_D215	508,{
+	callfunc "GRO_Discover",215;
+	end;
+}
+
+ein_dun02,292,290,4	script	Strange Poring#GRO_D216	508,{
+	callfunc "GRO_Discover",216;
+	end;
+}
+
+gef_dun00,104,99,4	script	Strange Poring#GRO_D217	508,{
+	callfunc "GRO_Discover",217;
+	end;
+}
+
+gef_dun01,115,236,4	script	Strange Poring#GRO_D218	508,{
+	callfunc "GRO_Discover",218;
+	end;
+}
+
+gef_dun02,106,132,4	script	Strange Poring#GRO_D219	508,{
+	callfunc "GRO_Discover",219;
+	end;
+}
+
+gef_dun03,203,200,4	script	Strange Poring#GRO_D220	508,{
+	callfunc "GRO_Discover",220;
+	end;
+}
+
+gefenia01,40,103,4	script	Strange Poring#GRO_D221	508,{
+	callfunc "GRO_Discover",221;
+	end;
+}
+
+gefenia02,203,34,4	script	Strange Poring#GRO_D222	508,{
+	callfunc "GRO_Discover",222;
+	end;
+}
+
+gefenia03,266,168,4	script	Strange Poring#GRO_D223	508,{
+	callfunc "GRO_Discover",223;
+	end;
+}
+
+gefenia04,130,272,4	script	Strange Poring#GRO_D224	508,{
+	callfunc "GRO_Discover",224;
+	end;
+}
+
+glast_01,370,304,4	script	Strange Poring#GRO_D225	508,{
+	callfunc "GRO_Discover",225;
+	end;
+}
+
+gl_sew04,68,277,4	script	Strange Poring#GRO_D226	508,{
+	callfunc "GRO_Discover",226;
+	end;
+}
+
+gl_church,156,7,4	script	Strange Poring#GRO_D227	508,{
+	callfunc "GRO_Discover",227;
+	end;
+}
+
+gl_step,12,7,4	script	Strange Poring#GRO_D228	508,{
+	callfunc "GRO_Discover",228;
+	end;
+}
+
+gl_dun01,133,271,4	script	Strange Poring#GRO_D229	508,{
+	callfunc "GRO_Discover",229;
+	end;
+}
+
+gl_dun02,224,274,4	script	Strange Poring#GRO_D230	508,{
+	callfunc "GRO_Discover",230;
+	end;
+}
+
+gl_prison,14,70,4	script	Strange Poring#GRO_D231	508,{
+	callfunc "GRO_Discover",231;
+	end;
+}
+
+gl_prison1,150,14,4	script	Strange Poring#GRO_D232	508,{
+	callfunc "GRO_Discover",232;
+	end;
+}
+
+gl_cas01,199,29,4	script	Strange Poring#GRO_D233	508,{
+	callfunc "GRO_Discover",233;
+	end;
+}
+
+gl_cas02,104,25,4	script	Strange Poring#GRO_D234	508,{
+	callfunc "GRO_Discover",234;
+	end;
+}
+
+gl_knt01,150,15,4	script	Strange Poring#GRO_D235	508,{
+	callfunc "GRO_Discover",235;
+	end;
+}
+
+gl_knt02,157,287,4	script	Strange Poring#GRO_D236	508,{
+	callfunc "GRO_Discover",236;
+	end;
+}
+
+gl_chyard,147,15,4	script	Strange Poring#GRO_D237	508,{
+	callfunc "GRO_Discover",237;
+	end;
+}
+
+gl_sew01,258,255,4	script	Strange Poring#GRO_D238	508,{
+	callfunc "GRO_Discover",238;
+	end;
+}
+
+gl_sew02,108,291,4	script	Strange Poring#GRO_D239	508,{
+	callfunc "GRO_Discover",239;
+	end;
+}
+
+gl_sew03,171,283,4	script	Strange Poring#GRO_D240	508,{
+	callfunc "GRO_Discover",240;
+	end;
+}
+
+prt_maze01,99,31,4	script	Strange Poring#GRO_D241	508,{
+	callfunc "GRO_Discover",241;
+	end;
+}
+
+prt_maze02,93,20,4	script	Strange Poring#GRO_D242	508,{
+	callfunc "GRO_Discover",242;
+	end;
+}
+
+prt_maze03,182,88,4	script	Strange Poring#GRO_D243	508,{
+	callfunc "GRO_Discover",243;
+	end;
+}
+
+ice_dun01,157,14,4	script	Strange Poring#GRO_D244	508,{
+	callfunc "GRO_Discover",244;
+	end;
+}
+
+ice_dun02,151,155,4	script	Strange Poring#GRO_D245	508,{
+	callfunc "GRO_Discover",245;
+	end;
+}
+
+ice_dun03,149,22,4	script	Strange Poring#GRO_D246	508,{
+	callfunc "GRO_Discover",246;
+	end;
+}
+
+jupe_cave,140,51,4	script	Strange Poring#GRO_D247	508,{
+	callfunc "GRO_Discover",247;
+	end;
+}
+
+juperos_01,53,247,4	script	Strange Poring#GRO_D248	508,{
+	callfunc "GRO_Discover",248;
+	end;
+}
+
+juperos_02,37,63,4	script	Strange Poring#GRO_D249	508,{
+	callfunc "GRO_Discover",249;
+	end;
+}
+
+jupe_core,150,285,4	script	Strange Poring#GRO_D250	508,{
+	callfunc "GRO_Discover",250;
+	end;
+}
+
+kh_dun01,28,226,4	script	Strange Poring#GRO_D251	508,{
+	callfunc "GRO_Discover",251;
+	end;
+}
+
+kh_dun02,41,198,4	script	Strange Poring#GRO_D252	508,{
+	callfunc "GRO_Discover",252;
+	end;
+}
+
+gon_dun01,153,53,4	script	Strange Poring#GRO_D253	508,{
+	callfunc "GRO_Discover",253;
+	end;
+}
+
+gon_dun02,28,113,4	script	Strange Poring#GRO_D254	508,{
+	callfunc "GRO_Discover",254;
+	end;
+}
+
+gon_dun03,68,16,4	script	Strange Poring#GRO_D255	508,{
+	callfunc "GRO_Discover",255;
+	end;
+}
+
+lou_dun01,218,196,4	script	Strange Poring#GRO_D256	508,{
+	callfunc "GRO_Discover",256;
+	end;
+}
+
+lou_dun02,282,20,4	script	Strange Poring#GRO_D257	508,{
+	callfunc "GRO_Discover",257;
+	end;
+}
+
+lou_dun03,165,38,4	script	Strange Poring#GRO_D258	508,{
+	callfunc "GRO_Discover",258;
+	end;
+}
+
+mag_dun01,126,68,4	script	Strange Poring#GRO_D259	508,{
+	callfunc "GRO_Discover",259;
+	end;
+}
+
+mag_dun02,47,30,4	script	Strange Poring#GRO_D260	508,{
+	callfunc "GRO_Discover",260;
+	end;
+}
+
+mosk_dun01,189,48,4	script	Strange Poring#GRO_D261	508,{
+	callfunc "GRO_Discover",261;
+	end;
+}
+
+mosk_dun02,165,30,4	script	Strange Poring#GRO_D262	508,{
+	callfunc "GRO_Discover",262;
+	end;
+}
+
+mosk_dun03,32,135,4	script	Strange Poring#GRO_D263	508,{
+	callfunc "GRO_Discover",263;
+	end;
+}
+
+nyd_dun01,61,239,4	script	Strange Poring#GRO_D264	508,{
+	callfunc "GRO_Discover",264;
+	end;
+}
+
+nyd_dun02,60,271,4	script	Strange Poring#GRO_D265	508,{
+	callfunc "GRO_Discover",265;
+	end;
+}
+
+odin_tem01,298,167,4	script	Strange Poring#GRO_D266	508,{
+	callfunc "GRO_Discover",266;
+	end;
+}
+
+odin_tem02,224,149,4	script	Strange Poring#GRO_D267	508,{
+	callfunc "GRO_Discover",267;
+	end;
+}
+
+odin_tem03,266,280,4	script	Strange Poring#GRO_D268	508,{
+	callfunc "GRO_Discover",268;
+	end;
+}
+
+orcsdun01,32,170,4	script	Strange Poring#GRO_D269	508,{
+	callfunc "GRO_Discover",269;
+	end;
+}
+
+orcsdun02,21,185,4	script	Strange Poring#GRO_D270	508,{
+	callfunc "GRO_Discover",270;
+	end;
+}
+
+pay_dun00,21,183,4	script	Strange Poring#GRO_D271	508,{
+	callfunc "GRO_Discover",271;
+	end;
+}
+
+pay_dun01,19,33,4	script	Strange Poring#GRO_D272	508,{
+	callfunc "GRO_Discover",272;
+	end;
+}
+
+pay_dun02,19,63,4	script	Strange Poring#GRO_D273	508,{
+	callfunc "GRO_Discover",273;
+	end;
+}
+
+pay_dun03,155,159,4	script	Strange Poring#GRO_D274	508,{
+	callfunc "GRO_Discover",274;
+	end;
+}
+
+pay_dun04,201,204,4	script	Strange Poring#GRO_D275	508,{
+	callfunc "GRO_Discover",275;
+	end;
+}
+
+prt_sewb01,131,247,4	script	Strange Poring#GRO_D276	508,{
+	callfunc "GRO_Discover",276;
+	end;
+}
+
+prt_sewb02,19,19,4	script	Strange Poring#GRO_D277	508,{
+	callfunc "GRO_Discover",277;
+	end;
+}
+
+prt_sewb03,180,169,4	script	Strange Poring#GRO_D278	508,{
+	callfunc "GRO_Discover",278;
+	end;
+}
+
+prt_sewb04,100,92,4	script	Strange Poring#GRO_D279	508,{
+	callfunc "GRO_Discover",279;
+	end;
+}
+
+moc_pryd01,192,9,4	script	Strange Poring#GRO_D280	508,{
+	callfunc "GRO_Discover",280;
+	end;
+}
+
+moc_pryd02,10,192,4	script	Strange Poring#GRO_D281	508,{
+	callfunc "GRO_Discover",281;
+	end;
+}
+
+moc_pryd03,100,92,4	script	Strange Poring#GRO_D282	508,{
+	callfunc "GRO_Discover",282;
+	end;
+}
+
+moc_pryd04,181,11,4	script	Strange Poring#GRO_D283	508,{
+	callfunc "GRO_Discover",283;
+	end;
+}
+
+moc_pryd05,94,96,4	script	Strange Poring#GRO_D284	508,{
+	callfunc "GRO_Discover",284;
+	end;
+}
+
+moc_pryd06,192,8,4	script	Strange Poring#GRO_D285	508,{
+	callfunc "GRO_Discover",285;
+	end;
+}
+
+ra_san01,140,11,4	script	Strange Poring#GRO_D286	508,{
+	callfunc "GRO_Discover",286;
+	end;
+}
+
+ra_san02,32,21,4	script	Strange Poring#GRO_D287	508,{
+	callfunc "GRO_Discover",287;
+	end;
+}
+
+ra_san03,8,149,4	script	Strange Poring#GRO_D288	508,{
+	callfunc "GRO_Discover",288;
+	end;
+}
+
+ra_san04,204,218,4	script	Strange Poring#GRO_D289	508,{
+	callfunc "GRO_Discover",289;
+	end;
+}
+
+ra_san05,150,9,4	script	Strange Poring#GRO_D290	508,{
+	callfunc "GRO_Discover",290;
+	end;
+}
+
+in_sphinx1,288,9,4	script	Strange Poring#GRO_D291	508,{
+	callfunc "GRO_Discover",291;
+	end;
+}
+
+in_sphinx2,149,81,4	script	Strange Poring#GRO_D292	508,{
+	callfunc "GRO_Discover",292;
+	end;
+}
+
+in_sphinx3,210,54,4	script	Strange Poring#GRO_D293	508,{
+	callfunc "GRO_Discover",293;
+	end;
+}
+
+in_sphinx4,10,222,4	script	Strange Poring#GRO_D294	508,{
+	callfunc "GRO_Discover",294;
+	end;
+}
+
+in_sphinx5,100,99,4	script	Strange Poring#GRO_D295	508,{
+	callfunc "GRO_Discover",295;
+	end;
+}
+
+treasure01,69,24,4	script	Strange Poring#GRO_D296	508,{
+	callfunc "GRO_Discover",296;
+	end;
+}
+
+treasure02,102,27,4	script	Strange Poring#GRO_D297	508,{
+	callfunc "GRO_Discover",297;
+	end;
+}
+
+tha_t01,150,39,4	script	Strange Poring#GRO_D298	508,{
+	callfunc "GRO_Discover",298;
+	end;
+}
+
+tha_t10,159,138,4	script	Strange Poring#GRO_D299	508,{
+	callfunc "GRO_Discover",299;
+	end;
+}
+
+tha_t11,19,20,4	script	Strange Poring#GRO_D300	508,{
+	callfunc "GRO_Discover",300;
+	end;
+}
+
+tha_t12,130,52,4	script	Strange Poring#GRO_D301	508,{
+	callfunc "GRO_Discover",301;
+	end;
+}
+
+tha_t02,150,136,4	script	Strange Poring#GRO_D302	508,{
+	callfunc "GRO_Discover",302;
+	end;
+}
+
+tha_t03,220,158,4	script	Strange Poring#GRO_D303	508,{
+	callfunc "GRO_Discover",303;
+	end;
+}
+
+tha_t04,59,143,4	script	Strange Poring#GRO_D304	508,{
+	callfunc "GRO_Discover",304;
+	end;
+}
+
+tha_t05,62,11,4	script	Strange Poring#GRO_D305	508,{
+	callfunc "GRO_Discover",305;
+	end;
+}
+
+tha_t06,89,221,4	script	Strange Poring#GRO_D306	508,{
+	callfunc "GRO_Discover",306;
+	end;
+}
+
+tha_t07,35,166,4	script	Strange Poring#GRO_D307	508,{
+	callfunc "GRO_Discover",307;
+	end;
+}
+
+tha_t08,93,148,4	script	Strange Poring#GRO_D308	508,{
+	callfunc "GRO_Discover",308;
+	end;
+}
+
+tha_t09,29,107,4	script	Strange Poring#GRO_D309	508,{
+	callfunc "GRO_Discover",309;
+	end;
+}
+
+thor_v01,21,228,4	script	Strange Poring#GRO_D310	508,{
+	callfunc "GRO_Discover",310;
+	end;
+}
+
+thor_v02,75,205,4	script	Strange Poring#GRO_D311	508,{
+	callfunc "GRO_Discover",311;
+	end;
+}
+
+thor_v03,34,272,4	script	Strange Poring#GRO_D312	508,{
+	callfunc "GRO_Discover",312;
+	end;
+}
+
+xmas_dun01,205,15,4	script	Strange Poring#GRO_D313	508,{
+	callfunc "GRO_Discover",313;
+	end;
+}
+
+xmas_dun02,129,133,4	script	Strange Poring#GRO_D314	508,{
+	callfunc "GRO_Discover",314;
+	end;
+}
+
+tur_dun01,154,49,4	script	Strange Poring#GRO_D315	508,{
+	callfunc "GRO_Discover",315;
+	end;
+}
+
+tur_dun02,148,261,4	script	Strange Poring#GRO_D316	508,{
+	callfunc "GRO_Discover",316;
+	end;
+}
+
+tur_dun03,132,189,4	script	Strange Poring#GRO_D317	508,{
+	callfunc "GRO_Discover",317;
+	end;
+}
+
+tur_dun04,100,192,4	script	Strange Poring#GRO_D318	508,{
+	callfunc "GRO_Discover",318;
+	end;
+}
+

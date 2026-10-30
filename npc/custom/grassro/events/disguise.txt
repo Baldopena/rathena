@@ -1,0 +1,342 @@
+//===== Grass Ro Custom NPC ==================================
+//= Disguise Event v6.0 - review build
+//= Based on rAthena disguise event by GmOcean / Euphy
+//= Requires map-server PCRE support for defpattern.
+//= Unlimited player wins; one prize for each correct round.
+//============================================================
+prontera,156,285,4	script	Disguise Event	795,{
+	.@label$ = "[Disguise Event]";
+
+	if (getgmlevel() < 60) {
+		mes .@label$;
+		mes "Guess the monster I resemble by saying its exact name in public chat.";
+		mes "The first correct guess each round receives a prize.";
+		mes "Events are held here in Prontera.";
+		close;
+	}
+
+	mes .@label$;
+	mes "Event status: " + (.Phase ? "Running" : "Idle");
+	mes "Automatic schedule: " + ($GR_DisguiseAuto ? "Enabled" : "Disabled");
+	mes "Rounds: " + $GR_DisguiseRounds;
+	mes "Prize: " + $GR_DisguiseQty + "x " + getitemname($GR_DisguisePrize);
+	next;
+
+	switch (select("Start event:Stop event:Toggle automatic schedule:Event settings:Cancel")) {
+	case 1:
+		if (.Phase) {
+			mes .@label$;
+			mes "An event is already running.";
+			close;
+		}
+		if (($GR_DisguiseMode == 1 && getarraysize(.Normal) == 0) ||
+			($GR_DisguiseMode == 2 && getarraysize(.MVP) == 0)) {
+			mes .@label$;
+			mes "The selected monster pool is empty. Check the map-server logs.";
+			close;
+		}
+		close2;
+		callsub S_Start;
+		end;
+
+	case 2:
+		if (!.Phase) {
+			mes .@label$;
+			mes "No event is running.";
+			close;
+		}
+		close2;
+		callsub S_Stop;
+		announce "The Disguise Event was stopped by a GM.",bc_all | bc_blue;
+		end;
+
+	case 3:
+		$GR_DisguiseAuto = !$GR_DisguiseAuto;
+		mes .@label$;
+		mes "Automatic schedule: " + ($GR_DisguiseAuto ? "Enabled" : "Disabled");
+		mes "This does not stop an event already in progress.";
+		close;
+
+	case 4:
+		if (.Phase) {
+			mes .@label$;
+			mes "Stop the active event before changing its settings.";
+			close;
+		}
+		mes .@label$;
+		mes "Choose a setting to change.";
+		next;
+		switch (select("Monster mode:Number of rounds:Prize item and quantity:Cancel")) {
+		case 1:
+			mes .@label$;
+			mes "Choose the monster pool.";
+			next;
+			.@mode = select("Regular monsters:MVP monsters only:Cancel");
+			if (.@mode == 3) close;
+			if ((.@mode == 1 && getarraysize(.Normal) == 0) ||
+				(.@mode == 2 && getarraysize(.MVP) == 0)) {
+				mes .@label$;
+				mes "That monster pool contains no valid entries.";
+				close;
+			}
+			$GR_DisguiseMode = .@mode;
+			mes .@label$;
+			mes "Monster mode updated.";
+			close;
+
+		case 2:
+			mes .@label$;
+			mes "Choose between 1 and 30 rounds.";
+			next;
+			input .@rounds;
+			if (.@rounds < 1 || .@rounds > 30) {
+				mes .@label$;
+				mes "Invalid number. The previous setting was kept.";
+				close;
+			}
+			$GR_DisguiseRounds = .@rounds;
+			mes .@label$;
+			mes "Number of rounds updated.";
+			close;
+
+		case 3:
+			mes .@label$;
+			mes "Enter a valid reward item ID.";
+			next;
+			input .@prize;
+			.@prizename$ = getitemname(.@prize);
+			if (.@prize <= 0 || .@prizename$ == "null" || .@prizename$ == "") {
+				mes .@label$;
+				mes "Invalid item ID. Settings unchanged.";
+				close;
+			}
+			mes .@label$;
+			mes "Enter a quantity from 1 to 20.";
+			next;
+			input .@qty;
+			if (.@qty < 1 || .@qty > 20) {
+				mes .@label$;
+				mes "Invalid quantity. Settings unchanged.";
+				close;
+			}
+			$GR_DisguisePrize = .@prize;
+			$GR_DisguiseQty = .@qty;
+			mes .@label$;
+			mes "New reward: " + .@qty + "x " + .@prizename$;
+			close;
+		}
+		close;
+	}
+	close;
+
+OnInit:
+	// These permanent global variables survive normal map-server restarts.
+	// Automatic scheduling starts OFF on first installation.
+	if ($GR_DisguiseConfigured != 1) {
+		$GR_DisguiseConfigured = 1;
+		$GR_DisguiseAuto = 0;
+		$GR_DisguiseMode = 1;
+		$GR_DisguiseRounds = 10;
+		$GR_DisguisePrize = 512;
+		$GR_DisguiseQty = 1;
+	}
+	if ($GR_DisguiseMode < 1 || $GR_DisguiseMode > 2)
+		$GR_DisguiseMode = 1;
+	if ($GR_DisguiseRounds < 1 || $GR_DisguiseRounds > 30)
+		$GR_DisguiseRounds = 10;
+	if ($GR_DisguiseQty < 1 || $GR_DisguiseQty > 20)
+		$GR_DisguiseQty = 1;
+	if ($GR_DisguisePrize < 1 || getitemname($GR_DisguisePrize) == "null")
+		$GR_DisguisePrize = 512;
+
+	// Curated candidate IDs. Only live, valid monsters make the final lists.
+	setarray .CandidatesNormal[0],
+		1002,1004,1005,1007,1008,1009,1011,1012,1013,1014,
+		1015,1020,1023,1025,1026,1028,1030,1031,1033,1034,
+		1035,1036,1040,1041,1042,1049,1052,1054,1058,1063,
+		1077,1082,1090,1106,1113,1114,1126,1131,1138,1152,
+		1174,1204,1211,1242,1258,1281,1363;
+	setarray .CandidatesMVP[0],
+		1038,1039,1046,1059,1086,1087,1112,1115,1147,1150,
+		1157,1159,1190,1251,1252,1272,1312,1373,1389,1399,
+		1418,1492,1502,1511,1583,1623,1630,1646,1647,1648,
+		1649,1650,1651,1658,1685,1688,1708,1719,1734,1751,
+		1768,1779,1785,1802,1832,1871,1874,1885,1917,1980,
+		2022,2068,2087,2131,2156,2165;
+
+	deletearray .Normal[0],getarraysize(.Normal);
+	deletearray .MVP[0],getarraysize(.MVP);
+	for (.@group = 1; .@group <= 2; .@group++) {
+		.@size = (.@group == 1 ? getarraysize(.CandidatesNormal) : getarraysize(.CandidatesMVP));
+		for (.@i = 0; .@i < .@size; .@i++) {
+			.@id = (.@group == 1 ? .CandidatesNormal[.@i] : .CandidatesMVP[.@i]);
+			.@name$ = getmonsterinfo(.@id,MOB_NAME);
+			if (.@name$ == "null" || .@name$ == "") continue;
+			// Names are inserted into a PCRE pattern. Reject regex metacharacters.
+			if (compare(.@name$,".") || compare(.@name$,"(") ||
+				compare(.@name$,")") || compare(.@name$,"[") ||
+				compare(.@name$,"]") || compare(.@name$,"+") ||
+				compare(.@name$,"*") || compare(.@name$,"?") ||
+				compare(.@name$,"{") || compare(.@name$,"}") ||
+				compare(.@name$,"|") || compare(.@name$,"^") ||
+				compare(.@name$,"$") || compare(.@name$,"\\")) continue;
+			if (.@group == 1) {
+				if (getmonsterinfo(.@id,MOB_MVPEXP) > 0) continue;
+				.Normal[getarraysize(.Normal)] = .@id;
+			} else {
+				if (getmonsterinfo(.@id,MOB_MVPEXP) <= 0) continue;
+				.MVP[getarraysize(.MVP)] = .@id;
+			}
+		}
+	}
+
+	.Phase = 0;
+	.Completed = 0;
+	.Winner = 0;
+	.LastMob = 0;
+	stopnpctimer;
+	setnpctimer 0;
+	deletepset 1;
+	setnpcdisplay "Disguise Event",795;
+	end;
+
+OnClock0000:
+OnClock0200:
+OnClock0400:
+OnClock0600:
+OnClock0800:
+OnClock1000:
+OnClock1200:
+OnClock1400:
+OnClock1600:
+OnClock1800:
+OnClock2000:
+OnClock2200:
+	if ($GR_DisguiseAuto && !.Phase)
+		callsub S_Start;
+	end;
+
+OnTimer60000:
+	if (.Phase == 1)
+		announce "Disguise Event begins in 2 minutes at Prontera (156,285).",bc_all | bc_blue;
+	end;
+
+OnTimer120000:
+	if (.Phase == 1)
+		announce "Disguise Event begins in 1 minute at Prontera (156,285).",bc_all | bc_blue;
+	end;
+
+OnTimer180000:
+	if (.Phase != 1) end;
+	announce "The Disguise Event has started at Prontera (156,285)!",bc_all | bc_blue;
+	callsub S_NewRound;
+	end;
+
+OnTimer10000:
+	if (.Phase == 3)
+		callsub S_NewRound;
+	end;
+
+OnTimer30000:
+	if (.Phase != 2) end;
+	deletepset 1;
+	stopnpctimer;
+	setnpctimer 0;
+	setnpcdisplay "Disguise Event",795;
+	.Completed++;
+	npctalk "Time is up! The answer was " + .MonsterName$ + ".";
+	if (.Completed >= $GR_DisguiseRounds) {
+		callsub S_Stop;
+		announce "The Disguise Event has ended. Thanks for playing!",bc_all | bc_blue;
+		end;
+	}
+	.Phase = 3;
+	initnpctimer;
+	end;
+
+OnCorrect:
+	if (.Phase != 2 || .Winner) end;
+	if (!checkweight($GR_DisguisePrize,$GR_DisguiseQty)) {
+		dispbottom "You need more inventory space or weight capacity to receive the prize.";
+		end;
+	}
+	.Winner = 1;
+	deletepset 1;
+	getitem $GR_DisguisePrize,$GR_DisguiseQty;
+	.Completed++;
+	announce strcharinfo(0) + " guessed correctly: " + .MonsterName$ + "!",bc_map | bc_blue;
+	stopnpctimer;
+	setnpctimer 0;
+	setnpcdisplay "Disguise Event",795;
+	if (.Completed >= $GR_DisguiseRounds) {
+		callsub S_Stop;
+		announce "The Disguise Event has ended. Thanks for playing!",bc_all | bc_blue;
+		end;
+	}
+	.Phase = 3;
+	initnpctimer;
+	end;
+
+S_Start:
+	if (.Phase) return;
+	if (($GR_DisguiseMode == 1 && getarraysize(.Normal) == 0) ||
+		($GR_DisguiseMode == 2 && getarraysize(.MVP) == 0)) return;
+	.Phase = 1;
+	.Completed = 0;
+	.Winner = 0;
+	.LastMob = 0;
+	deletepset 1;
+	stopnpctimer;
+	setnpctimer 0;
+	setnpcdisplay "Disguise Event",795;
+	announce "Disguise Event begins in 3 minutes at Prontera (156,285).",bc_all | bc_blue;
+	initnpctimer;
+	return;
+
+S_Stop:
+	.Phase = 0;
+	.Winner = 0;
+	.Completed = 0;
+	deletepset 1;
+	stopnpctimer;
+	setnpctimer 0;
+	setnpcdisplay "Disguise Event",795;
+	return;
+
+S_NewRound:
+	if ($GR_DisguiseMode == 1) {
+		.@size = getarraysize(.Normal);
+		if (.@size == 0) {
+			callsub S_Stop;
+			return;
+		}
+		.@i = rand(.@size);
+		for (.@tries = 0; .@tries < 10 && .@size > 1 && .Normal[.@i] == .LastMob; .@tries++)
+			.@i = rand(.@size);
+		.Mob = .Normal[.@i];
+	} else {
+		.@size = getarraysize(.MVP);
+		if (.@size == 0) {
+			callsub S_Stop;
+			return;
+		}
+		.@i = rand(.@size);
+		for (.@tries = 0; .@tries < 10 && .@size > 1 && .MVP[.@i] == .LastMob; .@tries++)
+			.@i = rand(.@size);
+		.Mob = .MVP[.@i];
+	}
+	.LastMob = .Mob;
+	.MonsterName$ = getmonsterinfo(.Mob,MOB_NAME);
+	.Phase = 2;
+	.Winner = 0;
+	deletepset 1;
+	// Anchored match: the public message must be exactly the monster name.
+	// (?i) makes the answer case-insensitive.
+	defpattern 1,"(?i)^[^:]+:[[:space:]]*" + .MonsterName$ + "[[:space:]]*$","OnCorrect";
+	activatepset 1;
+	setnpcdisplay "Disguise Event",.Mob;
+	stopnpctimer;
+	setnpctimer 0;
+	initnpctimer;
+	return;
+}

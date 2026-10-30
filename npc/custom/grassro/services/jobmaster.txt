@@ -1,0 +1,778 @@
+//===== GrassRO rAthena Script =============================================
+//= Job Master v2.1 - Pre-Renewal paid advancement (clean dialogue)
+//= Replace ONLY npc/custom/jobmaster.txt (back up original first).
+//= Requirements: rAthena with eaclass/roclass, getiteminfo, logmes,
+//= F_ClearJobVar and F_GetPlatinumSkills available in official scripts.
+//= No custom SQL tables; permanent globals/char vars + logmes are best-effort.
+//= WARNING: Crash safety is NOT atomic. Test on a development server first.
+//=======================================================================
+prontera,153,193,6	script	Job Veteran	778,{
+	function BaseFee;
+	function EffectiveFee;
+	function RewardItem;
+	function ItemCharge;
+	function PriceGuide;
+	function AdminPanel;
+	function ValidateChange;
+	function HandleReview;
+	function IsMappedReward;
+
+	mes "[Job Master]";
+	mes "Welcome, adventurer! I offer paid job advancement without the traditional job-change quests.";
+	mes "^00AA00SPECIAL BONUS: Max Job Level Discount!^000000";
+	mes "Reach your job's maximum level to save ^00AA00" + $JM_Discount + "%^000000 on eligible job-change fees.";
+	mes "Optional equipment is separately priced. Rebirth does not receive a Max Job discount.";
+	if (JM_TxState == 1) {
+		mes "^FF0000Your previous Job Master transaction requires administrator review.^000000";
+		mes "You can still play normally. Group 99 must resolve the transaction before Job Master can process another job change.";
+	}
+	next;
+	mes "[Job Master]";
+	.@menu$ = "Change My Job:View Fees and Rules:Leave";
+	if (getgroupid() == 99)
+		.@menu$ += ":^00AA00Group 99 Administration^000000";
+	.@action = select(.@menu$);
+	if (.@action == 2) {
+		PriceGuide();
+		close;
+	}
+	if (.@action == 3)
+		close;
+	if (.@action == 4 && getgroupid() == 99) {
+		AdminPanel();
+		close;
+	}
+	if (.@action != 1)
+		close;
+	// Remove the welcome/menu text before checking this character.
+	clear;
+	if (JM_TxState != 0) {
+		mes "[Job Master]";
+		mes "^FF0000Job Master is locked for this character pending group 99 review.^000000";
+		close;
+	}
+	if (checkcart() || checkfalcon() || checkriding() || ismounting()) {
+		mes "[Job Master]";
+		mes "Remove your cart, falcon, riding Peco, or mount before changing jobs.";
+		close;
+	}
+	if (SkillPoint > 0) {
+		mes "[Job Master]";
+		mes "Spend all unused skill points before changing jobs.";
+		close;
+	}
+
+	// All options are explicit whitelists. There is no third/fourth path.
+	.@n = 0;
+	switch (Class) {
+		case Job_Novice:
+			setarray .@o[0],Job_Swordman,Job_Mage,Job_Archer,Job_Acolyte,Job_Merchant,Job_Thief,Job_Super_Novice,Job_Taekwon,Job_Gunslinger,Job_Ninja;
+			.@n = 10;
+			break;
+		case Job_Baby:
+			// Players reach Baby Novice ONLY via the real adoption system.
+			setarray .@o[0],Job_Baby_Swordman,Job_Baby_Mage,Job_Baby_Archer,Job_Baby_Acolyte,Job_Baby_Merchant,Job_Baby_Thief,Job_Super_Baby,Job_Baby_Taekwon,Job_Baby_Gunslinger,Job_Baby_Ninja;
+			.@n = 10;
+			break;
+		case Job_Novice_High:
+			// Official Valkyrie stores ADVJOB; old custom Job Master stored lastJob.
+			.@lineage = ADVJOB;
+			if (.@lineage == 0 && lastJob > 0)
+				.@lineage = lastJob + Job_Novice_High;
+			if (lastJob > 0 && ADVJOB > 0 && (lastJob + Job_Novice_High) != ADVJOB)
+				.@lineage = 0;
+			if (.@lineage > 0 && eaclass(.@lineage) != -1 && (eaclass(.@lineage) & EAJL_2) && (eaclass(.@lineage) & EAJL_UPPER)) {
+				.@to = roclass((eaclass(.@lineage) & EAJ_BASEMASK) | EAJL_UPPER);
+				if (.@to > 0 && BaseFee(.@to) >= 0) {
+					.@o[.@n] = .@to;
+					.@n++;
+				}
+			}
+			break;
+		default:
+			.@eac = eaclass();
+			if (.@eac == -1 || (.@eac & (EAJL_THIRD|EAJL_FOURTH)))
+				break;
+			// Only the classic normal second classes may rebirth.
+			if (Class >= Job_Knight && Class <= Job_Crusader2 && !(.@eac & (EAJL_BABY|EAJL_UPPER)) && Upper == 0) {
+				if (valkyrie_Q == 0 && ADVJOB == 0) {
+					.@o[.@n] = Job_Novice_High;
+					.@n++;
+				} else {
+					mes "[Job Master]";
+					mes "^FF0000An existing Juno rebirth record was detected. Complete rebirth through Valkyrie instead.^000000";
+				}
+			}
+			// Standard, High and Baby first-class families, including Taekwon.
+			switch (Class) {
+				case Job_Swordman: case Job_Mage: case Job_Archer:
+				case Job_Acolyte: case Job_Merchant: case Job_Thief:
+				case Job_Swordman_High: case Job_Mage_High: case Job_Archer_High:
+				case Job_Acolyte_High: case Job_Merchant_High: case Job_Thief_High:
+				case Job_Baby_Swordman: case Job_Baby_Mage: case Job_Baby_Archer:
+				case Job_Baby_Acolyte: case Job_Baby_Merchant: case Job_Baby_Thief:
+				case Job_Taekwon: case Job_Baby_Taekwon:
+					.@c1 = roclass(.@eac|EAJL_2_1);
+					.@c2 = roclass(.@eac|EAJL_2_2);
+					// High first classes MUST keep their pre-rebirth branch.
+					if (.@eac & EAJL_UPPER) {
+						.@lineage = ADVJOB;
+						if (.@lineage == 0 && lastJob > 0)
+							.@lineage = lastJob + Job_Novice_High;
+						if (.@lineage <= 0 || eaclass(.@lineage) == -1 ||
+							((eaclass(.@lineage)&EAJ_BASEMASK) != (.@eac&EAJ_BASEMASK)) ||
+							!(eaclass(.@lineage)&EAJL_2) || !(eaclass(.@lineage)&EAJL_UPPER) ||
+							(lastJob > 0 && ADVJOB > 0 && lastJob + Job_Novice_High != ADVJOB)) {
+							break;
+						}
+						if (.@c1 == .@lineage || .@c2 == .@lineage) {
+							.@o[.@n] = .@lineage;
+							.@n++;
+						}
+					} else {
+						if (.@c1 > 0 && BaseFee(.@c1) >= 0 && !(eaclass(.@c1)&(EAJL_THIRD|EAJL_FOURTH))) {
+							.@o[.@n] = .@c1;
+							.@n++;
+						}
+						if (.@c2 > 0 && BaseFee(.@c2) >= 0 && !(eaclass(.@c2)&(EAJL_THIRD|EAJL_FOURTH))) {
+							.@o[.@n] = .@c2;
+							.@n++;
+						}
+					}
+					break;
+			}
+			break;
+	}
+
+	if (.@n <= 0) {
+		mes "[Job Master]";
+		mes "There is no eligible Pre-Renewal advancement for your current class.";
+		mes "If you are a High class with conflicting rebirth records, ask a group 99 administrator for a review.";
+		close;
+	}
+	// The menu must not inherit any dialogue printed by the checks.
+	clear;
+	mes "[Job Master]";
+	mes "Select an advancement:";
+	.@choices$ = "";
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (.@i > 0) .@choices$ += ":";
+		.@choices$ += (.@o[.@i] == Job_Novice_High ? "Rebirth to High Novice" : jobname(.@o[.@i]));
+	}
+	.@choices$ += ":Cancel";
+	.@pick = select(.@choices$);
+	if (.@pick > .@n) close;
+	.@target = .@o[.@pick-1];
+	.@source = Class;
+	// Job selection is complete: reset the message area for equipment.
+	clear;
+
+	if (!ValidateChange(.@source,.@target)) {
+		mes "[Job Master]";
+		mes "^FF0000You do not currently meet the eligibility requirements for that job.^000000";
+		close;
+	}
+	.@base = EffectiveFee(.@target);
+	if (.@base < 0) close;
+	.@discount = 0;
+	if (!(eaclass(.@source)&EAJL_2) &&
+		.@source != Job_Novice && .@source != Job_Baby && .@source != Job_Novice_High &&
+		JobLevel >= 50 && .@target != Job_Novice_High) {
+		.@discount = (.@base * $JM_Discount) / 100;
+	}
+	.@fee = .@base - .@discount;
+	.@item = RewardItem(.@target);
+	.@eqprice = ( .@item > 0 ? ItemCharge(.@item) : -1 );
+	.@with = 0;
+	if (.@item > 0 && .@eqprice >= 0) {
+		mes "[Job Master]";
+		mes "Optional reward: ^0055FF" + getitemname(.@item) + "^000000";
+		mes "Job fee: " + .@fee + "z";
+		mes "Equipment surcharge: " + .@eqprice + "z";
+		.@pack = select("Job change only:Job change + equipment:Cancel");
+		if (.@pack == 3) close;
+		.@with = (.@pack == 2);
+	} else {
+		mes "[Job Master]";
+		mes "There is no eligible, priced equipment reward for this class. Job change only.";
+	}
+	.@eqtotal = (.@with ? .@eqprice : 0);
+	.@total = .@fee + .@eqtotal;
+	// Keep the final quote short so it fits the small roBrowser dialogue.
+	clear;
+	mes "^3366CCAdvance: " + jobname(.@target) + "^000000";
+	mes "Job fee: " + callfunc("F_InsertComma",.@fee) + "z";
+	if (.@discount > 0)
+		mes "^00AA00Max Job savings: " + callfunc("F_InsertComma",.@discount) + "z^000000";
+	mes "Gear: " + (.@with ? getitemname(.@item) + " (" + callfunc("F_InsertComma",.@eqtotal) + "z)" : "None");
+	mes "^00AA00TOTAL: " + callfunc("F_InsertComma",.@total) + "z^000000";
+	if (.@with) {
+		// A deliberate extra page ensures the red warning is visible at pay time.
+		next;
+		mes "[Job Master]";
+		mes "^FF0000WARNING: Gear may drop!^000000";
+		mes "^FF0000If full or overweight, it may fall.^000000";
+		mes "^FF0000Others can take it. No replacement.^000000";
+		mes "^00AA00Pay: " + callfunc("F_InsertComma",.@total) + "z^000000";
+	} else {
+		mes "Balance: " + callfunc("F_InsertComma",Zeny) + "z";
+	}
+	if (select("Confirm and pay:Cancel") != 1) close;
+	// Clear the quote/warning before reporting success or any failure.
+	clear;
+
+	// Revalidate all mutable conditions after the player's final confirmation.
+	if (JM_TxState != 0 || Class != .@source || !ValidateChange(.@source,.@target) ||
+		checkcart() || checkfalcon() || checkriding() || ismounting() || SkillPoint > 0) {
+		mes "[Job Master]";
+		mes "Eligibility changed. No payment was taken.";
+		close;
+	}
+	.@latest = EffectiveFee(.@target);
+	.@latestdiscount = 0;
+	if (!(eaclass(.@source)&EAJL_2) &&
+		.@source != Job_Novice && .@source != Job_Baby && .@source != Job_Novice_High &&
+		JobLevel >= 50 && .@target != Job_Novice_High)
+		.@latestdiscount = (.@latest * $JM_Discount) / 100;
+	.@newitem = RewardItem(.@target);
+	.@newprice = (.@with ? ItemCharge(.@newitem) : 0);
+	if (.@latest < 0 || .@latest-.@latestdiscount != .@fee || .@newitem != .@item ||
+		(.@with && (.@newprice < 0 || .@newprice != .@eqprice))) {
+		mes "[Job Master]";
+		mes "Pricing or equipment changed during your conversation. No payment was taken. Please reopen Job Master.";
+		close;
+	}
+	if (Zeny < .@total) {
+		mes "[Job Master]";
+		mes "You need " + (.@total-Zeny) + "z more to pay. No payment was taken.";
+		close;
+	}
+
+	// WARNING: This flag and log are NOT an atomic database transaction.
+	// On uncertain recovery, a surviving JM_TxState=1 blocks further use.
+	JM_TxSource = .@source;
+	JM_TxTarget = .@target;
+	JM_TxCharge = .@total;
+	JM_TxItem = (.@with ? .@item : 0);
+	JM_TxBefore = Zeny;
+	JM_TxWhen = gettimetick(2);
+	JM_TxState = 1;
+	logmes "JM BEGIN char="+getcharid(0)+" src="+.@source+" dst="+.@target+" price="+.@total+" item="+JM_TxItem+" before="+Zeny;
+	Zeny -= .@total;
+	if (.@target == Job_Novice_High) {
+		// Mirror necessary official Valkyrie lineage/quest side effects;
+		// DO NOT modify npc/jobs/valkyrie.txt itself.
+		callfunc "F_ClearJobVar";
+		lastJob = .@source;
+		ADVJOB = .@source + Job_Novice_High;
+		if (ADVJOB == Job_Lord_Knight2) ADVJOB = Job_Lord_Knight;
+		if (ADVJOB == Job_Paladin2) ADVJOB = Job_Paladin;
+	}
+	jobchange .@target;
+	if (Class != .@target) {
+		logmes "JM ERROR jobchange failed char="+getcharid(0)+" expected="+.@target+" actual="+Class;
+		mes "[Job Master]";
+		mes "^FF0000Unexpected result. Contact group 99. Do not retry.^000000";
+		close;
+	}
+	if (.@target == Job_Novice_High) {
+		resetlvl(1);
+		MISC_QUEST = MISC_QUEST & ~1024;
+		skill "NV_FIRSTAID",1,SKILL_PERM;
+		skill "NV_TRICKDEAD",1,SKILL_PERM;
+		completequest 1000;
+	} else {
+		// Sync old Job Master lineage after an official Valkyrie rebirth.
+		if ((eaclass(.@target)&EAJL_UPPER) && ADVJOB > 0 && lastJob == 0)
+			lastJob = ADVJOB - Job_Novice_High;
+		if ($JM_Platinum)
+			callfunc "F_GetPlatinumSkills";
+	}
+	if (.@with && .@item > 0) {
+		getitem .@item,1;
+		logmes "JM REWARD char="+getcharid(0)+" item="+.@item+" amount=1 (may drop if overweight)";
+	}
+	JM_LastTarget = .@target;
+	JM_LastPaid = .@total;
+	JM_LastWhen = gettimetick(2);
+	logmes "JM COMPLETE char="+getcharid(0)+" src="+.@source+" dst="+Class+" zeny="+Zeny;
+	JM_TxState = 0;
+	specialeffect2 EF_ANGEL2;
+	specialeffect2 EF_ELECTRIC;
+	mes "[Job Master]";
+	mes "^00AA00Advancement completed!^000000 You are now " + jobname(Class) + ".";
+	mes "Paid: " + .@total + "z. Remaining: " + Zeny + "z.";
+	mes "No teleport was performed.";
+	close;
+
+// ----- Class-based pricing: all non-listed classes are rejected. --------
+function BaseFee {
+	.@j = getarg(0);
+	if (.@j == Job_Novice_High) return 1285000;
+	if (.@j == Job_Super_Novice || .@j == Job_Super_Baby || .@j == Job_Ninja || .@j == Job_Baby_Ninja)
+		return 10000;
+	if (.@j == Job_Taekwon || .@j == Job_Baby_Taekwon) return 1000;
+	if (.@j == Job_Gunslinger || .@j == Job_Baby_Gunslinger) return 5000;
+	if (.@j == Job_Swordman_High || .@j == Job_Mage_High || .@j == Job_Archer_High ||
+		.@j == Job_Acolyte_High || .@j == Job_Merchant_High || .@j == Job_Thief_High)
+		return 10000;
+	if (.@j == Job_Swordman || .@j == Job_Mage || .@j == Job_Archer ||
+		.@j == Job_Acolyte || .@j == Job_Merchant || .@j == Job_Thief ||
+		.@j == Job_Baby_Swordman || .@j == Job_Baby_Mage || .@j == Job_Baby_Archer ||
+		.@j == Job_Baby_Acolyte || .@j == Job_Baby_Merchant || .@j == Job_Baby_Thief)
+		return 5000;
+	.@e = eaclass(.@j);
+	if (.@e == -1 || (.@e & (EAJL_THIRD|EAJL_FOURTH)) || !(.@e & EAJL_2)) return -1;
+	if (.@e & EAJL_UPPER) return 30000;
+	.@base = roclass(.@e & EAJ_UPPERMASK);
+	switch (.@base) {
+		case Job_Knight: return 50000;
+		case Job_Crusader: return 75000;
+		case Job_Priest: return 40000;
+		case Job_Monk: return 100000;
+		case Job_Wizard: return 80000;
+		case Job_Sage: return 150000;
+		case Job_Hunter: return 50000;
+		case Job_Bard: return 90000;
+		case Job_Dancer: return 60000;
+		case Job_Blacksmith: return 70000;
+		case Job_Alchemist: return 150000;
+		case Job_Assassin: return 60000;
+		case Job_Rogue: return 90000;
+		case Job_Star_Gladiator: return 125000;
+		case Job_Soul_Linker: return 100000;
+	}
+	return -1;
+}
+function EffectiveFee {
+	.@j = getarg(0);
+	.@default = BaseFee(.@j);
+	if (.@default < 0) return -1;
+	if (getd("$JM_FeeOverrideOn_" + .@j))
+		return getd("$JM_FeeOverride_" + .@j);
+	return .@default;
+}
+// ----- Item mapping mirrors upstream classic Job Master rewards. --------
+function RewardItem {
+	.@j = getarg(0);
+	if (.@j == Job_Novice_High) return 0;
+	if (.@j == Job_Super_Novice || .@j == Job_Super_Baby) return 1208;
+	.@e = eaclass(.@j);
+	if (.@e == -1 || (.@e & (EAJL_THIRD|EAJL_FOURTH))) return 0;
+	if (.@e & EAJL_2) {
+		switch (roclass(.@e & EAJ_UPPERMASK)) {
+			case Job_Knight: return 1163;
+			case Job_Priest: return 1522;
+			case Job_Wizard: return 1617;
+			case Job_Blacksmith: return 1360;
+			case Job_Hunter: return 1718;
+			case Job_Assassin: return 1254;
+			case Job_Crusader: return 1410;
+			case Job_Monk: return 1807;
+			case Job_Sage: return 1550;
+			case Job_Rogue: return 1222;
+			case Job_Alchemist: return 1126;
+			case Job_Bard: return 1907;
+			case Job_Dancer: return 1960;
+			case Job_Star_Gladiator: return 1550;
+			case Job_Soul_Linker: return 1617;
+		}
+	}
+	switch (roclass(.@e & EAJ_BASEMASK)) {
+		case Job_Swordman: return 1108;
+		case Job_Mage: return 1602;
+		case Job_Archer: return 1705;
+		case Job_Acolyte: return 1505;
+		case Job_Merchant: return 1302;
+		case Job_Thief: return 1208;
+		case Job_Gunslinger: return 13101;
+		case Job_Ninja: return 13010;
+	}
+	return 0;
+}
+function IsMappedReward {
+	.@id = getarg(0);
+	for (.@k=0; .@k < getarraysize(.RewardWhitelist); .@k++)
+		if (.RewardWhitelist[.@k] == .@id) return 1;
+	return 0;
+}
+function ItemCharge {
+	.@id = getarg(0);
+	if (.@id <= 0 || !IsMappedReward(.@id) || getiteminfo(.@id,ITEMINFO_ID) != .@id) return -1;
+	// An explicit GM override is allowed to equal 0 (free equipment).
+	if (getd("$JM_EqOverrideOn_" + .@id))
+		return getd("$JM_EqOverride_" + .@id);
+	.@buy = getiteminfo(.@id,ITEMINFO_BUY);
+	if (.@buy <= 0) return -1;
+	.@price = .@buy / 2; // integer division = round down
+	if (.@price < 1) .@price = 1; // only GM may make equipment free
+	return .@price;
+}
+// ----- Final validation is also called BEFORE payment. ------------------
+function ValidateChange {
+	.@from = getarg(0);
+	.@to = getarg(1);
+	if (Class != .@from || BaseFee(.@to) < 0) return 0;
+	if (eaclass(.@to) == -1 || (eaclass(.@to)&(EAJL_THIRD|EAJL_FOURTH))) return 0;
+	// A Baby class must have a real family record, not just a Baby class ID.
+	if ((eaclass(.@to)&EAJL_BABY) && (!getmotherid() || !getfatherid())) return 0;
+	if (JM_TxState != 0) return 0;
+	if (.@to == Job_Novice_High) {
+		if (!(Class >= Job_Knight && Class <= Job_Crusader2) || (eaclass()&(EAJL_BABY|EAJL_UPPER))) return 0;
+		if (Upper != 0 || ADVJOB != 0 || valkyrie_Q != 0) return 0;
+		return BaseLevel >= 99 && JobLevel >= 50;
+	}
+	if (.@from == Job_Novice || .@from == Job_Baby || .@from == Job_Novice_High) {
+		if (JobLevel < 10) return 0;
+		if ((.@to == Job_Super_Novice || .@to == Job_Super_Baby) && BaseLevel < 45) return 0;
+		if (.@from == Job_Novice_High) {
+			.@lineage = ADVJOB;
+			if (.@lineage == 0 && lastJob > 0) .@lineage = lastJob + Job_Novice_High;
+			if (.@lineage <= 0 || eaclass(.@lineage) == -1 || !(eaclass(.@lineage)&EAJL_UPPER) ||
+				!(eaclass(.@lineage)&EAJL_2) ||
+				(lastJob > 0 && ADVJOB > 0 && lastJob+Job_Novice_High != ADVJOB)) return 0;
+			return .@to == roclass((eaclass(.@lineage)&EAJ_BASEMASK)|EAJL_UPPER);
+		}
+		if (.@from == Job_Novice) {
+			if (eaclass(.@to)&(EAJL_BABY|EAJL_UPPER|EAJL_2))
+				return .@to == Job_Super_Novice;
+			return .@to == Job_Super_Novice || .@to == Job_Taekwon ||
+				.@to == Job_Gunslinger || .@to == Job_Ninja ||
+				(.@to >= Job_Swordman && .@to <= Job_Thief);
+		}
+		if (.@from == Job_Baby) {
+			return .@to == Job_Super_Baby || .@to == Job_Baby_Taekwon ||
+				.@to == Job_Baby_Gunslinger || .@to == Job_Baby_Ninja ||
+				.@to == Job_Baby_Swordman || .@to == Job_Baby_Mage ||
+				.@to == Job_Baby_Archer || .@to == Job_Baby_Acolyte ||
+				.@to == Job_Baby_Merchant || .@to == Job_Baby_Thief;
+		}
+	}
+	if (JobLevel < 40) return 0;
+	.@src = eaclass(.@from);
+	.@dst = eaclass(.@to);
+	if (.@src == -1 || .@dst == -1) return 0;
+	if ((.@src&EAJ_BASEMASK) != (.@dst&EAJ_BASEMASK)) return 0;
+	if ((.@src&EAJL_BABY) != (.@dst&EAJL_BABY)) return 0;
+	if ((.@src&EAJL_UPPER) != (.@dst&EAJL_UPPER)) return 0;
+	if (!(.@dst&EAJL_2) || (.@src&EAJL_2)) return 0;
+	if (.@src&EAJL_UPPER) {
+		.@lineage = ADVJOB;
+		if (.@lineage == 0 && lastJob > 0) .@lineage = lastJob + Job_Novice_High;
+		if (.@lineage <= 0 || .@lineage != .@to ||
+			(lastJob > 0 && ADVJOB > 0 && lastJob + Job_Novice_High != ADVJOB)) return 0;
+	}
+	return 1;
+}
+// ----- Player-facing fee guide: short pages, categorized by topic. -------
+function PriceGuide {
+	while (1) {
+		clear;
+		mes "[Job Master]";
+		mes "^3366CCFEES & RULES^000000";
+		mes "Choose what you want to view.";
+		.@section = select("Advancement Fees:Second Job Prices:Expanded Class Prices:Discounts & Equipment:Rebirth & Baby Rules:Back");
+		if (.@section == 6)
+			return;
+		clear;
+		switch (.@section) {
+			case 1:
+				mes "[Job Master]";
+				mes "^3366CCSTANDARD ADVANCEMENT^000000";
+				mes "First Job: ^0055FF" + callfunc("F_InsertComma",BaseFee(Job_Swordman)) + "z^000000";
+				mes "High First Job: ^0055FF" + callfunc("F_InsertComma",BaseFee(Job_Swordman_High)) + "z^000000";
+				mes "Transcendent Second: ^0055FF" + callfunc("F_InsertComma",BaseFee(Job_Lord_Knight)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCREBIRTH^000000";
+				mes "Current fee: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Novice_High)) + "z^000000";
+				mes "Requires ^FF8800Base 99 / Job 50^000000.";
+				mes "^777777GM overrides may change individual class fees.^000000";
+				next;
+				break;
+			case 2:
+				mes "[Job Master]";
+				mes "^3366CCSECOND JOBS - 1 / 5^000000";
+				mes "Knight: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Knight)) + "z^000000";
+				mes "Crusader: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Crusader)) + "z^000000";
+				mes "Priest: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Priest)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCSECOND JOBS - 2 / 5^000000";
+				mes "Monk: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Monk)) + "z^000000";
+				mes "Wizard: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Wizard)) + "z^000000";
+				mes "Sage: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Sage)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCSECOND JOBS - 3 / 5^000000";
+				mes "Hunter: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Hunter)) + "z^000000";
+				mes "Bard: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Bard)) + "z^000000";
+				mes "Dancer: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Dancer)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCSECOND JOBS - 4 / 5^000000";
+				mes "Blacksmith: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Blacksmith)) + "z^000000";
+				mes "Alchemist: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Alchemist)) + "z^000000";
+				mes "Assassin: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Assassin)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCSECOND JOBS - 5 / 5^000000";
+				mes "Rogue: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Rogue)) + "z^000000";
+				mes "^00AA00Job 50: " + $JM_Discount + "% discount.^000000";
+				mes "^777777Baby jobs use matching fees.^000000";
+				next;
+				break;
+			case 3:
+				mes "[Job Master]";
+				mes "^3366CCEXPANDED JOBS - 1 / 2^000000";
+				mes "Taekwon: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Taekwon)) + "z^000000";
+				mes "Gunslinger: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Gunslinger)) + "z^000000";
+				mes "Ninja: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Ninja)) + "z^000000";
+				mes "Super Novice: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Super_Novice)) + "z^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCEXPANDED JOBS - 2 / 2^000000";
+				mes "Star Gladiator: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Star_Gladiator)) + "z^000000";
+				mes "Soul Linker: ^0055FF" + callfunc("F_InsertComma",EffectiveFee(Job_Soul_Linker)) + "z^000000";
+				mes "^00AA00Job 50: " + $JM_Discount + "% off these advances.^000000";
+				mes "^777777Baby versions use matching class fees.^000000";
+				next;
+				break;
+			case 4:
+				mes "[Job Master]";
+				mes "^3366CCMAX JOB LEVEL BONUS^000000";
+				mes "^00AA00" + $JM_Discount + "% off^000000 eligible job fees";
+				mes "at maximum Job Level.";
+				mes "^777777No Max Job discount on rebirth.^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCOPTIONAL EQUIPMENT^000000";
+				mes "Pay ^0055FF50% of database Buy^000000";
+				mes "or the group 99 final price.";
+				mes "^FF0000Full inventory? Item may drop.^000000";
+				next;
+				break;
+			case 5:
+				mes "[Job Master]";
+				mes "^3366CCREBIRTH RULES^000000";
+				mes "Base 99 / Job 50 required.";
+				mes "Keep your items and leftover Zeny.";
+				mes "^FF0000Started Juno rebirth? Finish there.^000000";
+				next;
+				mes "[Job Master]";
+				mes "^3366CCBABY & CLASS RULES^000000";
+				mes "Baby Novice requires adoption.";
+				mes "Super Novice requires Base 45.";
+				mes "^FF0000No 3rd, 4th or later expanded jobs.^000000";
+				next;
+				break;
+		}
+	}
+}
+// ----- Admin: only exact group ID 99. Settings survive reloads. ---------
+function AdminPanel {
+	if (getgroupid() != 99) return;
+	while (1) {
+		mes "[Job Master: Group 99]";
+		mes "All changes are global and apply to future purchases.";
+		.@action = select("View/Change Job Fee:Change Rebirth Fee:Equipment Price Override:Max Job Discount:Toggle Platinum Skills:Review/Unlock Character:Reset Overrides:Exit");
+		if (getgroupid() != 99) close;
+		if (.@action == 8) return;
+		if (.@action == 6) {
+			HandleReview();
+			return;
+		}
+		if (.@action == 4) {
+			mes "[Job Master]";
+			mes "Current discount: " + $JM_Discount + "%. Set 0-50%.";
+			input .@new;
+			if (.@new < 0 || .@new > 50) { mes "Invalid range."; close; }
+			if (select("Confirm change:Cancel") == 1 && getgroupid() == 99) {
+				logmes "JM ADMIN discount GM="+getcharid(0)+" old="+$JM_Discount+" new="+.@new;
+				$JM_Discount = .@new;
+			}
+			close;
+		}
+		if (.@action == 5) {
+			mes "[Job Master]";
+			mes "Automatic Platinum Skills: " + ($JM_Platinum ? "Enabled" : "Disabled");
+			if (select("Toggle globally:Cancel") == 1 && getgroupid() == 99) {
+				$JM_Platinum = !$JM_Platinum;
+				logmes "JM ADMIN platinum GM="+getcharid(0)+" value="+$JM_Platinum;
+			}
+			close;
+		}
+		if (.@action == 1 || .@action == 2) {
+			mes "[Job Master]";
+			if (.@action == 2) .@id = Job_Novice_High;
+			else {
+				mes "Enter a permitted destination job ID.";
+				input .@id;
+			}
+			if (BaseFee(.@id) < 0) { mes "Invalid or prohibited destination."; close; }
+			mes "Class: " + jobname(.@id);
+			mes "Default fee: " + BaseFee(.@id) + "z; active fee: " + EffectiveFee(.@id) + "z.";
+			.@choice = select("Set final fee:Reset class fee to default:Cancel");
+			if (.@choice == 3) close;
+			if (getgroupid() != 99) close;
+			if (.@choice == 2) {
+				setd "$JM_FeeOverrideOn_"+.@id,0;
+				logmes "JM ADMIN reset job fee GM="+getcharid(0)+" id="+.@id;
+				close;
+			}
+			mes "Set new final job fee (1 to 10,000,000z):";
+			input .@new;
+			if (.@new < 1 || .@new > 10000000) { mes "Invalid fee."; close; }
+			mes "Change " + jobname(.@id) + " to " + .@new + "z?";
+			if (select("Confirm:Cancel") == 1 && getgroupid() == 99) {
+				logmes "JM ADMIN job fee GM="+getcharid(0)+" id="+.@id+" old="+EffectiveFee(.@id)+" new="+.@new;
+				setd "$JM_FeeOverride_"+.@id,.@new;
+				setd "$JM_FeeOverrideOn_"+.@id,1;
+			}
+			close;
+		}
+		if (.@action == 3) {
+			mes "[Job Master]";
+			mes "Enter an equipment reward item ID from the Job Master mapping.";
+			input .@id;
+			if (!IsMappedReward(.@id) || getiteminfo(.@id,ITEMINFO_ID) != .@id) {
+				mes "Invalid/unmapped item. Override refused.";
+				close;
+			}
+			mes "Item: " + getitemname(.@id);
+			mes "Effective equipment price: " + ItemCharge(.@id) + "z (-1 means unavailable).";
+			.@choice = select("Set exact final equipment price:Remove override:Cancel");
+			if (.@choice == 3) close;
+			if (.@choice == 2 && getgroupid() == 99) {
+				setd "$JM_EqOverrideOn_"+.@id,0;
+				logmes "JM ADMIN reset item price GM="+getcharid(0)+" item="+.@id;
+				close;
+			}
+			mes "Enter 0 to 100,000,000z. Zero makes this reward FREE.";
+			input .@new;
+			if (.@new < 0 || .@new > 100000000) { mes "Invalid price."; close; }
+			if (.@new == 0)
+				mes "^FF0000WARNING: This will make " + getitemname(.@id) + " FREE during eligible advancement.^000000";
+			mes "Set FINAL item charge to " + .@new + "z?";
+			if (select("Confirm override:Cancel") == 1 && getgroupid() == 99) {
+				logmes "JM ADMIN equipment price GM="+getcharid(0)+" item="+.@id+" old="+ItemCharge(.@id)+" new="+.@new;
+				setd "$JM_EqOverride_"+.@id,.@new;
+				setd "$JM_EqOverrideOn_"+.@id,1;
+			}
+			close;
+		}
+		if (.@action == 7) {
+			mes "[Job Master]";
+			mes "Reset ALL price overrides and restore 20% max discount and Platinum Skills enabled?";
+			mes "^FF0000This also removes intentional free-equipment overrides.^000000";
+			if (select("Continue to final confirmation:Cancel") != 1) close;
+			if (select("CONFIRM RESET ALL:Cancel") != 1 || getgroupid() != 99) close;
+			for (.@i=0; .@i<getarraysize(.AllowedJobs); .@i++)
+				setd "$JM_FeeOverrideOn_"+.AllowedJobs[.@i],0;
+			for (.@i=0; .@i<getarraysize(.RewardWhitelist); .@i++)
+				setd "$JM_EqOverrideOn_"+.RewardWhitelist[.@i],0;
+			$JM_Discount = 20;
+			$JM_Platinum = 1;
+			logmes "JM ADMIN RESET ALL GM="+getcharid(0);
+			close;
+		}
+	}
+	return;
+}
+// ----- Review ONLINE character, no automatic refund or item spawn. -----
+function HandleReview {
+	if (getgroupid() != 99) return;
+	mes "[Job Master: Review]";
+	mes "Character must be ONLINE; enter their exact character name.";
+	input .@who$;
+	.@target_aid = getcharid(3,.@who$);
+	if (.@target_aid <= 0) { mes "Character is not online or not found."; close; }
+	.@gm_aid = getcharid(3);
+	.@gm_cid = getcharid(0);
+	mes "After viewing the reported transaction, investigate independently.";
+	mes "^FF0000Only resolve after verifying and documenting the outcome. This panel cannot refund or spawn items.^000000";
+	.@decision = select("Inspect only:Resolve and unlock:Cancel");
+	if (.@decision == 3) close;
+	if (.@decision == 2) {
+		mes "Enter your investigation and compensation note:";
+		input .@note$;
+		if (.@note$ == "") { mes "Resolution note required."; close; }
+		mes "Unlock this character based on your investigation?";
+		if (select("Final confirmation:Cancel") != 1) close;
+	}
+	if (getgroupid() != 99) close;
+	close2;
+	// RID switch occurs ONLY after the original GM dialogue is closed.
+	if (!attachrid(.@target_aid)) {
+		attachrid .@gm_aid;
+		dispbottom "JM: Target went offline. No changes made.";
+		end;
+	}
+	if (strcharinfo(0) != .@who$) {
+		detachrid;
+		attachrid .@gm_aid;
+		dispbottom "JM: Character identity mismatch. No changes made.";
+		end;
+	}
+	.@state = JM_TxState;
+	.@source = JM_TxSource;
+	.@dest = JM_TxTarget;
+	.@paid = JM_TxCharge;
+	.@item = JM_TxItem;
+	.@before = JM_TxBefore;
+	.@when = JM_TxWhen;
+	.@actual = Class;
+	.@zeny = Zeny;
+	if (.@decision == 2 && .@state == 1) {
+		logmes "JM ADMIN RESOLVE gm_cid="+.@gm_cid+" target_cid="+getcharid(0)+" orig="+.@source+" dest="+.@dest+" actual="+Class+" paid="+.@paid+" note="+.@note$;
+		JM_LastResolution$ = .@note$;
+		JM_LastReviewer = .@gm_cid;
+		JM_TxState = 0;
+	}
+	detachrid;
+	if (!attachrid(.@gm_aid)) end;
+	dispbottom "JM REVIEW "+.@who$+": status="+.@state+" source="+.@source+" dest="+.@dest+" actual="+.@actual;
+	dispbottom "JM REVIEW: quoted="+.@paid+"z initial="+.@before+"z current="+.@zeny+"z item="+.@item+" time="+.@when;
+	if (.@decision == 2 && .@state == 1)
+		dispbottom "JM: Resolution recorded and player Job Master unlocked.";
+	else if (.@decision == 2)
+		dispbottom "JM: Character was not locked; no unlock performed.";
+	end;
+}
+OnInit:
+	// Defaults only on first initialization; do not reset on @reloadscript.
+	if (!$JM_ConfigInitialized) {
+		$JM_Discount = 20;
+		$JM_Platinum = 1;
+		$JM_ConfigInitialized = 1;
+	}
+	// All GM fee overrides are restricted to these whitelisted jobs.
+	setarray .AllowedJobs[0],Job_Novice_High,
+		Job_Swordman,Job_Mage,Job_Archer,Job_Acolyte,Job_Merchant,Job_Thief,
+		Job_Swordman_High,Job_Mage_High,Job_Archer_High,Job_Acolyte_High,Job_Merchant_High,Job_Thief_High,
+		Job_Baby_Swordman,Job_Baby_Mage,Job_Baby_Archer,Job_Baby_Acolyte,Job_Baby_Merchant,Job_Baby_Thief,
+		Job_Taekwon,Job_Baby_Taekwon,Job_Gunslinger,Job_Baby_Gunslinger,Job_Ninja,Job_Baby_Ninja,
+		Job_Super_Novice,Job_Super_Baby,
+		Job_Knight,Job_Crusader,Job_Priest,Job_Monk,Job_Wizard,Job_Sage,Job_Hunter,
+		Job_Bard,Job_Dancer,Job_Blacksmith,Job_Alchemist,Job_Assassin,Job_Rogue,
+		Job_Star_Gladiator,Job_Soul_Linker;
+	// Include all permitted 2nd/Trans/Baby/expanded destinations in reset-all.
+	// Do not assume setting an override to zero clears its "enabled" marker.
+	setarray .FirstForAdmin[0],Job_Swordman,Job_Mage,Job_Archer,Job_Acolyte,Job_Merchant,Job_Thief,
+		Job_Swordman_High,Job_Mage_High,Job_Archer_High,Job_Acolyte_High,Job_Merchant_High,Job_Thief_High,
+		Job_Baby_Swordman,Job_Baby_Mage,Job_Baby_Archer,Job_Baby_Acolyte,Job_Baby_Merchant,Job_Baby_Thief,
+		Job_Taekwon,Job_Baby_Taekwon;
+	for (.@i=0; .@i<getarraysize(.FirstForAdmin); .@i++) {
+		.@e=eaclass(.FirstForAdmin[.@i]);
+		.@j1=roclass(.@e|EAJL_2_1);
+		.@j2=roclass(.@e|EAJL_2_2);
+		if (.@j1 > 0 && BaseFee(.@j1) >= 0)
+			.AllowedJobs[getarraysize(.AllowedJobs)] = .@j1;
+		if (.@j2 > 0 && BaseFee(.@j2) >= 0)
+			.AllowedJobs[getarraysize(.AllowedJobs)] = .@j2;
+	}
+	// Classic equipment rewards in official rAthena Job Master mapping.
+	setarray .RewardWhitelist[0],1108,1602,1705,1505,1302,1208,13101,13010,
+		1163,1522,1617,1360,1718,1254,1410,1807,1550,1222,1126,1907,1960;
+	end;
+}

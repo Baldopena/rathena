@@ -1,0 +1,156 @@
+
+﻿//===== Grass Ro Custom NPC ==================================
+//= Lord Kaho's Horn Quest
+//= Version: 2.0
+//= Based on rAthena Lord Kaho's Horn Quest
+//= Reward: Lord Kaho's Horn (5013)
+//= Binding: Account Bound
+//= Completion: Once per account
+//============================================================
+
+geffen,115,107,5	script	Lord Kaho's Servant	61,{
+
+	.@fee = 15000000;
+	.@reward = 5013;
+
+	// Crafting materials (9 types).
+	setarray .@items[0],
+		714,969,923,724,734,1061,1095,756,757,
+		741,742,743,752,753,754,750,751;
+
+	// Required quantities.
+	setarray .@amounts[0],
+		3,10,300,50,100,200,200,100,100,
+		3,3,3,3,2,2,1,1;
+
+	.@total = getarraysize(.@items);
+
+	mes "[Lord Kaho's Servant]";
+
+	// Account-wide quest restriction.
+	if (#GR_KahoClaimed) {
+		mes "Ah, I remember you!";
+		mes "I have already forged Lord Kaho's Horn for your account.";
+		mes "This quest can only be completed once per account.";
+		close;
+	}
+
+	mes "Greetings, adventurer!";
+	mes "I once served the legendary Lord Kaho.";
+	mes "After years of searching, I have perfected the formula for his magnificent horns.";
+	mes "However, such powerful equipment requires extraordinary materials.";
+	next;
+
+	// Display crafting materials.
+	mes "[Lord Kaho's Servant]";
+	mes "^0055FFRequired Crafting Materials:^000000";
+
+	for (.@i = 0; .@i < 9; .@i++) {
+		mes getitemname(.@items[.@i]) + ": " +
+			countitem(.@items[.@i]) + "/" +
+			.@amounts[.@i];
+	}
+	next;
+
+	// Display doll collection.
+	mes "[Lord Kaho's Servant]";
+	mes "I also collect dolls, you see!";
+	mes "^0055FFRequired Doll Collection:^000000";
+
+	for (.@i = 9; .@i < .@total; .@i++) {
+		mes getitemname(.@items[.@i]) + ": " +
+			countitem(.@items[.@i]) + "/" +
+			.@amounts[.@i];
+	}
+	next;
+
+	// Explain fee and restrictions.
+	mes "[Lord Kaho's Servant]";
+	mes "Finally, I require:";
+	mes "^FF000015,000,000 Zeny^000000";
+	mes "For my considerable efforts.";
+	next;
+
+	mes "[Lord Kaho's Servant]";
+	mes "^0055FFImportant Conditions:^000000";
+	mes "The completed horns will be bound to your account.";
+	mes "They cannot be traded, dropped, sold, mailed, or auctioned.";
+	mes "You may store them in your personal Kafra storage.";
+	mes "This quest may only be completed once per account.";
+	next;
+
+	mes "[Lord Kaho's Servant]";
+	mes "Have you gathered everything?";
+	mes "Shall I forge Lord Kaho's Horn for you?";
+
+	if (select("Forge the Horns:Cancel") == 2) {
+		mes "[Lord Kaho's Servant]";
+		mes "Return when you are ready.";
+		close;
+	}
+
+	// Recheck account completion.
+	if (#GR_KahoClaimed) {
+		mes "[Lord Kaho's Servant]";
+		mes "Your account has already completed this quest.";
+		close;
+	}
+
+	// Verify Zeny.
+	if (Zeny < .@fee) {
+		mes "[Lord Kaho's Servant]";
+		mes "You do not have enough Zeny!";
+		mes "You need 15,000,000 Zeny to complete this quest.";
+		close;
+	}
+
+	// Verify all materials.
+	for (.@i = 0; .@i < .@total; .@i++) {
+		if (countitem(.@items[.@i]) < .@amounts[.@i]) {
+			mes "[Lord Kaho's Servant]";
+			mes "You are missing some required materials.";
+			mes "Required: " + .@amounts[.@i] +
+				"x " + getitemname(.@items[.@i]);
+			mes "Currently owned: " + countitem(.@items[.@i]);
+			close;
+		}
+	}
+
+	// Validate inventory capacity.
+	if (!checkweight(.@reward,1)) {
+		mes "[Lord Kaho's Servant]";
+		mes "Your inventory cannot hold the completed horns.";
+		mes "Please make some room before proceeding.";
+		close;
+	}
+
+	// Final validation passed.
+	// No dialogue interruptions during the exchange.
+
+	// Consume all materials.
+	for (.@i = 0; .@i < .@total; .@i++) {
+		delitem .@items[.@i],.@amounts[.@i];
+	}
+
+	// Deduct Zeny.
+	Zeny = Zeny - .@fee;
+
+	// Grant account-bound reward.
+	getitembound .@reward,1,Bound_Account;
+
+	// Record account-wide completion.
+	#GR_KahoClaimed = 1;
+
+	// Record transaction.
+	logmes "[Grass Ro] Kaho Quest Completed | Account: " +
+		getcharid(3) + " | Character: " +
+		strcharinfo(0) + " | Reward: 5013 | Fee: 15000000";
+
+	// Success dialogue.
+	mes "[Lord Kaho's Servant]";
+	mes "Magnificent!";
+	mes "You have successfully obtained Lord Kaho's Horn!";
+	mes "The horns are now bound to your account.";
+	mes "May their legendary power serve you well!";
+	close;
+}

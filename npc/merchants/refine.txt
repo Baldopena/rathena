@@ -532,7 +532,7 @@ prt_in,63,60,0	script	Hollgrehenn	4_M_03,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Hollgrehenn",0;
+		callfunc "refinemain","Hollgrehenn",1;
 		end;
 	}
 }
@@ -547,7 +547,7 @@ morocc_in,73,38,6	script	Aragham	4W_M_03,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Aragham",0;
+		callfunc "refinemain","Aragham",1;
 		end;
 	}
 }
@@ -560,7 +560,7 @@ payon,144,173,5	script	Antonio	4_M_ORIENT01,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Antonio",0;
+		callfunc "refinemain","Antonio",1;
 		end;
 	}
 }
@@ -574,7 +574,7 @@ alberta_in,28,58,0	script	Fredrik	4_M_03,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Fredrik",0;
+		callfunc "refinemain","Fredrik",1;
 		end;
 	}
 }
@@ -587,7 +587,7 @@ yuno_in01,171,21,4	script	Lambert	4_M_ORIENT01,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Lambert",0;
+		callfunc "refinemain","Lambert",1;
 		end;
 	}
 }
@@ -601,7 +601,7 @@ ein_in01,24,87,5	script	Manthasman	4_M_DWARF,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Manthasman Pruhag",0;
+		callfunc "refinemain","Manthasman Pruhag",1;
 		end;
 	}
 }
@@ -616,7 +616,7 @@ lhz_in02,282,20,7	script	Fulerr	4_M_LGTMAN,{
 		refineui();
 		end;
 	}else{
-		callfunc "refinemain","Fulerr",0;
+		callfunc "refinemain","Fulerr",1;
 		end;
 	}
 }

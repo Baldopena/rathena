@@ -40,6 +40,8 @@ Body:
   - ID: 0
     Name: "Storage"
     Table: storage
+    Max: 600
+
 
 Footer:
   Imports:

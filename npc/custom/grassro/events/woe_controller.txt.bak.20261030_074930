@@ -1,0 +1,1032 @@
+//===== Grass Ro =============================================================
+//= WoE Controller v2 - weekly, one-time and manual WoE / public information
+//= NPC: prontera,126,169,4 | GM: level 99 | Philippine time (Asia/Manila)
+//=
+//= INSTALLATION / SAFETY:
+//=  - Keep the original WoE controller and default FE/SE schedulers disabled.
+//=  - Keep core castle scripts and WoE mapflags enabled.
+//=  - Back up v1 script and persistent variables before using this replacement.
+//=  - Weekly v1 $GRW_Exists/Enabled/Day/Start/End/FE/SE arrays are reused.
+//=  - On upgrade, weekly/special AUTOMATION IS HELD until GM explicitly arms it.
+//=  - Manual WoE never enables automatic scheduling.
+//=  - @agitstart/@agitstart2 remain unrestricted global GM commands.
+//=  - Castle exclusion uses stock OnAgitEnd/OnAgitEnd2 and GvgOff events.
+//=  - No custom rewards. Needs isolated castle and restart testing before live use.
+//===========================================================================
+
+prontera,126,169,4	script	Grass Ro WoE Manager::GRW_Core	835,{
+	goto OnMenu;
+OnInit:
+	.GMLevel = 99;
+	.MaxSlots = 16;
+	.MaxSpecial = 8;
+	setarray .Days$[0],"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday";
+	setarray .Regions$[0],"Prontera","Payon","Geffen","Aldebaran","Arunafeltz (SE)","Schwarzwald (SE)";
+	setarray .Castles$[0],
+		"prtg_cas01","prtg_cas02","prtg_cas03","prtg_cas04","prtg_cas05",
+		"payg_cas01","payg_cas02","payg_cas03","payg_cas04","payg_cas05",
+		"gefg_cas01","gefg_cas02","gefg_cas03","gefg_cas04","gefg_cas05",
+		"aldeg_cas01","aldeg_cas02","aldeg_cas03","aldeg_cas04","aldeg_cas05",
+		"arug_cas01","arug_cas02","arug_cas03","arug_cas04","arug_cas05",
+		"schg_cas01","schg_cas02","schg_cas03","schg_cas04","schg_cas05";
+	setarray .SEKill$[0],
+		"Steward#ar01::OnStartArena","Steward#ar02::OnStartArena",
+		"Steward#ar03::OnStartArena","Steward#ar04::OnStartArena",
+		"Steward#ar05::OnStartArena","Steward#sc01::OnStartArena",
+		"Steward#sc02::OnStartArena","Steward#sc03::OnStartArena",
+		"Steward#sc04::OnStartArena","Steward#sc05::OnStartArena";
+
+	if (!$GRW_ConfigVersion) {
+		$GRW_ConfigVersion = 2;
+		$GRW_Paused = 1;
+		$GRW_SpecialPaused = 1;
+		$GRW_V2Armed = 0;
+	} else if ($GRW_ConfigVersion < 2) {
+		// Keep v1 weekly arrays, masks, status and names without resetting them.
+		// A separate arm switch prevents surprise scheduled WoE on upgrade.
+		$GRW_ConfigVersion = 2;
+		$GRW_V2Armed = 0;
+		$GRW_SpecialPaused = 1;
+		$GRW_ManualUntil = 0;
+		$GRW_ManualFE = 0;
+		$GRW_ManualSE = 0;
+		// Do not assume ownership of a global WoE already running on upgrade.
+		// Treat it as external; a GM must end it with @agitend/@agitend2.
+		if (agitcheck()) { $GRW_OwnFE = 0; $GRW_LastFE = 0; }
+		if (agitcheck2()) { $GRW_OwnSE = 0; $GRW_LastSE = 0; }
+	}
+	// If the clock is correct but server was started before the timezone change,
+	// restart the map server in a maintenance window to refresh localtime() use.
+	initnpctimer;
+	sleep 5000;
+	donpcevent "GRW_Core::OnTick";
+	end;
+
+OnTimer10000:
+	initnpctimer;
+	donpcevent "GRW_Core::OnTick";
+	end;
+
+// Reconcile the union of all scheduled, special and manual selections.
+// Each global FE/SE mode is started only when at least one castle is required.
+OnTick:
+	if (.Busy) end;
+	.Busy = 1;
+	.@now = gettimetick(2);
+	.@day = gettime(DT_DAYOFWEEK);
+	.@minute = gettime(DT_HOUR) * 60 + gettime(DT_MINUTE);
+	.@wantFE = 0;
+	.@wantSE = 0;
+
+	if ($GRW_ManualUntil && .@now >= $GRW_ManualUntil) {
+		$GRW_ManualUntil = 0;
+		$GRW_ManualFE = 0;
+		$GRW_ManualSE = 0;
+	}
+
+	if ($GRW_V2Armed && !$GRW_Paused) {
+		for (.@s = 0; .@s < .MaxSlots; ++.@s) {
+			if (!$GRW_Exists[.@s] || !$GRW_Enabled[.@s]) continue;
+			if (callsub(S_WeeklyActive, .@s, .@day, .@minute)) {
+				.@wantFE |= $GRW_FE[.@s];
+				.@wantSE |= $GRW_SE[.@s];
+			}
+		}
+	}
+
+	if ($GRW_V2Armed && !$GRW_SpecialPaused) {
+		for (.@s = 0; .@s < .MaxSpecial; ++.@s) {
+			if (!$GRW_O_Exists[.@s] || !$GRW_O_Enabled[.@s] || $GRW_O_Completed[.@s]) continue;
+			if (.@now >= $GRW_O_End[.@s]) {
+				$GRW_O_Completed[.@s] = 1;
+				$GRW_O_Enabled[.@s] = 0;
+				continue;
+			}
+			if (.@now >= $GRW_O_Start[.@s] && .@now < $GRW_O_End[.@s]) {
+				.@wantFE |= $GRW_O_FE[.@s];
+				.@wantSE |= $GRW_O_SE[.@s];
+			}
+		}
+	}
+
+	// Unlike v1, manual sessions are never gated by weekly automation state.
+	if ($GRW_ManualUntil > .@now) {
+		.@wantFE |= $GRW_ManualFE;
+		.@wantSE |= $GRW_ManualSE;
+	}
+
+	// Do NOT adopt a global WoE started by @agitstart or another scheduler.
+	if (agitcheck() && !$GRW_OwnFE) .@wantFE = 0;
+	if (agitcheck2() && !$GRW_OwnSE) .@wantSE = 0;
+
+	if (.@wantFE) {
+		if (!agitcheck()) {
+			$GRW_OwnFE = 1;
+			AgitStart;
+			sleep 1200;
+			$GRW_LastFE = 1048575; // global FE activated all 20 initially
+		}
+		if ($GRW_OwnFE) {
+			for (.@i = 0; .@i < 20; ++.@i) {
+				.@bit = 1 << .@i;
+				if ((($GRW_LastFE & .@bit) != 0) == ((.@wantFE & .@bit) != 0)) continue;
+				if (.@wantFE & .@bit) {
+					donpcevent "Agit#" + .Castles$[.@i] + "::OnAgitStart";
+				} else {
+					donpcevent "Agit#" + .Castles$[.@i] + "::OnAgitEnd";
+					killmonster .Castles$[.@i], "Agit#" + .Castles$[.@i] + "::OnAgitBreak";
+				}
+			}
+			$GRW_LastFE = .@wantFE;
+		}
+	} else if ($GRW_OwnFE) {
+		if (agitcheck()) AgitEnd;
+		$GRW_OwnFE = 0;
+		$GRW_LastFE = 0;
+	}
+
+	if (.@wantSE) {
+		if (!agitcheck2()) {
+			$GRW_OwnSE = 1;
+			AgitStart2;
+			sleep 1200;
+			$GRW_LastSE = 1023;
+		}
+		if ($GRW_OwnSE) {
+			for (.@i = 0; .@i < 10; ++.@i) {
+				.@bit = 1 << .@i;
+				if ((($GRW_LastSE & .@bit) != 0) == ((.@wantSE & .@bit) != 0)) continue;
+				if (.@wantSE & .@bit) {
+					donpcevent "Manager#" + .Castles$[.@i + 20] + "::OnAgitStart2";
+				} else {
+					donpcevent "Manager#" + .Castles$[.@i + 20] + "::OnAgitEnd2";
+					killmonster .Castles$[.@i + 20], .SEKill$[.@i];
+				}
+			}
+			$GRW_LastSE = .@wantSE;
+		}
+	} else if ($GRW_OwnSE) {
+		if (agitcheck2()) AgitEnd2;
+		$GRW_OwnSE = 0;
+		$GRW_LastSE = 0;
+	}
+	.Busy = 0;
+	end;
+
+// Returns 1 if a weekly slot is active at weekday/minute, including overnight.
+S_WeeklyActive:
+	.@s = getarg(0);
+	.@day = getarg(1);
+	.@minute = getarg(2);
+	.@start = $GRW_Start[.@s];
+	.@stop = $GRW_End[.@s];
+	.@weekday = $GRW_Day[.@s];
+	if (.@start < 0 || .@stop < 0 || .@start == .@stop || .@weekday < 0 || .@weekday > 6) return 0;
+	if (.@start < .@stop) return (.@day == .@weekday && .@minute >= .@start && .@minute < .@stop);
+	return ((.@day == .@weekday && .@minute >= .@start) ||
+		((.@day + 6) % 7 == .@weekday && .@minute < .@stop));
+
+// Weekly collision: same castle in enabled overlapping weekly slots.
+// Other cities/castles at the same time are deliberately allowed.
+S_WeeklyConflict:
+	.@self = getarg(0);
+	.@day = getarg(1);
+	.@start = getarg(2);
+	.@stop = getarg(3);
+	.@fe = getarg(4);
+	.@se = getarg(5);
+	.@a = .@day * 1440 + .@start;
+	.@duration = (.@stop - .@start + 1440) % 1440;
+	.@b = .@a + .@duration;
+	for (.@wcIndex = 0; .@wcIndex < .MaxSlots; ++.@wcIndex) {
+		if (.@wcIndex == .@self || !$GRW_Exists[.@wcIndex] || !$GRW_Enabled[.@wcIndex]) continue;
+		if (!(($GRW_FE[.@wcIndex] & .@fe) || ($GRW_SE[.@wcIndex] & .@se))) continue;
+		.@c = $GRW_Day[.@wcIndex] * 1440 + $GRW_Start[.@wcIndex];
+		.@otherDur = ($GRW_End[.@wcIndex] - $GRW_Start[.@wcIndex] + 1440) % 1440;
+		.@d = .@c + .@otherDur;
+		for (.@shift = -10080; .@shift <= 10080; .@shift += 10080) {
+			if (.@a < .@d + .@shift && .@c + .@shift < .@b) return 1;
+		}
+	}
+	return 0;
+
+// Test a proposed special event against weekly and one-time castle allocations.
+// Repeating week positions are treated as 10080-minute circles.
+S_SpecialConflict:
+	.@first = getarg(0);
+	.@last = getarg(1);
+	.@fe = getarg(2);
+	.@se = getarg(3);
+	.@except = getarg(4,-1);
+	.@localMin = (.@first + 28800) / 60;
+	.@weekday = ((.@localMin / 1440) + 4) % 7;
+	.@a = .@weekday * 1440 + (.@localMin % 1440);
+	.@b = .@a + (.@last - .@first) / 60;
+	for (.@scWeek = 0; .@scWeek < .MaxSlots; ++.@scWeek) {
+		if (!$GRW_Exists[.@scWeek] || !$GRW_Enabled[.@scWeek]) continue;
+		if (!(($GRW_FE[.@scWeek] & .@fe) || ($GRW_SE[.@scWeek] & .@se))) continue;
+		.@c = $GRW_Day[.@scWeek] * 1440 + $GRW_Start[.@scWeek];
+		.@duration = ($GRW_End[.@scWeek] - $GRW_Start[.@scWeek] + 1440) % 1440;
+		.@d = .@c + .@duration;
+		for (.@shift = -10080; .@shift <= 10080; .@shift += 10080) {
+			if (.@a < .@d + .@shift && .@c + .@shift < .@b) return 1;
+		}
+	}
+	for (.@scIndex = 0; .@scIndex < .MaxSpecial; ++.@scIndex) {
+		if (.@scIndex == .@except || !$GRW_O_Exists[.@scIndex] || !$GRW_O_Enabled[.@scIndex] || $GRW_O_Completed[.@scIndex]) continue;
+		if (!(($GRW_O_FE[.@scIndex] & .@fe) || ($GRW_O_SE[.@scIndex] & .@se))) continue;
+		if (.@first < $GRW_O_End[.@scIndex] && $GRW_O_Start[.@scIndex] < .@last) return 1;
+	}
+	return 0;
+
+// Also validate a new/changed weekly event against already enabled specials.
+S_WeeklySpecialConflict:
+	.@day = getarg(0);
+	.@start = getarg(1);
+	.@stop = getarg(2);
+	.@fe = getarg(3);
+	.@se = getarg(4);
+	.@a = .@day * 1440 + .@start;
+	.@b = .@a + (.@stop - .@start + 1440) % 1440;
+	for (.@wsc = 0; .@wsc < .MaxSpecial; ++.@wsc) {
+		if (!$GRW_O_Exists[.@wsc] || !$GRW_O_Enabled[.@wsc] || $GRW_O_Completed[.@wsc]) continue;
+		if (!(($GRW_O_FE[.@wsc] & .@fe) || ($GRW_O_SE[.@wsc] & .@se))) continue;
+		.@localMin = ($GRW_O_Start[.@wsc] + 28800) / 60;
+		.@weekday = ((.@localMin / 1440) + 4) % 7;
+		.@c = .@weekday * 1440 + (.@localMin % 1440);
+		.@d = .@c + ($GRW_O_End[.@wsc] - $GRW_O_Start[.@wsc]) / 60;
+		for (.@shift = -10080; .@shift <= 10080; .@shift += 10080) {
+			if (.@a < .@d + .@shift && .@c + .@shift < .@b) return 1;
+		}
+	}
+	return 0;
+
+// One-time event date validation/conversion, Manila-local wall clock to Unix.
+// Restrict 2020..2037 to avoid 32-bit Unix timestamp overflow.
+S_MakeEpoch:
+	.@year = getarg(0);
+	.@month = getarg(1);
+	.@date = getarg(2);
+	.@hour = getarg(3);
+	.@min = getarg(4);
+	if (.@year < 2020 || .@year > 2037 || .@month < 1 || .@month > 12 || .@hour < 0 || .@hour > 23 || .@min < 0 || .@min > 59) return -1;
+	setarray .@months[0],31,28,31,30,31,30,31,31,30,31,30,31;
+	if (.@year % 4 == 0 && (.@year % 100 != 0 || .@year % 400 == 0)) .@months[1] = 29;
+	if (.@date < 1 || .@date > .@months[.@month - 1]) return -1;
+	.@days = 0;
+	for (.@y = 1970; .@y < .@year; ++.@y)
+		.@days += (365 + ((.@y % 4 == 0 && (.@y % 100 != 0 || .@y % 400 == 0)) ? 1 : 0));
+	for (.@m = 1; .@m < .@month; ++.@m) .@days += .@months[.@m - 1];
+	.@days += .@date - 1;
+	return .@days * 86400 + .@hour * 3600 + .@min * 60 - 28800;
+
+S_Time:
+	.@v = getarg(0);
+	if (.@v < 0) return "Not set";
+	.@h = .@v / 60;
+	.@m = .@v % 60;
+	return ((.@h < 10) ? "0" : "") + .@h + ":" + ((.@m < 10) ? "0" : "") + .@m;
+
+S_Count:
+	.@mask = getarg(0);
+	.@max = getarg(1);
+	.@count = 0;
+	for (.@i = 0; .@i < .@max; ++.@i) if (.@mask & (1 << .@i)) .@count++;
+	return .@count;
+
+S_Label:
+	.@slot = getarg(0);
+	.@name$ = $GRW_Name$[.@slot];
+	if (.@name$ == "") .@name$ = "Weekly event";
+	.@day = $GRW_Day[.@slot];
+	if (.@day < 0 || .@day > 6) return .@name$ + " - Not configured";
+	return .@name$ + " - " + .Days$[.@day] + " " + callsub(S_Time, $GRW_Start[.@slot]);
+
+S_CastleSummary:
+	.@mask = getarg(0);
+	for (.@r = 0; .@r < 6; ++.@r) {
+		.@count = 0;
+		for (.@k = 0; .@k < 5; ++.@k) if (.@mask & (1 << (.@r * 5 + .@k))) .@count++;
+		if (.@count) mes .Regions$[.@r] + ": " + .@count + "/5 castles";
+	}
+	return;
+
+OnMenu:
+	while (1) {
+		clear;
+		mes "[Grass Ro WoE Manager]";
+		mes "Server: " + gettimestr("%a %Y-%m-%d %H:%M",21) + " PHT";
+		mes "FE: " + (agitcheck() ? "^00AA00ACTIVE^000000" : "Inactive") +
+			" | SE: " + (agitcheck2() ? "^00AA00ACTIVE^000000" : "Inactive");
+		mes "Weekly: " + ($GRW_Paused ? "Paused" : "On") +
+			" | Special: " + ($GRW_SpecialPaused ? "Paused" : "On");
+		if (!$GRW_V2Armed) mes "^FF5555Automatic execution is safety-locked.^000000";
+		next;
+		.@menu$ = "Current WoE status:Weekly WoE schedules:One-time special events:Participating castles:Next WoE";
+		if (getgmlevel() >= .GMLevel) .@menu$ += ":GM administration";
+		.@menu$ += ":Close";
+		.@choice = select(.@menu$);
+		switch (.@choice) {
+		case 1: callsub S_Status; break;
+		case 2: callsub S_PublicWeekly; break;
+		case 3: callsub S_PublicSpecial; break;
+		case 4: callsub S_PublicCastles; break;
+		case 5: callsub S_Next; break;
+		case 6:
+			if (getgmlevel() >= .GMLevel) callsub S_Admin;
+			else close;
+			break;
+		default: close;
+		}
+	}
+	end;
+
+S_Status:
+	mes "[Current WoE Status]";
+	mes "First Edition: " + (agitcheck() ? "ACTIVE" : "Inactive");
+	mes "Second Edition: " + (agitcheck2() ? "ACTIVE" : "Inactive");
+	if ((agitcheck() && !$GRW_OwnFE) || (agitcheck2() && !$GRW_OwnSE))
+		mes "^FF5500An external WoE is running.^000000";
+	if ($GRW_OwnFE || $GRW_OwnSE) {
+		mes "Grass Ro-managed event running.";
+		mes "FE castles: " + callsub(S_Count, $GRW_LastFE, 20);
+		mes "SE castles: " + callsub(S_Count, $GRW_LastSE, 10);
+	}
+	if ($GRW_ManualUntil > gettimetick(2))
+		mes "Manual event: " + (($GRW_ManualUntil - gettimetick(2) + 59) / 60) + " min remaining.";
+	mes "All displayed times: Philippines (UTC+8).";
+	next;
+	return;
+
+S_PublicWeekly:
+	mes "[Weekly WoE Schedule]";
+	mes "Only enabled schedules are listed.";
+	if ($GRW_Paused || !$GRW_V2Armed) mes "^FF5500Automatic weekly starts are paused.^000000";
+	.@count = 0;
+	for (.@s = 0; .@s < .MaxSlots; ++.@s) {
+		if (!$GRW_Exists[.@s] || !$GRW_Enabled[.@s]) continue;
+		if (.@count > 0 && .@count % 3 == 0) {
+			next;
+			if (select("Continue:Back") == 2) return;
+		}
+		mes "^0055FF" + callsub(S_Label, .@s) + "^000000";
+		mes "Until " + callsub(S_Time, $GRW_End[.@s]) + " PHT";
+		mes "FE " + callsub(S_Count,$GRW_FE[.@s],20) + " / SE " + callsub(S_Count,$GRW_SE[.@s],10);
+		.@count++;
+	}
+	if (!.@count) mes "No enabled weekly WoE sessions.";
+	next;
+	return;
+
+S_PublicSpecial:
+	mes "[One-Time Special WoE]";
+	if ($GRW_SpecialPaused || !$GRW_V2Armed) mes "^FF5500Automatic special events are paused.^000000";
+	.@count = 0;
+	for (.@s = 0; .@s < .MaxSpecial; ++.@s) {
+		if (!$GRW_O_Exists[.@s] || !$GRW_O_Enabled[.@s] || $GRW_O_Completed[.@s]) continue;
+		if ($GRW_O_End[.@s] <= gettimetick(2)) continue;
+		if (.@count > 0 && .@count % 3 == 0) {
+			next;
+			if (select("Continue:Back") == 2) return;
+		}
+		mes "^0055FF" + $GRW_O_Name$[.@s] + "^000000";
+		mes gettimestr("%a %Y-%m-%d %H:%M",21,$GRW_O_Start[.@s]) + " PHT";
+		mes "Until " + gettimestr("%a %H:%M",21,$GRW_O_End[.@s]);
+		.@count++;
+	}
+	if (!.@count) mes "No upcoming enabled special events.";
+	next;
+	return;
+
+S_PublicCastles:
+	mes "[Participating Castles]";
+	if (!agitcheck() && !agitcheck2()) {
+		mes "WoE is currently inactive.";
+		next;
+		return;
+	}
+	if ((agitcheck() && !$GRW_OwnFE) || (agitcheck2() && !$GRW_OwnSE)) {
+		mes "External/global WoE is active.";
+		mes "Selection cannot be verified by this NPC.";
+		next;
+		return;
+	}
+	mes "Choose a region:";
+	next;
+	.@region = select("Prontera:Payon:Geffen:Aldebaran:Arunafeltz (SE):Schwarzwald (SE):Back") - 1;
+	if (.@region >= 6) return;
+	mes "[" + .Regions$[.@region] + "]";
+	for (.@k = 0; .@k < 5; ++.@k) {
+		.@i = .@region * 5 + .@k;
+		.@mask = (.@i < 20 ? $GRW_LastFE : $GRW_LastSE);
+		.@bit = 1 << (.@i < 20 ? .@i : .@i - 20);
+		mes ((.@mask & .@bit) ? "^00AA00[SELECTED]^000000 " : "[Excluded] ") + getcastlename(.Castles$[.@i]);
+	}
+	mes "Castle isolation requires in-game validation.";
+	next;
+	return;
+
+S_Next:
+	.@weekMinute = gettime(DT_DAYOFWEEK) * 1440 + gettime(DT_HOUR) * 60 + gettime(DT_MINUTE);
+	.@best = 10081;
+	.@kind = 0;
+	.@id = -1;
+	for (.@s = 0; .@s < .MaxSlots; ++.@s) {
+		if (!$GRW_Exists[.@s] || !$GRW_Enabled[.@s]) continue;
+		.@target = $GRW_Day[.@s] * 1440 + $GRW_Start[.@s];
+		.@diff = (.@target - .@weekMinute + 10080) % 10080;
+		if (.@diff == 0) .@diff = 10080;
+		if (.@diff < .@best) { .@best = .@diff; .@kind = 1; .@id = .@s; }
+	}
+	for (.@s = 0; .@s < .MaxSpecial; ++.@s) {
+		if (!$GRW_O_Exists[.@s] || !$GRW_O_Enabled[.@s] || $GRW_O_Completed[.@s]) continue;
+		.@diff = ($GRW_O_Start[.@s] - gettimetick(2) + 59) / 60;
+		if (.@diff < 0) continue;
+		if (.@diff < .@best) { .@best = .@diff; .@kind = 2; .@id = .@s; }
+	}
+	mes "[Next Scheduled WoE]";
+	if (.@kind == 1) mes callsub(S_Label, .@id);
+	else if (.@kind == 2) {
+		mes "Special: " + $GRW_O_Name$[.@id];
+		mes gettimestr("%Y-%m-%d %H:%M",21,$GRW_O_Start[.@id]) + " PHT";
+	} else mes "No enabled upcoming events.";
+	if (.@kind) mes "In " + (.@best / 1440) + "d " + ((.@best % 1440) / 60) + "h " + (.@best % 60) + "m.";
+	if (!$GRW_V2Armed) mes "Automatic execution safety-locked.";
+	else if (.@kind == 1 && $GRW_Paused) mes "Weekly automation paused.";
+	else if (.@kind == 2 && $GRW_SpecialPaused) mes "Special automation paused.";
+	next;
+	return;
+
+// Choose up to six configured schedules per page. No raw numeric slot input.
+// Returns index (0-15) or -1 for Cancel.
+S_ChooseWeekly:
+	.@page = 0;
+	while (1) {
+		.@count = 0;
+		.@total = 0;
+		.@menu$ = "";
+		for (.@s = 0; .@s < .MaxSlots; ++.@s) {
+			if (!$GRW_Exists[.@s]) continue;
+			if (.@total >= .@page * 6 && .@total < (.@page + 1) * 6) {
+				.@id[.@count] = .@s;
+				.@menu$ += ($GRW_Enabled[.@s] ? "[ON] " : "[OFF] ") + callsub(S_Label,.@s) + ":";
+				.@count++;
+			}
+			.@total++;
+		}
+		if (!.@total) { mes "No weekly schedules exist."; next; return -1; }
+		.@choice = select(.@menu$ + "Next page:Previous page:Cancel") - 1;
+		if (.@choice < .@count) return .@id[.@choice];
+		if (.@choice == .@count && (.@page + 1) * 6 < .@total) .@page++;
+		if (.@choice == .@count + 1 && .@page > 0) .@page--;
+		if (.@choice == .@count + 2) return -1;
+	}
+	return -1;
+
+S_ChooseSpecial:
+	.@page = 0;
+	while (1) {
+		.@count = 0;
+		.@total = 0;
+		.@menu$ = "";
+		for (.@s = 0; .@s < .MaxSpecial; ++.@s) {
+			if (!$GRW_O_Exists[.@s]) continue;
+			if (.@total >= .@page * 6 && .@total < (.@page + 1) * 6) {
+				.@id[.@count] = .@s;
+				.@menu$ += ($GRW_O_Completed[.@s] ? "[DONE] " : ($GRW_O_Enabled[.@s] ? "[ON] " : "[OFF] ")) + $GRW_O_Name$[.@s] + ":";
+				.@count++;
+			}
+			.@total++;
+		}
+		if (!.@total) { mes "No special events exist."; next; return -1; }
+		.@choice = select(.@menu$ + "Next page:Previous page:Cancel") - 1;
+		if (.@choice < .@count) return .@id[.@choice];
+		if (.@choice == .@count && (.@page + 1) * 6 < .@total) .@page++;
+		if (.@choice == .@count + 1 && .@page > 0) .@page--;
+		if (.@choice == .@count + 2) return -1;
+	}
+	return -1;
+
+S_InputTime:
+	mes "Time is Philippine local time (24-hour).";
+	if (select("Enter hour and minute:Cancel") == 2) return -1;
+	mes "Hour (0-23):";
+	input .@hour;
+	mes "Minute (0-59):";
+	input .@minute;
+	if (.@hour < 0 || .@hour > 23 || .@minute < 0 || .@minute > 59) {
+		mes "Invalid time; nothing changed.";
+		next;
+		return -1;
+	}
+	return .@hour * 60 + .@minute;
+
+// Castle mask: FE bits 0..19; SE bits 20..29.
+// Returns updated mask. No selections are committed until final Save.
+S_PickCastles:
+	.@mask = getarg(0);
+	while (1) {
+		clear;
+		mes "[Castle Selection]";
+		mes "Selected: " + callsub(S_Count,.@mask,30) + "/30";
+		mes "Select a city or region to edit.";
+		next;
+		.@region = select("Prontera:Payon:Geffen:Aldebaran:Arunafeltz (SE):Schwarzwald (SE):Finish selection") - 1;
+		if (.@region == 6) return .@mask;
+		while (1) {
+			clear;
+			mes "[" + .Regions$[.@region] + "]";
+			.@menu$ = "Select all five:Clear all five:";
+			for (.@k = 0; .@k < 5; ++.@k) {
+				.@i = .@region * 5 + .@k;
+				.@menu$ += ((.@mask & (1 << .@i)) ? "[ON] " : "[OFF] ") + getcastlename(.Castles$[.@i]) + ":";
+			}
+			.@choice = select(.@menu$ + "Back to regions");
+			if (.@choice == 8) break;
+			if (.@choice == 1 || .@choice == 2) {
+				for (.@k = 0; .@k < 5; ++.@k) {
+					.@bit = 1 << (.@region * 5 + .@k);
+					if (.@choice == 1) .@mask |= .@bit;
+					else .@mask &= ~.@bit;
+				}
+			} else if (.@choice >= 3 && .@choice <= 7) {
+				.@bit = 1 << (.@region * 5 + .@choice - 3);
+				.@mask ^= .@bit;
+			}
+		}
+	}
+	return .@mask;
+
+S_Admin:
+	if (getgmlevel() < .GMLevel) return;
+	while (1) {
+		clear;
+		mes "[Grass Ro - GM Administration]";
+		mes "Time: " + gettimestr("%a %Y-%m-%d %H:%M",21) + " PHT";
+		mes "Weekly: " + ($GRW_Paused ? "PAUSED" : "ENABLED");
+		mes "Special: " + ($GRW_SpecialPaused ? "PAUSED" : "ENABLED");
+		mes "Scheduler safety: " + ($GRW_V2Armed ? "ARMED" : "LOCKED");
+		next;
+		.@choice = select("Create weekly schedule:View / edit weekly schedules:Create one-time special WoE:View / edit special events:Start manual WoE:End Grass Ro-managed WoE:Automation and safety controls:Back");
+		switch (.@choice) {
+		case 1: callsub S_CreateWeekly; break;
+		case 2:
+			.@s = callsub(S_ChooseWeekly);
+			if (.@s >= 0) callsub S_EditWeekly,.@s;
+			break;
+		case 3: callsub S_CreateSpecial; break;
+		case 4:
+			.@s = callsub(S_ChooseSpecial);
+			if (.@s >= 0) callsub S_EditSpecial,.@s;
+			break;
+		case 5: callsub S_ManualStart; break;
+		case 6: callsub S_StopManaged; break;
+		case 7: callsub S_Automation;
+			break;
+		default: return;
+		}
+	}
+	return;
+
+S_CreateWeekly:
+	.@free = -1;
+	for (.@s = 0; .@s < .MaxSlots; ++.@s) if (!$GRW_Exists[.@s]) { .@free = .@s; break; }
+	if (.@free < 0) { mes "All 16 weekly schedules are used."; next; return; }
+	mes "[Create Weekly WoE]";
+	mes "No default day, time or castles will be selected.";
+	if (select("Begin setup:Cancel") == 2) return;
+	mes "Enter a recognizable event name:";
+	input .@name$;
+	if (.@name$ == "") { mes "A name is required."; next; return; }
+	.@name$ = substr(.@name$,0,30);
+	mes "Choose the weekday:";
+	.@day = select("Sunday:Monday:Tuesday:Wednesday:Thursday:Friday:Saturday:Cancel") - 1;
+	if (.@day == 7) return;
+	mes "[Start time]";
+	.@start = callsub(S_InputTime);
+	if (.@start < 0) return;
+	mes "[End time]";
+	.@stop = callsub(S_InputTime);
+	if (.@stop < 0) return;
+	if (.@start == .@stop) { mes "Start and end cannot match."; next; return; }
+	mes "Choose the participating castles.";
+	next;
+	.@mask = callsub(S_PickCastles,0);
+	if (!.@mask) { mes "No castles selected. Schedule not saved."; next; return; }
+	mes "[Review New Weekly WoE]";
+	mes .@name$;
+	mes .Days$[.@day] + " " + callsub(S_Time,.@start) + " to " + callsub(S_Time,.@stop) + " PHT";
+	if (.@stop < .@start) mes "Ends on the following day.";
+	callsub S_CastleSummary,.@mask;
+	.@fe = .@mask & 1048575;
+	.@se = (.@mask >> 20) & 1023;
+	.@conflict = callsub(S_WeeklyConflict,.@free,.@day,.@start,.@stop,.@fe,.@se) ||
+		callsub(S_WeeklySpecialConflict,.@day,.@start,.@stop,.@fe,.@se);
+	if (.@conflict) mes "^FF0000Conflicts with another enabled weekly session for at least one castle.^000000";
+	mes "Saving disabled does not start WoE.";
+	next;
+	.@choice = select("Save DISABLED:" + (.@conflict ? "Do not enable - castle conflict" : "Save and ENABLE") + ":Cancel");
+	if (.@choice == 3) return;
+	if (.@choice == 2 && .@conflict) return;
+	$GRW_Exists[.@free] = 1;
+	$GRW_Name$[.@free] = .@name$;
+	$GRW_Day[.@free] = .@day;
+	$GRW_Start[.@free] = .@start;
+	$GRW_End[.@free] = .@stop;
+	$GRW_FE[.@free] = .@fe;
+	$GRW_SE[.@free] = .@se;
+	$GRW_Enabled[.@free] = (.@choice == 2);
+	logmes "Grass Ro WoE: weekly created by " + strcharinfo(0) + " id=" + .@free;
+	mes "Weekly schedule saved. " + ($GRW_Enabled[.@free] ? "Enabled." : "Disabled.");
+	if (!$GRW_V2Armed) mes "Automatic execution remains safety-locked.";
+	next;
+	return;
+
+S_EditWeekly:
+	.@s = getarg(0);
+	while (1) {
+		if (!$GRW_Exists[.@s]) return;
+		clear;
+		mes "[Weekly WoE - Edit]";
+		mes callsub(S_Label,.@s);
+		mes "End: " + callsub(S_Time,$GRW_End[.@s]);
+		mes "FE: " + callsub(S_Count,$GRW_FE[.@s],20) + " SE: " + callsub(S_Count,$GRW_SE[.@s],10);
+		mes "Status: " + ($GRW_Enabled[.@s] ? "ENABLED" : "Disabled");
+		mes "Active session edits are protected.";
+		next;
+		.@choice = select("Rename:Change weekday:Change start time:Change end time:Choose participating castles:Enable / disable schedule:Delete schedule:Back");
+		if (.@choice == 8) return;
+		// Do not permit editing a running schedule (other inactive slots remain editable).
+		if (callsub(S_WeeklyActive,.@s,gettime(DT_DAYOFWEEK),gettime(DT_HOUR)*60+gettime(DT_MINUTE)) && $GRW_Enabled[.@s] && !$GRW_Paused && $GRW_V2Armed) {
+			mes "This scheduled event is currently running.";
+			mes "Wait until its end before editing it.";
+			next;
+			continue;
+		}
+		.@newDay = $GRW_Day[.@s];
+		.@newStart = $GRW_Start[.@s];
+		.@newEnd = $GRW_End[.@s];
+		.@newFE = $GRW_FE[.@s];
+		.@newSE = $GRW_SE[.@s];
+		.@newName$ = $GRW_Name$[.@s];
+		if (.@choice == 1) {
+			mes "Enter new event name:";
+			input .@newName$;
+			if (.@newName$ == "") continue;
+			.@newName$ = substr(.@newName$,0,30);
+		} else if (.@choice == 2) {
+			.@newDay = select("Sunday:Monday:Tuesday:Wednesday:Thursday:Friday:Saturday:Cancel") - 1;
+			if (.@newDay == 7) continue;
+		} else if (.@choice == 3) {
+			.@newStart = callsub(S_InputTime);
+			if (.@newStart < 0) continue;
+		} else if (.@choice == 4) {
+			.@newEnd = callsub(S_InputTime);
+			if (.@newEnd < 0) continue;
+		} else if (.@choice == 5) {
+			.@mask = callsub(S_PickCastles,.@newFE | (.@newSE << 20));
+			.@newFE = .@mask & 1048575;
+			.@newSE = (.@mask >> 20) & 1023;
+		} else if (.@choice == 6) {
+			if ($GRW_Enabled[.@s]) {
+				mes "Disable this weekly event?";
+				if (select("Disable:Cancel") == 1) $GRW_Enabled[.@s] = 0;
+				continue;
+			}
+			if (!$GRW_FE[.@s] && !$GRW_SE[.@s]) { mes "Select castles first."; next; continue; }
+			if ($GRW_Start[.@s] == $GRW_End[.@s]) { mes "Fix start/end times first."; next; continue; }
+			.@conflict = callsub(S_WeeklyConflict,.@s,$GRW_Day[.@s],$GRW_Start[.@s],$GRW_End[.@s],$GRW_FE[.@s],$GRW_SE[.@s]) ||
+				callsub(S_WeeklySpecialConflict,$GRW_Day[.@s],$GRW_Start[.@s],$GRW_End[.@s],$GRW_FE[.@s],$GRW_SE[.@s]);
+			if (.@conflict) { mes "Castle/time conflict with another enabled event."; next; continue; }
+			mes "Enable automatic weekly schedule?";
+			if (select("Enable:Cancel") == 1) $GRW_Enabled[.@s] = 1;
+			continue;
+		} else if (.@choice == 7) {
+			mes "Delete this weekly event permanently?";
+			if (select("Delete:Cancel") != 1) continue;
+			$GRW_Exists[.@s] = 0;
+			$GRW_Enabled[.@s] = 0;
+			$GRW_Name$[.@s] = "";
+			$GRW_FE[.@s] = 0;
+			$GRW_SE[.@s] = 0;
+			logmes "Grass Ro WoE: weekly deleted by " + strcharinfo(0) + " id=" + .@s;
+			return;
+		}
+		if (.@newStart == .@newEnd || (!.@newFE && !.@newSE)) {
+			mes "Schedule must have different start/end and at least one castle.";
+			next;
+			continue;
+		}
+		.@conflict = callsub(S_WeeklyConflict,.@s,.@newDay,.@newStart,.@newEnd,.@newFE,.@newSE) ||
+			callsub(S_WeeklySpecialConflict,.@newDay,.@newStart,.@newEnd,.@newFE,.@newSE);
+		if ($GRW_Enabled[.@s] && .@conflict) {
+			mes "Cannot save enabled event: overlapping castle/time selection.";
+			mes "Disable this event first, or select other castles/times.";
+			next;
+			continue;
+		}
+		mes "Save these changes to " + (.@newName$ == "" ? "Weekly event" : .@newName$) + "?";
+		if (.@conflict) mes "Conflicts exist; keep disabled until resolved.";
+		if (select("Save:Cancel") != 1) continue;
+		$GRW_Name$[.@s] = .@newName$;
+		$GRW_Day[.@s] = .@newDay;
+		$GRW_Start[.@s] = .@newStart;
+		$GRW_End[.@s] = .@newEnd;
+		$GRW_FE[.@s] = .@newFE;
+		$GRW_SE[.@s] = .@newSE;
+		logmes "Grass Ro WoE: weekly edited by " + strcharinfo(0) + " id=" + .@s;
+	}
+	return;
+
+// Ask for one-time event date and time, returning a UTC Unix timestamp.
+// Return -1 if invalid or cancelled.
+S_InputDateTime:
+	mes "[Special WoE Date]";
+	mes "Enter Philippine date. Year 2020-2037.";
+	if (select("Enter date:Cancel") == 2) return -1;
+	mes "Year (YYYY):";
+	input .@year;
+	mes "Month (1-12):";
+	input .@month;
+	mes "Day of month (1-31):";
+	input .@date;
+	mes "Start time:";
+	.@minutes = callsub(S_InputTime);
+	if (.@minutes < 0) return -1;
+	.@stamp = callsub(S_MakeEpoch,.@year,.@month,.@date,.@minutes / 60,.@minutes % 60);
+	if (.@stamp < 0) { mes "Invalid calendar date/time."; next; return -1; }
+	return .@stamp;
+
+S_ChooseDuration:
+	mes "Choose duration:";
+	.@c = select("15 minutes:30 minutes:60 minutes:90 minutes:120 minutes:180 minutes:240 minutes:Cancel");
+	if (.@c == 8) return 0;
+	if (.@c == 1) return 15;
+	if (.@c == 2) return 30;
+	if (.@c == 3) return 60;
+	if (.@c == 4) return 90;
+	if (.@c == 5) return 120;
+	if (.@c == 6) return 180;
+	return 240;
+
+S_CreateSpecial:
+	.@free = -1;
+	for (.@s = 0; .@s < .MaxSpecial; ++.@s) if (!$GRW_O_Exists[.@s]) { .@free = .@s; break; }
+	if (.@free < 0) { mes "All 8 one-time event records are used. Delete an old event first."; next; return; }
+	mes "[New One-Time Special WoE]";
+	mes "This does not alter weekly automation.";
+	if (select("Begin setup:Cancel") == 2) return;
+	mes "Enter a name for the event:";
+	input .@name$;
+	if (.@name$ == "") { mes "A name is required."; next; return; }
+	.@name$ = substr(.@name$,0,30);
+	.@start = callsub(S_InputDateTime);
+	if (.@start < 0) return;
+	if (.@start <= gettimetick(2)) { mes "Start must be in the future."; next; return; }
+	.@minutes = callsub(S_ChooseDuration);
+	if (!.@minutes) return;
+	.@stop = .@start + .@minutes * 60;
+	mes "Choose participating castles:";
+	.@mask = callsub(S_PickCastles,0);
+	if (!.@mask) { mes "At least one castle is required."; next; return; }
+	.@fe = .@mask & 1048575;
+	.@se = (.@mask >> 20) & 1023;
+	.@conflict = callsub(S_SpecialConflict,.@start,.@stop,.@fe,.@se);
+	mes "[Review Special WoE]";
+	mes .@name$;
+	mes gettimestr("%a %Y-%m-%d %H:%M",21,.@start) + " PHT";
+	mes "Duration: " + .@minutes + " min.";
+	callsub S_CastleSummary,.@mask;
+	if (.@conflict) mes "^FF0000Castle/time overlap with an enabled weekly event.^000000";
+	next;
+	.@c = select("Save DISABLED:" + (.@conflict ? "Do not enable - conflict" : "Save and ENABLE") + ":Cancel");
+	if (.@c == 3 || (.@c == 2 && .@conflict)) return;
+	$GRW_O_Exists[.@free] = 1;
+	$GRW_O_Name$[.@free] = .@name$;
+	$GRW_O_Start[.@free] = .@start;
+	$GRW_O_End[.@free] = .@stop;
+	$GRW_O_FE[.@free] = .@fe;
+	$GRW_O_SE[.@free] = .@se;
+	$GRW_O_Completed[.@free] = 0;
+	$GRW_O_Enabled[.@free] = (.@c == 2);
+	logmes "Grass Ro WoE: special created by " + strcharinfo(0) + " id=" + .@free;
+	mes "Saved " + ($GRW_O_Enabled[.@free] ? "enabled" : "disabled") + ".";
+	if ($GRW_SpecialPaused || !$GRW_V2Armed) mes "Special auto-execution is currently paused/locked.";
+	next;
+	return;
+
+S_EditSpecial:
+	.@s = getarg(0);
+	while (1) {
+		if (!$GRW_O_Exists[.@s]) return;
+		clear;
+		mes "[One-Time Special - Edit]";
+		mes $GRW_O_Name$[.@s];
+		mes gettimestr("%a %Y-%m-%d %H:%M",21,$GRW_O_Start[.@s]) + " PHT";
+		mes "Until: " + gettimestr("%a %H:%M",21,$GRW_O_End[.@s]);
+		mes "Status: " + ($GRW_O_Completed[.@s] ? "COMPLETED" : ($GRW_O_Enabled[.@s] ? "ENABLED" : "Disabled"));
+		mes "Castles: FE " + callsub(S_Count,$GRW_O_FE[.@s],20) + ", SE " + callsub(S_Count,$GRW_O_SE[.@s],10);
+		next;
+		.@choice = select("Rename:Change start date/time:Change duration:Choose castles:Enable / disable:Delete event:Back");
+		if (.@choice == 7) return;
+		if ($GRW_O_Completed[.@s] ||
+			(gettimetick(2) >= $GRW_O_Start[.@s] && gettimetick(2) < $GRW_O_End[.@s] && $GRW_O_Enabled[.@s])) {
+			if (.@choice != 6) { mes "Active/completed events cannot be edited. Create another event."; next; continue; }
+		}
+		.@start = $GRW_O_Start[.@s];
+		.@end = $GRW_O_End[.@s];
+		.@fe = $GRW_O_FE[.@s];
+		.@se = $GRW_O_SE[.@s];
+		.@name$ = $GRW_O_Name$[.@s];
+		if (.@choice == 1) {
+			mes "New event name:";
+			input .@name$;
+			if (.@name$ == "") continue;
+			.@name$ = substr(.@name$,0,30);
+		} else if (.@choice == 2) {
+			.@duration = (.@end - .@start);
+			.@start = callsub(S_InputDateTime);
+			if (.@start < 0) continue;
+			.@end = .@start + .@duration;
+		} else if (.@choice == 3) {
+			.@duration = callsub(S_ChooseDuration);
+			if (.@duration <= 0) continue;
+			.@end = .@start + .@duration * 60;
+		} else if (.@choice == 4) {
+			.@mask = callsub(S_PickCastles,.@fe | (.@se << 20));
+			.@fe = .@mask & 1048575;
+			.@se = (.@mask >> 20) & 1023;
+		} else if (.@choice == 5) {
+			if ($GRW_O_Enabled[.@s]) {
+				mes "Disable this one-time event?";
+				if (select("Disable:Cancel") == 1) $GRW_O_Enabled[.@s] = 0;
+				continue;
+			}
+			if ($GRW_O_Start[.@s] <= gettimetick(2)) { mes "Event start is in the past."; next; continue; }
+			if (!$GRW_O_FE[.@s] && !$GRW_O_SE[.@s]) { mes "Choose castles first."; next; continue; }
+			.@conflict = callsub(S_SpecialConflict,$GRW_O_Start[.@s],$GRW_O_End[.@s],$GRW_O_FE[.@s],$GRW_O_SE[.@s],.@s);
+			if (.@conflict) { mes "Castle/time overlap with weekly WoE."; next; continue; }
+			mes "Enable this one-time event?";
+			if (select("Enable:Cancel") == 1) $GRW_O_Enabled[.@s] = 1;
+			continue;
+		} else if (.@choice == 6) {
+			if ($GRW_O_Enabled[.@s] && !$GRW_O_Completed[.@s] &&
+				gettimetick(2) >= $GRW_O_Start[.@s] && gettimetick(2) < $GRW_O_End[.@s]) {
+				mes "Cannot delete a currently running special WoE.";
+				mes "End the managed event safely first.";
+				next;
+				continue;
+			}
+			mes "Permanently delete this event?";
+			if (select("Delete:Cancel") != 1) continue;
+			$GRW_O_Exists[.@s] = 0;
+			$GRW_O_Enabled[.@s] = 0;
+			logmes "Grass Ro WoE: special deleted by " + strcharinfo(0) + " id=" + .@s;
+			return;
+		}
+		if (.@start <= gettimetick(2) || (!.@fe && !.@se)) {
+			mes "A future start time and castle selection are required.";
+			next;
+			continue;
+		}
+		.@conflict = callsub(S_SpecialConflict,.@start,.@end,.@fe,.@se,.@s);
+		if ($GRW_O_Enabled[.@s] && .@conflict) {
+			mes "Enabled event conflicts with a weekly WoE castle/time.";
+			mes "Disable the event before editing conflicting settings.";
+			next;
+			continue;
+		}
+		mes "Save the changed special event?";
+		if (select("Save:Cancel") != 1) continue;
+		$GRW_O_Name$[.@s] = .@name$;
+		$GRW_O_Start[.@s] = .@start;
+		$GRW_O_End[.@s] = .@end;
+		$GRW_O_FE[.@s] = .@fe;
+		$GRW_O_SE[.@s] = .@se;
+		logmes "Grass Ro WoE: special edited by " + strcharinfo(0) + " id=" + .@s;
+	}
+	return;
+
+S_ManualStart:
+	mes "[Manual WoE - Start Now]";
+	mes "Manual events never change recurring or special automation.";
+	if ($GRW_ManualUntil > gettimetick(2)) {
+		mes "A manual event is already running.";
+		mes "End it before starting another manual event.";
+		next;
+		return;
+	}
+	next;
+	.@mode = select("Use castles from an existing weekly event:Choose castles for a new manual event:Cancel");
+	if (.@mode == 3) return;
+	.@mask = 0;
+	if (.@mode == 1) {
+		.@s = callsub(S_ChooseWeekly);
+		if (.@s < 0) return;
+		.@mask = $GRW_FE[.@s] | ($GRW_SE[.@s] << 20);
+	} else {
+		.@mask = callsub(S_PickCastles,0);
+	}
+	if (!.@mask) { mes "No castles selected; nothing started."; next; return; }
+	.@minutes = callsub(S_ChooseDuration);
+	if (!.@minutes) return;
+	.@fe = .@mask & 1048575;
+	.@se = (.@mask >> 20) & 1023;
+	if ((.@fe && agitcheck() && !$GRW_OwnFE) || (.@se && agitcheck2() && !$GRW_OwnSE) || agitcheck3()) {
+		mes "An external/global WoE is active in a requested mode.";
+		mes "Cannot safely merge this manual event.";
+		next;
+		return;
+	}
+	mes "[Confirm Manual WoE]";
+	mes "Starts immediately for " + .@minutes + " min.";
+	callsub S_CastleSummary,.@mask;
+	mes "Weekly and special schedules remain unchanged.";
+	next;
+	if (select("START NOW:Cancel") != 1) return;
+	if ((.@fe && agitcheck() && !$GRW_OwnFE) || (.@se && agitcheck2() && !$GRW_OwnSE)) return;
+	$GRW_ManualFE = .@fe;
+	$GRW_ManualSE = .@se;
+	$GRW_ManualUntil = gettimetick(2) + .@minutes * 60;
+	logmes "Grass Ro WoE: manual started by " + strcharinfo(0) + " duration=" + .@minutes;
+	donpcevent "GRW_Core::OnTick";
+	mes "Manual start requested; check WoE status.";
+	next;
+	return;
+
+S_StopManaged:
+	mes "[WoE - Stop Controls]";
+	mes "No externally started WoE will be stopped here.";
+	mes "Manual events are independent of automation.";
+	if (!$GRW_OwnFE && !$GRW_OwnSE && !$GRW_ManualUntil) {
+		mes "There is no currently managed/manual WoE.";
+		next;
+		return;
+	}
+	next;
+	.@choice = select("Stop MANUAL event only:EMERGENCY - pause automation and end all managed WoE:Cancel");
+	if (.@choice == 3) return;
+	if (.@choice == 1) {
+		if (!$GRW_ManualUntil) { mes "No manual event is running."; next; return; }
+		if (select("Stop manual event:Cancel") != 1) return;
+		$GRW_ManualUntil = 0;
+		$GRW_ManualFE = 0;
+		$GRW_ManualSE = 0;
+		logmes "Grass Ro WoE: manual ended by " + strcharinfo(0);
+	} else {
+		mes "This PAUSES weekly and special automation.";
+		mes "It ends all currently Grass Ro-managed WoE.";
+		if (select("CONFIRM emergency stop:Cancel") != 1) return;
+		$GRW_Paused = 1;
+		$GRW_SpecialPaused = 1;
+		$GRW_ManualUntil = 0;
+		$GRW_ManualFE = 0;
+		$GRW_ManualSE = 0;
+		logmes "Grass Ro WoE: emergency stop by " + strcharinfo(0);
+	}
+	donpcevent "GRW_Core::OnTick";
+	mes "Stop requested. Check current status.";
+	next;
+	return;
+
+S_Automation:
+	while (1) {
+		clear;
+		mes "[WoE - Automation Controls]";
+		mes "Safety: " + ($GRW_V2Armed ? "ARMED" : "LOCKED");
+		mes "Weekly: " + ($GRW_Paused ? "PAUSED" : "ENABLED");
+		mes "Special: " + ($GRW_SpecialPaused ? "PAUSED" : "ENABLED");
+		mes "All time values are Philippine local time.";
+		next;
+		.@choice = select("Arm / lock automatic execution:Pause / resume weekly scheduling:Pause / resume one-time special scheduling:Back");
+		if (.@choice == 4) return;
+		if (.@choice == 1) {
+			if ($GRW_V2Armed) {
+				mes "Locking stops managed scheduled modes, but not an ongoing manual event.";
+				if (select("LOCK scheduler:Cancel") == 1) $GRW_V2Armed = 0;
+			} else {
+				mes "Arming allows enabled schedules to start when their time arrives.";
+				mes "Verify no default WoE schedulers are loaded.";
+				mes "Review all enabled weekly and one-time schedules first.";
+				if (agitcheck() || agitcheck2() || agitcheck3()) {
+					mes "Cannot arm while WoE is active.";
+					next;
+					continue;
+				}
+				if (select("I VERIFIED - ARM automation:Cancel") == 1) $GRW_V2Armed = 1;
+			}
+		} else if (.@choice == 2) {
+			mes "Weekly scheduling is " + ($GRW_Paused ? "PAUSED" : "ENABLED") + ".";
+			mes "Resuming can start an event currently within its weekly time window.";
+			if (select(($GRW_Paused ? "RESUME weekly:PAUSE weekly") + ":Cancel") == 1) $GRW_Paused = !$GRW_Paused;
+		} else if (.@choice == 3) {
+			mes "Special event scheduling is " + ($GRW_SpecialPaused ? "PAUSED" : "ENABLED") + ".";
+			mes "Resuming can start an event currently within its one-time window.";
+			if (select(($GRW_SpecialPaused ? "RESUME special:PAUSE special") + ":Cancel") == 1) $GRW_SpecialPaused = !$GRW_SpecialPaused;
+		}
+		logmes "Grass Ro WoE: automation changed by " + strcharinfo(0) +
+			" armed="+$GRW_V2Armed+" weeklyPaused="+$GRW_Paused+" specialPaused="+$GRW_SpecialPaused;
+		donpcevent "GRW_Core::OnTick";
+	}
+	return;
+}

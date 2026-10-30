@@ -1,0 +1,188 @@
+//===== GrassRO rAthena Pre-Renewal ============================
+//= Reset Girl - paid resets and per-character cooldown
+//= Location: prontera 150,193 | Facing: 4 | Sprite: 124
+//=
+//= First successful Skills / Stats / Both reset is free per character.
+//= Feeling, Hatred and Super Novice death resets are always paid.
+//= All successful services share one 10-second cooldown per character.
+//= All reset services pause during WoE and resume automatically afterward.
+//============================================================
+
+prontera,150,193,4	script	Amnesiac Woman	782,{
+	mes "[Reset Girl]";
+
+	// WoE:FE, WoE:SE, and WoE:TE; no permanent disable flags.
+	if (agitcheck() || agitcheck2() || agitcheck3()) {
+		mes "Reset services are unavailable during War of Emperium.";
+		mes "Please return once WoE has ended.";
+		close;
+	}
+
+	// Also disallow PvP, GvG, and Battleground maps.
+	.@map$ = strcharinfo(3);
+	if (getmapflag(.@map$, mf_pvp) || getmapflag(.@map$, mf_gvg) ||
+		getmapflag(.@map$, mf_gvg_te) || getmapflag(.@map$, mf_battleground)) {
+		mes "Reset services cannot be used on PvP or GvG maps.";
+		close;
+	}
+
+	.@remaining = resetgirl_next - gettimetick(2);
+	if (.@remaining > 0) {
+		mes "Please wait " + .@remaining + " more second(s) before another reset.";
+		close;
+	}
+
+	mes "Choose the reset service you need.";
+	mes "^0055FFYour first Skills, Stats, or Both reset is free.^000000";
+	mes "After that, standard prices apply.";
+	mes "Each successful reset has a 10-second cooldown.";
+	mes " ";
+	mes "Skills: ^FF8800" + callfunc("F_InsertComma", .Prices[1]) + "z^000000";
+	mes "Stats: ^FF8800" + callfunc("F_InsertComma", .Prices[2]) + "z^000000";
+	mes "Both: ^FF8800" + callfunc("F_InsertComma", .Prices[3]) + "z^000000";
+	mes "Star Gladiator Feeling: ^FF8800" + callfunc("F_InsertComma", .Prices[4]) + "z^000000";
+	mes "Star Gladiator Hatred: ^FF8800" + callfunc("F_InsertComma", .Prices[5]) + "z^000000";
+	mes "Super Novice Death Counter: ^FF8800" + callfunc("F_InsertComma", .Prices[6]) + "z^000000";
+	next;
+
+	.@service = select("Reset Skills:Reset Stats:Reset Both:Reset Star Gladiator Feeling:Reset Star Gladiator Hatred:Reset Super Novice Death Counter:Cancel");
+	if (.@service == 7)
+		close;
+
+	mes "[Reset Girl]";
+
+	// Restrict Star Gladiator-specific options to Star Gladiators.
+	if (.@service == 4 || .@service == 5) {
+		if (Class != Job_Star_Gladiator && Class != Job_Star_Gladiator2 &&
+			Class != Job_Baby_Star_Gladiator && Class != Job_Baby_Star_Gladiator2) {
+			mes "This service is only for Star Gladiators.";
+			close;
+		}
+	}
+
+	// Restrict death-counter resets to the Super Novice family.
+	if (.@service == 6) {
+		if (Class != Job_Super_Novice && Class != Job_Super_Baby &&
+			Class != Job_Super_Novice_E && Class != Job_Super_Baby_E) {
+			mes "This service is only for Super Novices.";
+			close;
+		}
+	}
+
+	// Do not offer a no-op transaction.
+	if (!callsub(S_HasSomethingToReset, .@service)) {
+		mes "There is nothing to reset for this service.";
+		mes "No Zeny has been deducted.";
+		close;
+	}
+
+	.@price = .Prices[.@service];
+	if (.@service <= 3 && !resetgirl_free_used)
+		.@price = 0;
+
+	mes "Selected: ^0055FF" + .Names$[.@service] + "^000000";
+	if (.@price == 0)
+		mes "Cost: ^00AA00FREE (first standard reset)^000000";
+	else
+		mes "Cost: ^FF8800" + callfunc("F_InsertComma", .@price) + " Zeny^000000";
+
+	if (Zeny < .@price) {
+		mes "You do not have enough Zeny.";
+		close;
+	}
+
+	mes "This action cannot be undone. Proceed?";
+	next;
+	if (select("Cancel:Confirm reset") == 1)
+		close;
+
+	// Recheck conditions after the confirmation dialog.
+	mes "[Reset Girl]";
+	if (agitcheck() || agitcheck2() || agitcheck3() ||
+		getmapflag(strcharinfo(3), mf_pvp) ||
+		getmapflag(strcharinfo(3), mf_gvg) ||
+		getmapflag(strcharinfo(3), mf_gvg_te) ||
+		getmapflag(strcharinfo(3), mf_battleground)) {
+		mes "Reset services are currently restricted.";
+		close;
+	}
+	if (resetgirl_next > gettimetick(2)) {
+		mes "Your reset cooldown is still active.";
+		close;
+	}
+	if (!callsub(S_HasSomethingToReset, .@service)) {
+		mes "There is no longer anything to reset.";
+		close;
+	}
+	if (Zeny < .@price) {
+		mes "You no longer have enough Zeny.";
+		close;
+	}
+
+	// Apply the reset first; only eligible, non-empty services reach here.
+	switch (.@service) {
+		case 1:
+			sc_end_class;
+			resetskill;
+			break;
+		case 2:
+			resetstatus;
+			break;
+		case 3:
+			sc_end_class;
+			resetskill;
+			resetstatus;
+			break;
+		case 4:
+			resetfeel;
+			break;
+		case 5:
+			resethate;
+			break;
+		case 6:
+			PC_DIE_COUNTER = 0;
+			recalculatestat;
+			break;
+	}
+
+	if (.@price > 0)
+		Zeny -= .@price;
+	if (.@service <= 3 && !resetgirl_free_used)
+		resetgirl_free_used = 1;
+	resetgirl_next = gettimetick(2) + .Cooldown;
+
+	mes "^00AA00Reset completed successfully!^000000";
+	if (.@price > 0)
+		mes "Paid: " + callfunc("F_InsertComma", .@price) + " Zeny.";
+	else
+		mes "Your free standard reset has been used.";
+	mes "You can reset again in " + .Cooldown + " seconds.";
+	close;
+
+S_HasSomethingToReset:
+	// These values match the underlying character registries in rAthena.
+	switch (getarg(0)) {
+		case 1:
+			return (skillpointcount() > SkillPoint);
+		case 2:
+			return (bStr > 1 || bAgi > 1 || bVit > 1 ||
+				bInt > 1 || bDex > 1 || bLuk > 1);
+		case 3:
+			return (skillpointcount() > SkillPoint ||
+				bStr > 1 || bAgi > 1 || bVit > 1 ||
+				bInt > 1 || bDex > 1 || bLuk > 1);
+		case 4:
+			return (PC_FEEL_SUN || PC_FEEL_MOON || PC_FEEL_STAR);
+		case 5:
+			return (PC_HATE_MOB_SUN || PC_HATE_MOB_MOON || PC_HATE_MOB_STAR);
+		case 6:
+			return (PC_DIE_COUNTER > 0);
+	}
+	return 0;
+
+OnInit:
+	.Cooldown = 10;
+	setarray .Prices[1], 50000, 50000, 90000, 50000, 50000, 100000;
+	setarray .Names$[1], "Reset Skills", "Reset Stats", "Reset Both", "Reset Feeling", "Reset Hatred", "Reset Death Counter";
+	end;
+}
