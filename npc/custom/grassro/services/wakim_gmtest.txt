@@ -1,0 +1,271 @@
+//============================================================
+//= Grass Ro | Wakim | Phase 2 — GM-only read-only Sell All audit
+//= Native Buy / Sell + Identify All (quantity-based billing)
+//= Sell All preview only: no item deletion / no payout. GM write operations disabled.
+//= Requires Hunting Arrow Item ID 1774 in the effective item DB.
+//= NEVER register this alongside another Wakim NPC at the same map position.
+//============================================================
+
+prontera,146,172,4	script	Wakim#GrassRo	582,{
+	if (getgmlevel() < 99) {
+		mes "[Wakim]";
+		mes "This service is currently under GM testing.";
+		close;
+	}
+	mes "[Wakim]";
+	mes "Welcome to Wakim's services.";
+	if (getgmlevel() >= 99) {
+		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Administration:Cancel");
+	} else {
+		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Cancel");
+	}
+
+	switch (.@choice) {
+	case 1:
+		close2;
+		callshop "Wakim_Stock#GrassRo",1;
+		end;
+	case 2:
+		close2;
+		callshop "Wakim_Stock#GrassRo",2;
+		end;
+	case 3:
+		goto L_SellAllPreview;
+	case 4:
+		goto L_Identify;
+	case 5:
+		if (getgmlevel() < 99)
+			close;
+		mes "[Wakim — Administration]";
+		mes "^FF0000Write operations are disabled in Phase 1.^000000";
+		mes "GM exclusions and incident recovery are not active yet.";
+		close;
+	default:
+		close;
+	}
+
+L_SellAllPreview:
+	// PHASE 2 - READ-ONLY GM PREVIEW. This label MUST NOT delete items or pay Zeny.
+	// No native NoSell/card registry, GM exclusion storage, or incident journal is in place yet.
+	// Never use this candidate list to authorize an actual sale.
+	if (getgmlevel() < 99) {
+		mes "[Wakim]";
+		mes "GM testing only.";
+		close;
+	}
+	if (@WakimOperationBusy) {
+		mes "[Wakim]";
+		mes "A Wakim operation is already in progress.";
+		close;
+	}
+	getinventorylist;
+	.@count = @inventorylist_count;
+	.@oc = getskilllv("MC_OVERCHARGE");
+	.@rate = (.@oc > 0) ? (5 + .@oc * 2 - (.@oc == 10 ? 1 : 0)) : 0;
+	.@possible = 0;
+	.@excluded = 0;
+	.@units = 0;
+	.@subtotal = 0;
+	.@overflow = 0;
+	mes "[Wakim - Sell All Audit]";
+	mes "^FF0000PREVIEW ONLY. NOTHING WILL BE SOLD.^000000";
+	mes "Prices and eligibility are provisional.";
+	mes "NoSell, inserted-card restrictions and GM exclusions are NOT checked yet.";
+	mes "Unequipped Gear Switch items cannot be reliably identified here.";
+	mes "^FF0000Favorite valuable equipment before future selling.^000000";
+	mes "--------------------------------";
+	// Small individual 'mes' calls avoid long single-packet NPC messages.
+	// The browser must still pass a long-receipt UI test before real selling is enabled.
+	for (.@i = 0; .@i < .@count; ++.@i) {
+		.@id = @inventorylist_id[.@i];
+		.@amount = @inventorylist_amount[.@i];
+		if (.@id <= 0 || .@amount <= 0)
+			continue;
+		// Explicit exclusions we can verify via getinventorylist.
+		if (@inventorylist_equip[.@i] || @inventorylist_favorite[.@i] ||
+			@inventorylist_identify[.@i] != 1 || @inventorylist_bound[.@i] ||
+			@inventorylist_expire[.@i] || getiteminfo(.@id, ITEMINFO_TYPE) == IT_PETEGG) {
+			.@excluded++;
+			continue;
+		}
+		.@raw = getiteminfo(.@id, ITEMINFO_SELL);
+		if (.@raw < 0) {
+			.@excluded++;
+			continue;
+		}
+		.@unit = (.@raw * (100 + .@rate)) / 100;
+		// Production min_shop_sell was verified as zero. Do not infer future changes.
+		if (.@unit < 0)
+			.@unit = 0;
+		.@line = .@unit * .@amount;
+		.@possible++;
+		.@units += .@amount;
+		.@subtotal += .@line;
+		mes getitemname(.@id) + " [" + .@id + "] x" + .@amount;
+		mes "  " + .@unit + "z per unit = " + .@line + "z";
+		// We deliberately reject overly large receipts for now, rather than silently truncate.
+		if (.@possible >= 600 || .@subtotal > 50000000) {
+			.@overflow = 1;
+			break;
+		}
+	}
+	mes "--------------------------------";
+	mes "Candidate slots: " + .@possible + ", units: " + .@units;
+	mes "Excluded by visible rules: " + .@excluded + " slots";
+	mes "Overcharge: " + .@rate + "% (applied per unit)";
+	if (.@overflow) {
+		mes "^FF0000Preview incomplete or exceeds payout safety threshold.^000000";
+		mes "No sale can proceed.";
+		close;
+	}
+	.@bonus = (.@subtotal * 10) / 100;
+	.@total = .@subtotal + .@bonus;
+	mes "Provisional native resale: " + .@subtotal + "z";
+	mes "Provisional extra 10%: " + .@bonus + "z";
+	mes "Provisional combined total: " + .@total + "z";
+	if (.@total > 50000000)
+		mes "^FF0000Exceeds Wakim 50,000,000z cap.^000000";
+	mes "^FF0000This is NOT a final eligibility or payment quote.^000000";
+	mes "No items or Zeny were changed.";
+	close;
+
+L_Identify:
+	// No temporary lock while the player is reading a dialog.
+	if (@WakimOperationBusy) {
+		mes "[Wakim]";
+		mes "Another Wakim operation is already running.";
+		close;
+	}
+
+	getinventorylist;
+	.@slotCount = @inventorylist_count;
+	.@units = 0;
+	.@unidentifiedSlots = 0;
+	for (.@i = 0; .@i < .@slotCount; .@i++) {
+		// Snapshot all inventory entries, not just unidentified ones.
+		.@ids[.@i] = @inventorylist_id[.@i];
+		.@amounts[.@i] = @inventorylist_amount[.@i];
+		.@identified[.@i] = @inventorylist_identify[.@i];
+		if (.@identified[.@i] != 1) {
+			.@units += .@amounts[.@i];
+			.@unidentifiedSlots++;
+		}
+	}
+
+	if (.@units == 0) {
+		mes "[Wakim]";
+		mes "You have no unidentified items.";
+		close;
+	}
+
+	.@fee = (.@units <= 10) ? .@units * 40 : 0;
+	mes "[Wakim]";
+	mes "Unidentified units: " + .@units;
+	mes "Unidentified inventory slots: " + .@unidentifiedSlots;
+	mes "Identification fee: " + .@fee + " Zeny.";
+	mes "11 or more units are identified for free.";
+	next;
+	if (select("Identify All:Cancel") != 1)
+		close;
+
+	// No player-input/yield commands from this point until completion.
+	if (@WakimOperationBusy) {
+		mes "[Wakim]";
+		mes "Another Wakim operation started. Please try again.";
+		close;
+	}
+	@WakimOperationBusy = 1;
+
+	// Recalculate and verify the earlier snapshot, since 'next' and
+	// 'select' allow time for the inventory to change.
+	getinventorylist;
+	if (@inventorylist_count != .@slotCount) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Your inventory changed. Please try again.";
+		close;
+	}
+	.@checkUnits = 0;
+	.@checkSlots = 0;
+	.@changed = 0;
+	for (.@i = 0; .@i < .@slotCount; .@i++) {
+		if (@inventorylist_id[.@i] != .@ids[.@i] ||
+			@inventorylist_amount[.@i] != .@amounts[.@i] ||
+			@inventorylist_identify[.@i] != .@identified[.@i]) {
+			.@changed = 1;
+			break;
+		}
+		if (@inventorylist_identify[.@i] != 1) {
+			.@checkUnits += @inventorylist_amount[.@i];
+			.@checkSlots++;
+		}
+	}
+	if (.@changed || .@checkUnits != .@units || .@checkSlots != .@unidentifiedSlots) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Your inventory changed. Please try again.";
+		close;
+	}
+	if (Zeny < .@fee) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "You need " + .@fee + " Zeny to identify these items.";
+		close;
+	}
+	if (identifyall(0) != .@unidentifiedSlots) {
+		@WakimOperationBusy = 0;
+		logmes "WAKIM IDENTIFY cancel: native slot count mismatch; cid=" + getcharid(0);
+		mes "[Wakim]";
+		mes "Identification state changed. Please retry.";
+		close;
+	}
+
+	// identifyall identifies by inventory SLOT, not quantity.
+	.@identifiedNow = identifyall(1);
+	if (.@identifiedNow != .@unidentifiedSlots || identifyall(0) != 0) {
+		logmes "WAKIM IDENTIFY incomplete; cid=" + getcharid(0) + "; expected_slots=" + .@unidentifiedSlots + "; actual_slots=" + .@identifiedNow;
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Identification could not be fully verified. No fee was charged.";
+		close;
+	}
+
+	if (.@fee > 0) {
+		// The attempt must be recorded before the assignment: on a failed
+		// SP_ZENY assignment rAthena can terminate the NPC script.
+		.@zenyBefore = Zeny;
+		if (.@zenyBefore < .@fee) {
+			logmes "WAKIM IDENTIFY payment skipped after success (funds); cid=" + getcharid(0) + "; fee=" + .@fee;
+			@WakimOperationBusy = 0;
+			mes "[Wakim]";
+			mes "Identification completed, but no fee could be collected. An audit was recorded.";
+			close;
+		}
+		logmes "WAKIM IDENTIFY payment_attempt; cid=" + getcharid(0) + "; units=" + .@units + "; fee=" + .@fee + "; before=" + .@zenyBefore;
+		Zeny -= .@fee;
+		if (Zeny != .@zenyBefore - .@fee) {
+			logmes "WAKIM IDENTIFY payment_unverified; cid=" + getcharid(0) + "; fee=" + .@fee;
+			@WakimOperationBusy = 0;
+			mes "[Wakim]";
+			mes "Identification completed, but payment requires review.";
+			close;
+		}
+	}
+
+	logmes "WAKIM IDENTIFY success; cid=" + getcharid(0) + "; units=" + .@units + "; fee=" + .@fee;
+	@WakimOperationBusy = 0;
+	mes "[Wakim]";
+	mes "Successfully identified " + .@units + " item units.";
+	mes "Paid: " + .@fee + " Zeny.";
+	close;
+
+OnPCLoginEvent:
+	// Temporary session state only. Do not erase persistent incidents.
+	@WakimOperationBusy = 0;
+	end;
+}
+
+// Native Zeny shop (buy/sell). Discount explicitly enabled.
+// Explicit prices are the APPROVED Wakim prices, not necessarily item DB Buy.
+// This invisible shop is called from Wakim's main menu.
+-	shop	Wakim_Stock#GrassRo	-1,yes,513:15,517:50,501:50,502:200,504:1200,12548:500,645:800,656:1500,657:3000,610:4000,525:500,526:7000,601:60,602:300,611:40,717:600,716:600,715:600,1750:1,1751:3,1752:3,1753:4,1774:30

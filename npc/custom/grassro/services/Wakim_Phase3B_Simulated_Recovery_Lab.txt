@@ -1,0 +1,194 @@
+//==========================================================================
+//= Grass Ro | Wakim Phase 3B | SIMULATED incident recovery lab
+//= Temporary and independent of production Wakim. DO NOT replace Wakim.
+//=
+//= DANGEROUS OPERATIONS INTENTIONALLY ABSENT:
+//=   - No actual WakimSell* incident writes or clears
+//=   - No inventory deletion, sale, Zeny changes, gameplay SQL, or GM globals
+//=   - Only temporary per-character @WakimP3Lab* variables are modified
+//=   - logmes may write ATTEMPT/RESULT audit records to the live NPC log
+//=
+//= Prerequisite: tested non-forced attachrid(account_id, 0), GM Level 99.
+//= Load via @loadnpc, unload via @unloadnpcfile; never register at startup.
+//==========================================================================
+prontera,146,169,4	script	WakimRecoveryLab#P3B	582,{
+	mes "[Wakim Recovery LAB]";
+	mes "SIMULATION ONLY: this NPC never changes real Wakim incidents, items or Zeny.";
+	if (getgmlevel() < 99) goto L_TestCharacter;
+	.@choice = select("GM: Inspect ONLINE simulated incident:GM: Review and CLEAR simulated incident:Test-character simulation controls:Cancel");
+	if (.@choice == 1) goto L_GMInspect;
+	if (.@choice == 2) goto L_GMRecover;
+	if (.@choice == 3) goto L_TestCharacter;
+	close;
+
+L_TestCharacter:
+	mes "[Simulation controls]";
+	mes "Your simulated incident is held in temporary character variables.";
+	mes "It is not a real Wakim Sell All incident.";
+	.@action = select("Arm a fake incomplete sale:Change fake incident (stale-review test):View my fake incident:Erase my fake incident:Cancel");
+	if (.@action == 5) close;
+	if (.@action == 3) {
+		mes "Flag: " + @WakimP3LabIncident + ", version: " + @WakimP3LabNonce;
+		mes "Epoch: " + @WakimP3LabEpoch;
+		mes "Expected: " + @WakimP3LabExpected + ", deleted: " + @WakimP3LabDeleted;
+		close;
+	}
+	if (.@action == 1) {
+		mes "Create fake incident (expected 3 slots, deleted 1)?";
+		if (select("ARM SIMULATION:Cancel") != 1) close;
+		@WakimP3LabNonce++;
+		if (@WakimP3LabNonce <= 0) @WakimP3LabNonce = 1;
+		@WakimP3LabIncident = 1;
+		@WakimP3LabEpoch = gettimetick(2);
+		@WakimP3LabExpected = 3;
+		@WakimP3LabDeleted = 1;
+		mes "Simulated incident armed. Close the dialogue before GM review.";
+		close;
+	}
+	if (.@action == 2) {
+		if (!@WakimP3LabIncident) {
+			mes "No simulated incident to mutate. Arm it first.";
+			close;
+		}
+		@WakimP3LabNonce++;
+		if (@WakimP3LabNonce <= 0) @WakimP3LabNonce = 1;
+		@WakimP3LabDeleted++;
+		mes "Changed version to " + @WakimP3LabNonce + ". A GM's older review is now stale.";
+		close;
+	}
+	if (.@action == 4) {
+		if (select("ERASE ONLY LAB DATA:Cancel") != 1) close;
+		@WakimP3LabNonce++;
+		if (@WakimP3LabNonce <= 0) @WakimP3LabNonce = 1;
+		@WakimP3LabIncident = 0;
+		@WakimP3LabEpoch = 0;
+		@WakimP3LabExpected = 0;
+		@WakimP3LabDeleted = 0;
+		mes "Simulated incident erased. Real Wakim records untouched.";
+		close;
+	}
+	close;
+
+L_GMInspect:
+	.@mode = 1;
+	goto L_GMBegin;
+
+L_GMRecover:
+	.@mode = 2;
+	goto L_GMBegin;
+
+L_GMBegin:
+	if (getgmlevel() < 99) close;
+	.@gmAid = getcharid(3);
+	.@gmCid = getcharid(0);
+	if (.@gmAid <= 0 || .@gmCid <= 0) close;
+	mes "[GM simulated incident review]";
+	mes "Use an ONLINE, consenting disposable test character on a DIFFERENT account.";
+	mes "Enter its exact character name.";
+	input .@targetName$;
+	if (getstrlen(.@targetName$) < 1 || getstrlen(.@targetName$) > 23) {
+		mes "Invalid name.";
+		close;
+	}
+	.@targetAid = getcharid(3, .@targetName$);
+	.@targetCid = getcharid(0, .@targetName$);
+	if (.@targetAid <= 0 || .@targetCid <= 0 || .@targetAid == .@gmAid || !isloggedin(.@targetAid, .@targetCid)) {
+		mes "Target not eligible / online or uses the GM account.";
+		close;
+	}
+
+	// Non-forced target attachment: no mes/next/input/select/logmes here.
+	.@readOK = 0;
+	.@actualBusy = 0;
+	.@flag = 0;
+	.@epoch = 0;
+	.@nonce = 0;
+	.@expected = 0;
+	.@deleted = 0;
+	if (attachrid(.@targetAid, 0)) {
+		if (getcharid(3) == .@targetAid && getcharid(0) == .@targetCid) {
+			.@readOK = 1;
+			.@actualBusy = @WakimOperationBusy;
+			.@flag = @WakimP3LabIncident;
+			.@epoch = @WakimP3LabEpoch;
+			.@nonce = @WakimP3LabNonce;
+			.@expected = @WakimP3LabExpected;
+			.@deleted = @WakimP3LabDeleted;
+		}
+	}
+	// Mandatory restoration to GM before any display or log.
+	if (!attachrid(.@gmAid, 1)) end;
+	if (getcharid(3) != .@gmAid || getcharid(0) != .@gmCid || getgmlevel() < 99) end;
+	if (!.@readOK) {
+		mes "Target busy, disconnected, or identity changed. No operation performed.";
+		close;
+	}
+	mes "Target AID: " + .@targetAid + ", CID: " + .@targetCid;
+	mes "Fake incident: " + .@flag + ", version: " + .@nonce;
+	mes "Epoch: " + .@epoch;
+	mes "Expected: " + .@expected + ", deleted: " + .@deleted;
+	mes "Live Wakim operation busy: " + .@actualBusy;
+	if (.@mode == 1) {
+		mes "Read-only inspection complete. No values modified.";
+		close;
+	}
+	if (.@flag != 1 || .@actualBusy || .@epoch <= 0 || .@expected <= 0 || .@deleted < 0 || .@deleted > .@expected) {
+		mes "No eligible, coherent fake incident. Nothing to clear.";
+		close;
+	}
+
+	.@issuedAt = gettimetick(2);
+	mes "[GM simulated recovery]";
+	mes "This will clear ONLY temporary simulated fields for the test character.";
+	mes "Enter your investigation reason (10-120 characters).";
+	input .@reason$;
+	if (getstrlen(.@reason$) < 10 || getstrlen(.@reason$) > 120) {
+		mes "Reason length invalid. Review canceled.";
+		close;
+	}
+	if (select("CONFIRM SIMULATED CLEAR:Cancel") != 1) close;
+	// Authorization expires 300 seconds after the original target review.
+	.@age = gettimetick(2) - .@issuedAt;
+	if (.@age < 0 || .@age > 300 || getgmlevel() < 99 || getcharid(3) != .@gmAid || getcharid(0) != .@gmCid) {
+		mes "Review expired or GM identity changed. Nothing cleared.";
+		close;
+	}
+	if (!isloggedin(.@targetAid, .@targetCid)) {
+		mes "Target disconnected. Nothing cleared.";
+		close;
+	}
+
+	// Write intent to the NPC audit before attempting any simulation change.
+	logmes "WAKIM P3B SIMULATED_CLEAR_ATTEMPT gm_aid=" + .@gmAid + " gm_cid=" + .@gmCid + " target_aid=" + .@targetAid + " target_cid=" + .@targetCid + " prior_version=" + .@nonce + " epoch=" + .@epoch + " expected=" + .@expected + " deleted=" + .@deleted + " reason=" + .@reason$;
+	// One final non-forced attachment + exact version check; no yielding actions.
+	.@cleared = 0;
+	if (attachrid(.@targetAid, 0)) {
+		if (getcharid(3) == .@targetAid && getcharid(0) == .@targetCid &&
+			@WakimOperationBusy == 0 &&
+			@WakimP3LabIncident == 1 &&
+			@WakimP3LabEpoch == .@epoch &&
+			@WakimP3LabNonce == .@nonce &&
+			@WakimP3LabExpected == .@expected &&
+			@WakimP3LabDeleted == .@deleted) {
+			@WakimP3LabNonce++;
+			@WakimP3LabIncident = 0;
+			@WakimP3LabEpoch = 0;
+			@WakimP3LabExpected = 0;
+			@WakimP3LabDeleted = 0;
+			.@cleared = 1;
+		}
+	}
+	// Audit and dialogue only after GM RID is restored.
+	if (!attachrid(.@gmAid, 1)) end;
+	if (getcharid(3) != .@gmAid || getcharid(0) != .@gmCid || getgmlevel() < 99) end;
+	if (!.@cleared) {
+		logmes "WAKIM P3B SIMULATED_CLEAR_REJECTED gm_aid=" + .@gmAid + " gm_cid=" + .@gmCid + " target_aid=" + .@targetAid + " target_cid=" + .@targetCid + " prior_version=" + .@nonce;
+		mes "Simulated clearance rejected: busy, stale, or disconnected.";
+		mes "No real Wakim incident was changed.";
+		close;
+	}
+	logmes "WAKIM P3B SIMULATED_CLEAR_SUCCESS gm_aid=" + .@gmAid + " gm_cid=" + .@gmCid + " target_aid=" + .@targetAid + " target_cid=" + .@targetCid + " prior_version=" + .@nonce + " epoch=" + .@epoch + " expected=" + .@expected + " deleted=" + .@deleted + " reason=" + .@reason$;
+	mes "SIMULATED incident cleared and audited under the GM.";
+	mes "No actual Wakim variables, inventory or Zeny changed.";
+	close;
+}

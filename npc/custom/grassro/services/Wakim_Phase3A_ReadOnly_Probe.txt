@@ -1,0 +1,78 @@
+//==================================================================
+//= Grass Ro — Wakim Phase 3A online incident READ-ONLY probe
+//= GM Level 99 only. Temporary test NPC, separate from live Wakim.
+//= Does NOT clear incidents, sell items, modify Zeny, or write logs.
+//= Does NOT define OnInit or modify any $GR_Wakim globals.
+//= Only inspect a consenting/disposable online test character.
+//= Unload after testing: @unloadnpcfile npc/custom/grassro/services/Wakim_Phase3A_ReadOnly_Probe.txt
+//==================================================================
+prontera,146,170,4	script	WakimProbe#P3A	582,{
+	if (getgmlevel() < 99) {
+		mes "[Wakim Recovery Probe]";
+		mes "GM testing only.";
+		close;
+	}
+	mes "[Wakim Recovery Probe]";
+	mes "READ-ONLY incident diagnostics. No sales or clearance.";
+	.@choice = select("Inspect MY incident:Inspect ONLINE test character:Cancel");
+	if (.@choice == 3) close;
+	if (.@choice == 1) {
+		mes "[My incident]";
+		mes "Account: " + getcharid(3) + ", Character: " + getcharid(0);
+		mes "Flag: " + WakimSellIncident + ", epoch: " + WakimSellEpoch;
+		mes "Expected: " + WakimSellExpected + ", deleted: " + WakimSellDeleted;
+		mes "Operation busy: " + @WakimOperationBusy;
+		close;
+	}
+	.@gmAid = getcharid(3);
+	.@gmCid = getcharid(0);
+	if (.@gmAid <= 0 || .@gmCid <= 0 || getgmlevel() < 99) close;
+	mes "[Online incident probe]";
+	mes "Use a disposable ONLINE test character on a DIFFERENT account.";
+	mes "Enter its exact character name.";
+	input .@targetName$;
+	if (getstrlen(.@targetName$) < 1 || getstrlen(.@targetName$) > 23) {
+		mes "Invalid character name.";
+		close;
+	}
+	.@targetAid = getcharid(3, .@targetName$);
+	.@targetCid = getcharid(0, .@targetName$);
+	if (.@targetAid <= 0 || .@targetCid <= 0 || .@targetAid == .@gmAid || !isloggedin(.@targetAid, .@targetCid)) {
+		mes "Character not online or not eligible for this test.";
+		close;
+	}
+	.@verified = 0;
+	.@incident = 0;
+	.@epoch = 0;
+	.@expected = 0;
+	.@deleted = 0;
+	.@busy = 0;
+	// Non-forced attach fails if target is in an NPC interaction.
+	// NEVER display dialogs or edit character values while attached to the target.
+	if (attachrid(.@targetAid, 0)) {
+		if (getcharid(3) == .@targetAid && getcharid(0) == .@targetCid) {
+			.@verified = 1;
+			.@incident = WakimSellIncident;
+			.@epoch = WakimSellEpoch;
+			.@expected = WakimSellExpected;
+			.@deleted = WakimSellDeleted;
+			.@busy = @WakimOperationBusy;
+		}
+	}
+	// Always restore the GM before returning any dialog or inspecting permissions.
+	if (!attachrid(.@gmAid, 1)) end;
+	if (getcharid(3) != .@gmAid || getcharid(0) != .@gmCid || getgmlevel() < 99) end;
+	if (!.@verified) {
+		mes "[Online incident probe]";
+		mes "Target is busy, disconnected, or identity verification failed.";
+		mes "No records were changed.";
+		close;
+	}
+	mes "[Online incident probe]";
+	mes "Target CID: " + .@targetCid + ", AID: " + .@targetAid;
+	mes "Flag: " + .@incident + ", epoch: " + .@epoch;
+	mes "Expected: " + .@expected + ", deleted: " + .@deleted;
+	mes "Operation busy: " + .@busy;
+	mes "No inventory, Zeny, or incident variables were changed.";
+	close;
+}

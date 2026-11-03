@@ -1,0 +1,264 @@
+// Grass Ro - Sir Reseton / Castle Administration v1.0
+// Only native FE/SE OnGuildBreak calls are enabled; Novice castles are view-only.
+// This script does not modify WoE scheduling, castle DB or guild records directly.
+// Position and sprite retained from the existing temporary NPC.
+prontera,127,169,4	script	Sir Reseton#grk_tmp	4_M_01,{
+	if (getgmlevel() < 99) {
+		mes "[Sir Reseton]";
+		mes "Castle administration is restricted to Level 99 GMs.";
+		close;
+	}
+	callsub S_Main;
+	close;
+
+OnInit:
+	setarray .Region$[0], "Prontera (FE)", "Payon (FE)", "Geffen (FE)", "Aldebaran (FE)", "Arunafeltz (SE)", "Schwarzwald (SE)", "Novice Guild";
+	setarray .Map$[0],
+		"aldeg_cas01", "aldeg_cas02", "aldeg_cas03", "aldeg_cas04", "aldeg_cas05",
+		"gefg_cas01", "gefg_cas02", "gefg_cas03", "gefg_cas04", "gefg_cas05",
+		"payg_cas01", "payg_cas02", "payg_cas03", "payg_cas04", "payg_cas05",
+		"prtg_cas01", "prtg_cas02", "prtg_cas03", "prtg_cas04", "prtg_cas05",
+		"nguild_alde", "nguild_gef", "nguild_pay", "nguild_prt", "schg_cas01",
+		"schg_cas02", "schg_cas03", "schg_cas04", "schg_cas05", "arug_cas01",
+		"arug_cas02", "arug_cas03", "arug_cas04", "arug_cas05";
+	end;
+
+S_Main:
+	while (1) {
+		if (getgmlevel() < 99) return;
+		.@occupied = 0;
+		for (.@i = 0; .@i < 34; ++.@i) {
+			if (getcastledata(.Map$[.@i], CD_GUILD_ID) > 0) ++.@occupied;
+		}
+		clear;
+		mes "[Sir Reseton - Castle Administration]";
+		mes "Total castles: 34";
+		mes "Occupied: " + .@occupied;
+		mes "Unoccupied: " + (34 - .@occupied);
+		mes "Novice Guild castles: view-only";
+		next;
+		.@choice = select("Browse castles by region:Show occupied castles:Close");
+		if (.@choice == 1) callsub S_Regions;
+		else if (.@choice == 2) callsub S_Occupied;
+		else return;
+	}
+	return;
+
+S_Regions:
+	while (1) {
+		clear;
+		mes "[Sir Reseton - Select Region]";
+		mes "Choose the castle region to manage.";
+		next;
+		.@choice = select("Prontera (FE):Payon (FE):Geffen (FE):Aldebaran (FE):Arunafeltz (SE):Schwarzwald (SE):Novice Guild:Back");
+		if (.@choice == 8) return;
+		callsub S_RegionList, .@choice - 1;
+	}
+	return;
+
+// Mapping follows the actual castle IDs in db/pre-re/castle_db.yml.
+S_GetRegion:
+	.@id = getarg(0);
+	if (.@id < 5) return 3; // Aldebaran: IDs 0-4
+	if (.@id < 10) return 2; // Geffen: IDs 5-9
+	if (.@id < 15) return 1; // Payon: IDs 10-14
+	if (.@id < 20) return 0; // Prontera: IDs 15-19
+	if (.@id < 24) return 6; // Novice: IDs 20-23
+	if (.@id < 29) return 5; // Schwarzwald: IDs 24-28
+	return 4; // Arunafeltz: IDs 29-33
+
+S_RegionList:
+	.@region = getarg(0);
+	while (1) {
+		.@menu$ = "";
+		.@count = 0;
+		for (.@i = 0; .@i < 34; ++.@i) {
+			if (callsub(S_GetRegion, .@i) != .@region) continue;
+			.@guild = getcastledata(.Map$[.@i], CD_GUILD_ID);
+			.@choiceIds[.@count] = .@i;
+			.@state$ = (.@guild > 0 ? "[OWNED] " : "[FREE] ");
+			.@menu$ += .@state$ + replacestr(getcastlename(.Map$[.@i]), ":", " - ") + ":";
+			.@count++;
+		}
+		clear;
+		mes "[Sir Reseton - " + .Region$[.@region] + "]";
+		mes "Select a castle to see its owner and controls.";
+		next;
+		.@choice = select(.@menu$ + "Back");
+		if (.@choice < 1 || .@choice > .@count) return;
+		callsub S_Castle, .@choiceIds[.@choice - 1];
+	}
+	return;
+
+S_Occupied:
+	while (1) {
+		.@count = 0;
+		.@menu$ = "";
+		for (.@i = 0; .@i < 34; ++.@i) {
+			.@guild = getcastledata(.Map$[.@i], CD_GUILD_ID);
+			if (.@guild <= 0) continue;
+			.@choiceIds[.@count] = .@i;
+			.@guildname$ = getguildname(.@guild);
+			if (.@guildname$ == "") .@guildname$ = "Guild ID " + .@guild;
+			.@menu$ += replacestr(getcastlename(.Map$[.@i]) + " - " + .@guildname$, ":", " - ") + ":";
+			.@count++;
+		}
+		clear;
+		mes "[Sir Reseton - Occupied Castles]";
+		if (.@count == 0) {
+			mes "No occupied castles.";
+			next;
+			return;
+		}
+		mes "Occupied: " + .@count;
+		mes "Select a castle to inspect.";
+		next;
+		.@choice = select(.@menu$ + "Back");
+		if (.@choice < 1 || .@choice > .@count) return;
+		callsub S_Castle, .@choiceIds[.@choice - 1];
+	}
+	return;
+
+S_Castle:
+	.@id = getarg(0);
+	if (.@id < 0 || .@id >= 34) return;
+	while (1) {
+		if (getgmlevel() < 99) return;
+		.@map$ = .Map$[.@id];
+		.@guild = getcastledata(.@map$, CD_GUILD_ID);
+		.@name$ = getcastlename(.@map$);
+		.@region = callsub(S_GetRegion, .@id);
+		clear;
+		mes "[Sir Reseton - Castle Details]";
+		mes "^3366FF" + .@name$ + "^000000";
+		mes "Region: " + .Region$[.@region];
+		mes "Map: " + .@map$ + " / ID: " + .@id;
+		mes "Status: " + (.@guild > 0 ? "^FF8800Occupied^000000" : "^00AA00Unoccupied^000000");
+		if (.@guild > 0) {
+			.@guildname$ = getguildname(.@guild);
+			if (.@guildname$ == "") .@guildname$ = "Unknown guild";
+			mes "Owner: " + .@guildname$;
+			mes "Guild ID: " + .@guild;
+		}
+		if (.@region == 6) mes "^FF8800Novice resets: read-only pending validation.^000000";
+		next;
+		if (.@guild <= 0 && .@region >= 0 && .@region <= 3) {
+			// FE castles only: restore their native unoccupied population.
+			.@choice = select("Restore default monsters:Refresh details:Back");
+			if (.@choice == 3) return;
+			if (.@choice == 1) callsub S_RestoreFE,.@id;
+		} else if (.@guild <= 0 || .@region == 6) {
+			.@choice = select("Refresh details:Back");
+			if (.@choice == 2) return;
+		} else {
+			.@choice = select("Reset ownership:Refresh details:Back");
+			if (.@choice == 3) return;
+			if (.@choice == 1) callsub S_Reset, .@id;
+		}
+	}
+	return;
+
+S_RestoreFE:
+	.@id = getarg(0);
+	if (getgmlevel() < 99 || .@id < 0 || .@id >= 34) return;
+	.@region = callsub(S_GetRegion,.@id);
+	if (.@region < 0 || .@region > 3) return;
+	.@map$ = .Map$[.@id];
+	if (getcastledata(.@map$,CD_GUILD_ID) != 0) {
+		mes "[Sir Reseton]";
+		mes "Only unoccupied castles can be restored.";
+		next;
+		return;
+	}
+	if (agitcheck() || agitcheck2() || agitcheck3()) {
+		mes "[Sir Reseton]";
+		mes "Cannot restore monsters during WoE.";
+		next;
+		return;
+	}
+	if (getmapusers(.@map$) > 0) {
+		mes "[Sir Reseton]";
+		mes "Players are inside this castle. Try again once it is empty.";
+		next;
+		return;
+	}
+	mes "[Sir Reseton - Restore Castle Monsters]";
+	mes "Castle: " + getcastlename(.@map$);
+	mes "This will clear ALL existing monsters on this map";
+	mes "and recreate its default unoccupied FE population.";
+	mes "That includes native MVP spawns. No guild owner changes.";
+	mes "No automatic respawn system will be added.";
+	next;
+	if (select("CONFIRM MONSTER RESTORE:Cancel") != 1) return;
+	// Revalidate immediately before calling the native castle script.
+	if (getgmlevel() < 99 || getcastledata(.@map$,CD_GUILD_ID) != 0 ||
+		agitcheck() || agitcheck2() || agitcheck3() || getmapusers(.@map$) > 0) {
+		mes "[Sir Reseton]";
+		mes "Castle conditions changed. No restoration requested.";
+		next;
+		return;
+	}
+	logmes "Grass Ro Sir Reseton: FE monster restoration requested on " + .@map$ + " by " + strcharinfo(0);
+	donpcevent "Agit#" + .@map$ + "::OnRecvCastle";
+	mes "[Sir Reseton]";
+	mes "Native FE monster restoration requested.";
+	mes "Check the castle and verify its monster population.";
+	next;
+	return;
+
+S_Reset:
+	.@id = getarg(0);
+	if (getgmlevel() < 99 || .@id < 0 || .@id >= 34) return;
+	.@map$ = .Map$[.@id];
+	.@region = callsub(S_GetRegion, .@id);
+	if (.@region == 6) {
+		mes "[Sir Reseton]";
+		mes "Novice Castle reset is read-only for safety.";
+		mes "Its native reset lifecycle must be verified first.";
+		next;
+		return;
+	}
+	if (agitcheck() || agitcheck2() || agitcheck3()) {
+		mes "[Sir Reseton]";
+		mes "^FF0000Cannot reset while any WoE is active.^000000";
+		next;
+		return;
+	}
+	.@guild = getcastledata(.@map$, CD_GUILD_ID);
+	if (.@guild <= 0) {
+		mes "[Sir Reseton]";
+		mes "This castle is already unoccupied.";
+		next;
+		return;
+	}
+	.@guildname$ = getguildname(.@guild);
+	if (.@guildname$ == "") .@guildname$ = "Unknown guild";
+	.@handler$ = "Agit#" + .@map$;
+	if (.@region == 4 || .@region == 5) .@handler$ = "Manager#" + .@map$;
+	mes "[Sir Reseton - Ownership Reset]";
+	mes "^FF0000THIS ACTION IS IRREVERSIBLE IN-GAME.^000000";
+	mes "Castle: " + getcastlename(.@map$);
+	mes "Current owner: " + .@guildname$;
+	mes "Guild ID: " + .@guild;
+	mes "This resets castle ownership to neutral.";
+	mes "The guild itself will not be deleted.";
+	mes "The native handler also refreshes castle NPCs and monsters.";
+	next;
+	if (select("CONFIRM OWNERSHIP RESET:Cancel") != 1) return;
+	// Revalidate access, castle owner and WoE after the confirmation dialog.
+	if (getgmlevel() < 99 || agitcheck() || agitcheck2() || agitcheck3() ||
+		getcastledata(.@map$, CD_GUILD_ID) != .@guild) {
+		mes "[Sir Reseton]";
+		mes "State changed; reset cancelled for safety.";
+		next;
+		return;
+	}
+	logmes "Grass Ro Sir Reseton: castle=" + .@map$ + " previous guild=" + .@guild + " admin=" + strcharinfo(0);
+	donpcevent .@handler$ + "::OnGuildBreak";
+	mes "[Sir Reseton]";
+	mes "Native castle reset event requested.";
+	mes "Allow a few seconds for castle refresh.";
+	mes "Reopen details to verify the owner is cleared.";
+	next;
+	return;
+}

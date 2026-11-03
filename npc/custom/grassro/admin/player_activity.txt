@@ -1,0 +1,244 @@
+// Grass Ro - Rheamae / Player Activity Collector
+// Lore dialogue revision: Rheamae - The Last Leader of Radix (v2)
+// The player dialogue tells her story through OPTIONAL conversations.
+// All collector code (from S_Status to the end) is retained verbatim.
+// Quest chapters are narrative hooks only. No persistent player state.
+prontera,130,155,8	script	Rheamae#grp	558,{
+	mes "[Rheamae]";
+	mes "Oh, hello! It's always nice to see another adventurer.";
+	mes "I was just keeping count. Old habits, you know?";
+	next;
+
+L_Menu:
+	mes "[Rheamae]";
+	mes "What would you like to talk about?";
+	if (getgmlevel() >= 99)
+		.@choice = select("Check who's online:How have you been?:Why do you count adventurers?:Tell me about Radix:Another great adventure?:GM population reports:Collector status (GM):See you around!");
+	else
+		.@choice = select("Check who's online:How have you been?:Why do you count adventurers?:Tell me about Radix:Another great adventure?:See you around!");
+
+	if (getgmlevel() >= 99 && .@choice == 6) {
+		next;
+		callsub S_Reports;
+		goto L_Menu;
+	}
+	if (getgmlevel() >= 99 && .@choice == 7) {
+		next;
+		callsub S_Status;
+		goto L_Menu;
+	}
+	if (.@choice == 8 || (getgmlevel() < 99 && .@choice == 6)) {
+		mes "[Rheamae]";
+		mes "Take care out there. I'll be cheering you on.";
+		close;
+	}
+
+	switch (.@choice) {
+	case 1:
+		mes "[Rheamae]";
+		mes "Let me have a look...";
+		mes "Right now, ^00AA00" + getusers(1) + " connected characters^000000 are online.";
+		mes "That includes GMs, resting adventurers, and extra clients.";
+		mes "You never know who might be looking for a companion.";
+		break;
+	case 2:
+		mes "[Rheamae]";
+		mes "I've been well. Things are quieter than they once were.";
+		mes "Sometimes I still expect someone to call for one more adventure.";
+		mes "But I'm happy meeting new faces, too.";
+		break;
+	case 3:
+		mes "[Rheamae]";
+		mes "I used to make sure everyone in my guild was accounted for.";
+		mes "Who had arrived? Who was missing? Who needed a hand?";
+		mes "I guess I never stopped paying attention.";
+		break;
+	case 4:
+		mes "[Rheamae]";
+		mes "Radix... now there's a name I haven't heard in a while.";
+		mes "I led that guild, in a world far from Grass Ro.";
+		next;
+		mes "[Rheamae]";
+		mes "Are you curious about the old days?";
+		.@topic = select("What were those days like?:Where did everyone go?:Maybe another time.");
+		if (.@topic == 1) {
+			mes "[Rheamae]";
+			mes "There were battles we thought we'd never win.";
+			mes "We celebrated every victory, however small.";
+			mes "What I remember most is having people beside me.";
+		}
+		else if (.@topic == 2) {
+			mes "[Rheamae]";
+			mes "Life took us in different directions.";
+			mes "Some explored other worlds. Some simply moved on.";
+			mes "Our gatherings grew smaller, until one day I was alone.";
+			mes "I don't blame them. I just miss them sometimes.";
+		}
+		else {
+			mes "[Rheamae]";
+			mes "Of course! There are plenty of other things to discuss.";
+		}
+		break;
+	case 5:
+		mes "[Rheamae]";
+		mes "Another great adventure? I'd like to see that.";
+		mes "Not to bring back the old days. They had their own magic.";
+		next;
+		mes "[Rheamae]";
+		mes "New companions don't need the same names or the same banner.";
+		mes "They just need a reason to stand together.";
+		mes "Maybe you'll be part of the next story worth remembering.";
+		break;
+	}
+	next;
+	goto L_Menu;
+
+S_Status:
+	if (getgmlevel() < 99) return;
+	.@result = query_sql("SELECT COUNT(*), COALESCE(MAX(sample_epoch),0), COUNT(online_accounts) FROM grassro_player_activity", .@samples, .@last, .@account_samples);
+	mes "[Population Collector - GM]";
+	mes "Interval: every 15 minutes";
+	mes "Retention: 90 days";
+	mes "Samples stored: " + .@samples;
+	mes "Samples with account counts: " + .@account_samples;
+	if (.@last > 0)
+		mes "Latest sample (Server Time): " + gettimestr("%a %Y-%m-%d %H:%M",21,.@last);
+	else
+		mes "No sample recorded yet.";
+	next;
+	return;
+
+S_Reports:
+	if (getgmlevel() < 99) return;
+	mes "[Population Reports - GM]";
+	mes "Select an observation period.";
+	mes "Samples missed during downtime are not treated as zero.";
+	next;
+	.@period = select("Last 7 days:Last 30 days:Last 90 days:Back");
+	if (.@period == 4) return;
+	.@days = (.@period == 1 ? 7 : (.@period == 2 ? 30 : 90));
+L_ReportOptions:
+	mes "[Population Reports - GM]";
+	mes "Period: last " + .@days + " days (Server Time)";
+	next;
+	.@choice = select("Population summary:Average by hour:Average by weekday:Peak and quietest hours:Collector status:Back");
+	if (.@choice == 6) return;
+	if (.@choice == 1) callsub S_Summary, .@days;
+	if (.@choice == 2) callsub S_Hourly, .@days;
+	if (.@choice == 3) callsub S_Weekday, .@days;
+	if (.@choice == 4) callsub S_Peaks, .@days;
+	if (.@choice == 5) callsub S_Status;
+	goto L_ReportOptions;
+
+S_Summary:
+	if (getgmlevel() < 99) return;
+	.@days = getarg(0);
+	.@cutoff = gettimetick(2) - (.@days * 86400);
+	.@rows = query_sql("SELECT COUNT(*), COALESCE(ROUND(AVG(online_characters),1),0), COALESCE(MIN(online_characters),0), COALESCE(MAX(online_characters),0), COALESCE(ROUND(AVG(online_accounts),1),0), COUNT(online_accounts) FROM grassro_player_activity WHERE sample_epoch >= " + .@cutoff, .@samples, .@avg$, .@min, .@max, .@avg_accounts$, .@account_samples);
+	mes "[Population Summary - GM]";
+	mes "Last " + .@days + " days; collected samples only.";
+	if (.@samples == 0) {
+		mes "No observations in this period.";
+	} else {
+		mes "Samples: " + .@samples;
+		mes "Avg connected: " + .@avg$;
+		mes "Lowest observed: " + .@min;
+		mes "Highest observed: " + .@max;
+		if (.@account_samples > 0) {
+			mes "Avg online accounts: " + .@avg_accounts$;
+			mes "Account-count samples: " + .@account_samples;
+			mes "Separate accounts may belong to the same person.";
+		} else {
+			mes "No account-count samples yet.";
+		}
+	}
+	next;
+	return;
+
+S_Hourly:
+	if (getgmlevel() < 99) return;
+	.@days = getarg(0);
+	.@cutoff = gettimetick(2) - (.@days * 86400);
+	.@n = query_sql("SELECT hour_of_day, ROUND(AVG(online_characters),1), COUNT(*) FROM grassro_player_activity WHERE sample_epoch >= " + .@cutoff + " GROUP BY hour_of_day ORDER BY hour_of_day", .@hour, .@avg$, .@samples);
+	mes "[Population by Hour - GM]";
+	mes "Last " + .@days + " days. Hours without samples omitted.";
+	if (.@n == 0) {
+		mes "No observations in this period.";
+	} else {
+		for (.@i = 0; .@i < .@n; .@i++) {
+			mes (.@hour[.@i] < 10 ? "0" : "") + .@hour[.@i] + ":00 - avg " + .@avg$[.@i] + " (n=" + .@samples[.@i] + ")";
+			if ((.@i + 1) % 6 == 0 && .@i + 1 < .@n) next;
+		}
+	}
+	next;
+	return;
+
+S_Weekday:
+	if (getgmlevel() < 99) return;
+	.@days = getarg(0);
+	.@cutoff = gettimetick(2) - (.@days * 86400);
+	.@n = query_sql("SELECT weekday, ROUND(AVG(online_characters),1), COUNT(*) FROM grassro_player_activity WHERE sample_epoch >= " + .@cutoff + " GROUP BY weekday ORDER BY weekday", .@weekday, .@avg$, .@samples);
+	mes "[Population by Weekday - GM]";
+	mes "Last " + .@days + " days; observed samples only.";
+	if (.@n == 0) {
+		mes "No observations in this period.";
+	} else {
+		for (.@i = 0; .@i < .@n; .@i++) {
+			switch (.@weekday[.@i]) {
+				case 0: .@day$ = "Sun"; break;
+				case 1: .@day$ = "Mon"; break;
+				case 2: .@day$ = "Tue"; break;
+				case 3: .@day$ = "Wed"; break;
+				case 4: .@day$ = "Thu"; break;
+				case 5: .@day$ = "Fri"; break;
+				default: .@day$ = "Sat"; break;
+			}
+			mes .@day$ + " - avg " + .@avg$[.@i] + " (n=" + .@samples[.@i] + ")";
+		}
+	}
+	next;
+	return;
+
+S_Peaks:
+	if (getgmlevel() < 99) return;
+	.@days = getarg(0);
+	.@cutoff = gettimetick(2) - (.@days * 86400);
+	.@n = query_sql("SELECT hour_of_day, ROUND(AVG(online_characters),1), COUNT(*) FROM grassro_player_activity WHERE sample_epoch >= " + .@cutoff + " GROUP BY hour_of_day ORDER BY AVG(online_characters) DESC, hour_of_day ASC LIMIT 3", .@peak_hour, .@peak_avg$, .@peak_samples);
+	mes "[Peak Population Hours - GM]";
+	mes "Last " + .@days + " days; ranking by sampled averages.";
+	if (.@n == 0) mes "No observations in this period.";
+	for (.@i = 0; .@i < .@n; .@i++)
+		mes (.@peak_hour[.@i] < 10 ? "0" : "") + .@peak_hour[.@i] + ":00 - avg " + .@peak_avg$[.@i] + " (n=" + .@peak_samples[.@i] + ")";
+	next;
+	.@n = query_sql("SELECT hour_of_day, ROUND(AVG(online_characters),1), COUNT(*) FROM grassro_player_activity WHERE sample_epoch >= " + .@cutoff + " GROUP BY hour_of_day ORDER BY AVG(online_characters) ASC, hour_of_day ASC LIMIT 3", .@quiet_hour, .@quiet_avg$, .@quiet_samples);
+	mes "[Quietest Population Hours - GM]";
+	mes "Unobserved downtime is excluded, not counted as zero.";
+	if (.@n == 0) mes "No observations in this period.";
+	for (.@i = 0; .@i < .@n; .@i++)
+		mes (.@quiet_hour[.@i] < 10 ? "0" : "") + .@quiet_hour[.@i] + ":00 - avg " + .@quiet_avg$[.@i] + " (n=" + .@quiet_samples[.@i] + ")";
+	next;
+	return;
+
+OnInit:
+	end;
+
+OnMinute00:
+OnMinute15:
+OnMinute30:
+OnMinute45:
+	.@now = gettimetick(2);
+	.@slot = .@now / 900;
+	.@weekday = gettime(DT_DAYOFWEEK);
+	.@hour = gettime(DT_HOUR);
+	.@online = getusers(1);
+	// rAthena normally marks a connected character as online=1.
+	// Store only the distinct count; never persist account IDs or IPs.
+	.@rows = query_sql("SELECT COUNT(DISTINCT account_id) FROM `char` WHERE online = 1", .@accounts);
+	if (.@rows == 1)
+		query_sql("INSERT IGNORE INTO grassro_player_activity (sample_slot,sample_epoch,weekday,hour_of_day,online_characters,online_accounts) VALUES (" + .@slot + "," + .@now + "," + .@weekday + "," + .@hour + "," + .@online + "," + .@accounts + ")");
+	else
+		query_sql("INSERT IGNORE INTO grassro_player_activity (sample_slot,sample_epoch,weekday,hour_of_day,online_characters) VALUES (" + .@slot + "," + .@now + "," + .@weekday + "," + .@hour + "," + .@online + ")");
+	if (gettime(DT_MINUTE) == 0)
+		query_sql("DELETE FROM grassro_player_activity WHERE sample_epoch < " + (.@now - 7776000));
+	end;
+}

@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+//discord line
+#include <fstream>
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -42,6 +44,18 @@
 #include "quest.hpp"
 
 using namespace rathena;
+// Write rare-drop announcements to the Discord queue log
+static void discord_log_rare_drop(const char* message) {
+    std::ofstream file(
+        "log/discord_rare_drops.log",
+        std::ios::app
+    );
+
+    if (file.is_open()) {
+        file << message << '\n';
+    }
+}
+
 
 #define ACTIVE_AI_RANGE 4	//Distance added on top of 'AREA_SIZE' at which mobs enter active AI mode.
 
@@ -3348,6 +3362,8 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 				sprintf(message, msg_txt(nullptr, 541), first_sd->status.name, md->name, it->ename.c_str(), (float)drop_rate / 100);
 				//MSG: "'%s' won %s's %s (chance: %0.02f%%)"
 				intif_broadcast(message, strlen(message) + 1, BC_DEFAULT);
+				//New: record rare drop for Discord
+				discord_log_rare_drop(message);
 			}
 			// Announce first, or else ditem will be freed. [Lance]
 			// By popular demand, use base drop rate for autoloot code. [Skotlex]
@@ -3513,6 +3529,8 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 					sprintf (message, msg_txt(nullptr,541), mvp_sd->status.name, md->name, i_data->ename.c_str(), temp/100.);
 					//MSG: "'%s' won %s's %s (chance: %0.02f%%)"
 					intif_broadcast(message,strlen(message)+1,BC_DEFAULT);
+					//New: record MVP rare drop for discord
+					discord_log_rare_drop(message);
 				}
 
 				mob_setdropitem_option( item, entry );

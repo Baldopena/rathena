@@ -11,4 +11,9 @@
 
 
 
+// Grass Ro: 600 Kafra storage slots
+#ifndef MIN_STORAGE
+#define MIN_STORAGE 600
+#endif
+
 #endif /* CONFIG_CUSTOM_DEFINES_PRE_HPP */

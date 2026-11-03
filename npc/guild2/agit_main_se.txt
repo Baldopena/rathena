@@ -602,6 +602,22 @@ OnStop:
 	end;
 
 OnStartArena:
+	// Grass Ro: authorize SE castle capture only for the active managed castle mask.
+	.@grw_allowed = 0;
+	if (agitcheck2() && $GRW_OwnSE) {
+		setarray .@grw_castle$[0],
+			"arug_cas01","arug_cas02","arug_cas03","arug_cas04","arug_cas05",
+			"schg_cas01","schg_cas02","schg_cas03","schg_cas04","schg_cas05";
+		for (.@grw_i = 0; .@grw_i < 10; ++.@grw_i) {
+			if (strnpcinfo(4) != .@grw_castle$[.@grw_i]) continue;
+			.@grw_allowed = (($GRW_LastSE & (1 << .@grw_i)) != 0);
+			break;
+		}
+	}
+	if (!.@grw_allowed) {
+		logmes "Grass Ro WoE: blocked unauthorized SE capture at " + strnpcinfo(4);
+		end;
+	}
 	set .@GID,getcharid(2);
 	set .@region$, (compare(strnpcinfo(4),"arug"))?"Valfreyja":"Nithafjoll";
 	// Lower castle Economy

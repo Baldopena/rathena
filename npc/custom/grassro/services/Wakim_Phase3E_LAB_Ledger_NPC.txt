@@ -1,0 +1,188 @@
+//=============================================================================
+//= Grass Ro | Wakim Phase 3E | GM 99 ISOLATED SQL LEDGER LAB
+//= ONLY uses rathena.wakim_sale_lab_* tables. Absolutely no game-state sales.
+//= No delitem, delitemidx, Zeny assignment, real Wakim incident mutations,
+//= live Sell All toggles, account-to-account attachment, or auto-compensation.
+//= Five line items are FIXED FIXTURES from verified Phase 3D audit, NOT a
+//= fresh inventory snapshot. No real inventory eligibility is asserted.
+//= IMPORTANT: SQL writes can leave an open PREPARING row if any step fails.
+//= That is intentional. Do not manually clear without inspecting first.
+//= Requires explicit prior installation of Wakim_Phase3E_LAB_Schema.sql.
+//= Temporary @loadnpc only. Do not register in scripts.conf.
+//=============================================================================
+prontera,146,166,4	script	WakimLedgerLab#P3E	582,{
+	mes "[Wakim SQL Ledger Lab]";
+	if (getgmlevel() < 99) {
+		mes "GM Level 99 only.";
+		close;
+	}
+	if ($GR_WakimSaleEnabled) {
+		mes "STOP: Live Sell All appears enabled. No lab action allowed.";
+		close;
+	}
+	mes "TEST ONLY: SQL lab tables; no items or Zeny changed.";
+	.@aid = getcharid(3);
+	.@cid = getcharid(0);
+	.@z0 = Zeny;
+	if (.@aid <= 0 || .@cid <= 0) {
+		mes "Cannot identify your character.";
+		close;
+	}
+	.@menu = select("Inspect my open LAB record:Create simulated LAB transaction:Mark open LAB record NEEDS_REVIEW:Close LAB record (test only):Cancel");
+	if (.@menu == 5) close;
+
+	// The generated active_char_guard is NULL for closed test records.
+	// Error -1 / SCRIPT_CMD_FAILURE may terminate the script, fail closed.
+	.@txid = 0;
+	.@token$ = "";
+	.@status$ = "";
+	.@initial = 0;
+	.@rows = query_sql("SELECT txn_id,run_token,status,initial_zeny FROM rathena.wakim_sale_lab_txn WHERE active_char_guard=" + .@cid, .@txid, .@token$, .@status$, .@initial);
+	if (.@rows < 0 || .@rows > 1) {
+		mes "SQL error or inconsistent open-record guard. STOP.";
+		close;
+	}
+
+	if (.@menu == 1) {
+		if (.@rows != 1) {
+			mes "No open LAB record for this character.";
+			close;
+		}
+		.@n = 0; .@units = 0; .@base = 0;
+		.@read = query_sql("SELECT COUNT(*),COALESCE(SUM(quantity),0),COALESCE(SUM(line_zeny),0) FROM rathena.wakim_sale_lab_item WHERE txn_id=" + .@txid, .@n, .@units, .@base);
+		if (.@read != 1) { mes "Failed to read item totals. STOP."; close; }
+		.@events = 0;
+		.@read = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_lab_event WHERE txn_id=" + .@txid, .@events);
+		if (.@read != 1) { mes "Failed to read event total. STOP."; close; }
+		mes "LAB transaction ID: " + .@txid;
+		mes "Status: " + .@status$;
+		mes "Fixture lines: " + .@n + " / units: " + .@units;
+		mes "Fixture base: " + .@base + "z / events: " + .@events;
+		mes "All records persist independently of this NPC dialogue.";
+		close;
+	}
+
+	if (.@menu == 2) {
+		if (.@rows == 1) {
+			mes "BLOCKED: transaction " + .@txid + " remains " + .@status$ + ".";
+			mes "This tests duplicate-sale lockout.";
+			close;
+		}
+		mes "Create a SQL-only record with 5 FIXED audit fixtures:";
+		mes "IDs 1774, 601, 7115, 7116, 508.";
+		mes "Expected: 110 units; 6,568z + 656z = 7,224z.";
+		mes "No current inventory scanning or item mutations.";
+		next;
+		if (select("Create simulated LAB record:Cancel") != 1) close;
+		if (getgmlevel() < 99 || $GR_WakimSaleEnabled || Zeny != .@z0 || getcharid(3) != .@aid || getcharid(0) != .@cid) {
+			mes "Actor or safety state changed. Canceled.";
+			close;
+		}
+		// Read active guard again before writing. DB UNIQUE guard remains final authority.
+		.@open = 0;
+		.@read = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_lab_txn WHERE active_char_guard=" + .@cid, .@open);
+		if (.@read != 1 || .@open != 0) { mes "Existing open record or SQL error. No write."; close; }
+		.@token$ = "" + .@cid + "-" + gettimetick(2) + "-" + rand(100000,999999);
+		.@sql$ = "INSERT INTO rathena.wakim_sale_lab_txn (run_token,account_id,char_id,status,initial_zeny,base_zeny,bonus_zeny,payout_zeny,expected_slots,expected_units) VALUES ('" + .@token$ + "'," + .@aid + "," + .@cid + ",'PREPARING'," + .@z0 + ",6568,656,7224,5,110)";
+		query_sql(.@sql$); // DML return 0 is NOT proof of successful write.
+		.@txid = 0;
+		.@actual$ = "";
+		.@rbase = 0; .@rbonus = 0; .@rpayout = 0; .@rslots = 0; .@runits = 0; .@rzeny = 0;
+		.@read = query_sql("SELECT txn_id,status,initial_zeny,base_zeny,bonus_zeny,payout_zeny,expected_slots,expected_units FROM rathena.wakim_sale_lab_txn WHERE run_token='" + .@token$ + "' AND account_id=" + .@aid + " AND char_id=" + .@cid, .@txid, .@actual$, .@rzeny, .@rbase, .@rbonus, .@rpayout, .@rslots, .@runits);
+		if (.@read != 1 || .@txid <= 0 || .@actual$ != "PREPARING" || .@rzeny != .@z0 || .@rbase != 6568 || .@rbonus != 656 || .@rpayout != 7224 || .@rslots != 5 || .@runits != 110) {
+			mes "Creation readback FAILED. Stop and inspect SQL. No game items changed.";
+			close;
+		}
+		query_sql("INSERT INTO rathena.wakim_sale_lab_event(txn_id,event_seq,kind,detail_json) VALUES (" + .@txid + ",1,'CREATED',JSON_OBJECT('simulation',1,'source','P3D_fixture'))");
+		setarray .@item[0], 1774,601,7115,7116,508;
+		setarray .@qty[0], 1,98,3,3,5;
+		setarray .@unit[0], 0,30,571,605,20;
+		for (.@i = 0; .@i < 5; ++.@i) {
+			.@sql$ = "INSERT INTO rathena.wakim_sale_lab_item(txn_id,line_no,original_audit_idx,item_id,quantity,unit_zeny,line_zeny,attributes_json) VALUES (" + .@txid + "," + (.@i + 1) + "," + (.@i + 2) + "," + .@item[.@i] + "," + .@qty[.@i] + "," + .@unit[.@i] + "," + (.@qty[.@i] * .@unit[.@i]) + ",JSON_OBJECT('fixture',1,'inventory_mutated',0,'source','WAKIM_P3D_DRYRUN'))";
+			query_sql(.@sql$);
+		}
+		.@n = 0; .@units = 0; .@base = 0;
+		.@read = query_sql("SELECT COUNT(*),COALESCE(SUM(quantity),0),COALESCE(SUM(line_zeny),0) FROM rathena.wakim_sale_lab_item WHERE txn_id=" + .@txid, .@n, .@units, .@base);
+		if (.@read != 1 || .@n != 5 || .@units != 110 || .@base != 6568) {
+			mes "Snapshot check FAILED; transaction remains PREPARING and locked.";
+			mes "NO items or Zeny were changed.";
+			close;
+		}
+		// Verify all five specific ID/slot/quantity/unit/line combinations,
+		// not merely their aggregate totals.
+		.@matching = 0;
+		.@sql$ = "SELECT COUNT(*) FROM rathena.wakim_sale_lab_item WHERE txn_id=" + .@txid + " AND ((line_no=1 AND original_audit_idx=2 AND item_id=1774 AND quantity=1 AND unit_zeny=0 AND line_zeny=0) OR (line_no=2 AND original_audit_idx=3 AND item_id=601 AND quantity=98 AND unit_zeny=30 AND line_zeny=2940) OR (line_no=3 AND original_audit_idx=4 AND item_id=7115 AND quantity=3 AND unit_zeny=571 AND line_zeny=1713) OR (line_no=4 AND original_audit_idx=5 AND item_id=7116 AND quantity=3 AND unit_zeny=605 AND line_zeny=1815) OR (line_no=5 AND original_audit_idx=6 AND item_id=508 AND quantity=5 AND unit_zeny=20 AND line_zeny=100))";
+		.@read = query_sql(.@sql$, .@matching);
+		if (.@read != 1 || .@matching != 5) {
+			mes "Line identity check FAILED; transaction remains PREPARING and locked.";
+			close;
+		}
+		.@events = 0;
+		.@read = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_lab_event WHERE txn_id=" + .@txid, .@events);
+		if (.@read != 1 || .@events != 1) {
+			mes "Initial event missing; transaction remains PREPARING and locked.";
+			close;
+		}
+		query_sql("INSERT INTO rathena.wakim_sale_lab_event(txn_id,event_seq,kind,detail_json) VALUES (" + .@txid + ",2,'SNAPSHOT_VERIFIED',JSON_OBJECT('slots',5,'units',110,'base',6568,'bonus',656,'projected',7224))");
+		.@events = 0;
+		.@read = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_lab_event WHERE txn_id=" + .@txid, .@events);
+		if (.@read != 1 || .@events != 2) {
+			mes "Verification event missing; transaction remains PREPARING and locked.";
+			close;
+		}
+		query_sql("UPDATE rathena.wakim_sale_lab_txn SET status='PREPARED' WHERE txn_id=" + .@txid + " AND status='PREPARING'");
+		.@actual$ = "";
+		.@read = query_sql("SELECT status FROM rathena.wakim_sale_lab_txn WHERE txn_id=" + .@txid, .@actual$);
+		if (.@read != 1 || .@actual$ != "PREPARED" || Zeny != .@z0) {
+			mes "Final readback FAILED or Zeny changed. Inspect SQL; do not proceed.";
+			close;
+		}
+		mes "LAB PREPARED and SQL readback passed. TXN ID: " + .@txid;
+		mes "5 fixture rows, 110 units, 7,224z projected.";
+		mes "Now speak again and attempt another Create (must be blocked).";
+		mes "No inventory or Zeny changed by this NPC.";
+		close;
+	}
+
+	if (.@rows != 1) {
+		mes "No open LAB transaction for this character.";
+		close;
+	}
+	if (.@menu == 3) {
+		mes "Simulate interruption of LAB txn " + .@txid + ".";
+		mes "This only changes a SQL test status to NEEDS_REVIEW.";
+		next;
+		if (select("Mark LAB NEEDS_REVIEW:Cancel") != 1) close;
+		if (getgmlevel() < 99 || $GR_WakimSaleEnabled || Zeny != .@z0) close;
+		if (.@status$ != "PREPARED") { mes "Expected PREPARED. No write."; close; }
+		query_sql("UPDATE rathena.wakim_sale_lab_txn SET status='NEEDS_REVIEW' WHERE txn_id=" + .@txid + " AND status='PREPARED'");
+		.@actual$ = "";
+		.@read = query_sql("SELECT status FROM rathena.wakim_sale_lab_txn WHERE txn_id=" + .@txid, .@actual$);
+		if (.@read != 1 || .@actual$ != "NEEDS_REVIEW") { mes "Status update unverified; inspect SQL."; close; }
+		query_sql("INSERT INTO rathena.wakim_sale_lab_event(txn_id,event_seq,kind,detail_json) VALUES (" + .@txid + ",3,'SIMULATED_INTERRUPTION',JSON_OBJECT('real_inventory_changes',0))");
+		mes "LAB incident marked NEEDS_REVIEW; next Create must be BLOCKED.";
+		close;
+	}
+	if (.@menu == 4) {
+		mes "Close only TEST LAB transaction " + .@txid + ".";
+		mes "This does NOT modify real Wakim incidents or inventory.";
+		mes "Use only after testing relog persistence and lockout.";
+		next;
+		if (select("Close LAB record:Cancel") != 1) close;
+		if (getgmlevel() < 99 || $GR_WakimSaleEnabled || Zeny != .@z0) close;
+		.@seq = 0;
+		.@read = query_sql("SELECT COALESCE(MAX(event_seq),0) FROM rathena.wakim_sale_lab_event WHERE txn_id=" + .@txid, .@seq);
+		if (.@read != 1) { mes "Cannot read event sequence. Stop."; close; }
+		query_sql("INSERT INTO rathena.wakim_sale_lab_event(txn_id,event_seq,kind,detail_json) VALUES (" + .@txid + "," + (.@seq + 1) + ",'GM_CLOSE_INTENT',JSON_OBJECT('actor_aid'," + .@aid + ",'actor_cid'," + .@cid + "))");
+		.@nseq = 0;
+		.@read = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_lab_event WHERE txn_id=" + .@txid + " AND event_seq=" + (.@seq + 1), .@nseq);
+		if (.@read != 1 || .@nseq != 1) { mes "Close-intent event missing. Stop."; close; }
+		query_sql("UPDATE rathena.wakim_sale_lab_txn SET status='CLOSED_TEST',resolution_note='GM closed SQL-only simulation after manual inspection' WHERE txn_id=" + .@txid + " AND char_id=" + .@cid + " AND status IN ('PREPARING','PREPARED','NEEDS_REVIEW')");
+		.@actual$ = "";
+		.@read = query_sql("SELECT status FROM rathena.wakim_sale_lab_txn WHERE txn_id=" + .@txid, .@actual$);
+		if (.@read != 1 || .@actual$ != "CLOSED_TEST") { mes "Lab close unverified; inspect SQL."; close; }
+		mes "LAB record CLOSED_TEST. Real Wakim unchanged.";
+		close;
+	}
+	close;
+}

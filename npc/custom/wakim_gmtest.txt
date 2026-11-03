@@ -1,0 +1,189 @@
+//============================================================
+//= Grass Ro | Wakim | Phase 1 — staging only
+//= Native Buy / Sell + Identify All (quantity-based billing)
+//= Sell All and GM write operations deliberately disabled.
+//= Requires Hunting Arrow Item ID 1774 in the effective item DB.
+//= NEVER register this alongside another Wakim NPC at the same map position.
+//============================================================
+
+prontera,146,172,4	script	Wakim#GrassRo	582,{
+	if (getgmlevel() < 99) {
+		mes "[Wakim]";
+		mes "This service is currently under GM testing.";
+		close;
+	}
+	mes "[Wakim]";
+	mes "Welcome to Wakim's services.";
+	if (getgmlevel() >= 99) {
+		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Administration:Cancel");
+	} else {
+		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Cancel");
+	}
+
+	switch (.@choice) {
+	case 1:
+		close2;
+		callshop "Wakim_Stock#GrassRo",1;
+		end;
+	case 2:
+		close2;
+		callshop "Wakim_Stock#GrassRo",2;
+		end;
+	case 3:
+		mes "[Wakim]";
+		mes "^FF0000Sell All is disabled in this staging build.^000000";
+		mes "Inventory-protection and transaction-recovery tests must pass first.";
+		close;
+	case 4:
+		goto L_Identify;
+	case 5:
+		if (getgmlevel() < 99)
+			close;
+		mes "[Wakim — Administration]";
+		mes "^FF0000Write operations are disabled in Phase 1.^000000";
+		mes "GM exclusions and incident recovery are not active yet.";
+		close;
+	default:
+		close;
+	}
+
+L_Identify:
+	// No temporary lock while the player is reading a dialog.
+	if (@WakimOperationBusy) {
+		mes "[Wakim]";
+		mes "Another Wakim operation is already running.";
+		close;
+	}
+
+	getinventorylist;
+	.@slotCount = @inventorylist_count;
+	.@units = 0;
+	.@unidentifiedSlots = 0;
+	for (.@i = 0; .@i < .@slotCount; .@i++) {
+		// Snapshot all inventory entries, not just unidentified ones.
+		.@ids[.@i] = @inventorylist_id[.@i];
+		.@amounts[.@i] = @inventorylist_amount[.@i];
+		.@identified[.@i] = @inventorylist_identify[.@i];
+		if (.@identified[.@i] != 1) {
+			.@units += .@amounts[.@i];
+			.@unidentifiedSlots++;
+		}
+	}
+
+	if (.@units == 0) {
+		mes "[Wakim]";
+		mes "You have no unidentified items.";
+		close;
+	}
+
+	.@fee = (.@units <= 10) ? .@units * 40 : 0;
+	mes "[Wakim]";
+	mes "Unidentified units: " + .@units;
+	mes "Unidentified inventory slots: " + .@unidentifiedSlots;
+	mes "Identification fee: " + .@fee + " Zeny.";
+	mes "11 or more units are identified for free.";
+	next;
+	if (select("Identify All:Cancel") != 1)
+		close;
+
+	// No player-input/yield commands from this point until completion.
+	if (@WakimOperationBusy) {
+		mes "[Wakim]";
+		mes "Another Wakim operation started. Please try again.";
+		close;
+	}
+	@WakimOperationBusy = 1;
+
+	// Recalculate and verify the earlier snapshot, since 'next' and
+	// 'select' allow time for the inventory to change.
+	getinventorylist;
+	if (@inventorylist_count != .@slotCount) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Your inventory changed. Please try again.";
+		close;
+	}
+	.@checkUnits = 0;
+	.@checkSlots = 0;
+	.@changed = 0;
+	for (.@i = 0; .@i < .@slotCount; .@i++) {
+		if (@inventorylist_id[.@i] != .@ids[.@i] ||
+			@inventorylist_amount[.@i] != .@amounts[.@i] ||
+			@inventorylist_identify[.@i] != .@identified[.@i]) {
+			.@changed = 1;
+			break;
+		}
+		if (@inventorylist_identify[.@i] != 1) {
+			.@checkUnits += @inventorylist_amount[.@i];
+			.@checkSlots++;
+		}
+	}
+	if (.@changed || .@checkUnits != .@units || .@checkSlots != .@unidentifiedSlots) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Your inventory changed. Please try again.";
+		close;
+	}
+	if (Zeny < .@fee) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "You need " + .@fee + " Zeny to identify these items.";
+		close;
+	}
+	if (identifyall(0) != .@unidentifiedSlots) {
+		@WakimOperationBusy = 0;
+		logmes "WAKIM IDENTIFY cancel: native slot count mismatch; cid=" + getcharid(0);
+		mes "[Wakim]";
+		mes "Identification state changed. Please retry.";
+		close;
+	}
+
+	// identifyall identifies by inventory SLOT, not quantity.
+	.@identifiedNow = identifyall(1);
+	if (.@identifiedNow != .@unidentifiedSlots || identifyall(0) != 0) {
+		logmes "WAKIM IDENTIFY incomplete; cid=" + getcharid(0) + "; expected_slots=" + .@unidentifiedSlots + "; actual_slots=" + .@identifiedNow;
+		@WakimOperationBusy = 0;
+		mes "[Wakim]";
+		mes "Identification could not be fully verified. No fee was charged.";
+		close;
+	}
+
+	if (.@fee > 0) {
+		// The attempt must be recorded before the assignment: on a failed
+		// SP_ZENY assignment rAthena can terminate the NPC script.
+		.@zenyBefore = Zeny;
+		if (.@zenyBefore < .@fee) {
+			logmes "WAKIM IDENTIFY payment skipped after success (funds); cid=" + getcharid(0) + "; fee=" + .@fee;
+			@WakimOperationBusy = 0;
+			mes "[Wakim]";
+			mes "Identification completed, but no fee could be collected. An audit was recorded.";
+			close;
+		}
+		logmes "WAKIM IDENTIFY payment_attempt; cid=" + getcharid(0) + "; units=" + .@units + "; fee=" + .@fee + "; before=" + .@zenyBefore;
+		Zeny -= .@fee;
+		if (Zeny != .@zenyBefore - .@fee) {
+			logmes "WAKIM IDENTIFY payment_unverified; cid=" + getcharid(0) + "; fee=" + .@fee;
+			@WakimOperationBusy = 0;
+			mes "[Wakim]";
+			mes "Identification completed, but payment requires review.";
+			close;
+		}
+	}
+
+	logmes "WAKIM IDENTIFY success; cid=" + getcharid(0) + "; units=" + .@units + "; fee=" + .@fee;
+	@WakimOperationBusy = 0;
+	mes "[Wakim]";
+	mes "Successfully identified " + .@units + " item units.";
+	mes "Paid: " + .@fee + " Zeny.";
+	close;
+
+OnPCLoginEvent:
+	// Temporary session state only. Do not erase persistent incidents.
+	@WakimOperationBusy = 0;
+	end;
+}
+
+// Native Zeny shop (buy/sell). Discount explicitly enabled.
+// Explicit prices are the APPROVED Wakim prices, not necessarily item DB Buy.
+// This invisible shop is called from Wakim's main menu.
+-	shop	Wakim_Stock#GrassRo	-1,yes,513:15,517:50,501:50,502:200,504:1200,12548:500,645:800,656:1500,657:3000,610:4000,525:500,526:7000,601:60,602:300,611:40,717:600,716:600,715:600,1750:1,1751:3,1752:3,1753:4,1774:30

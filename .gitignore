@@ -156,3 +156,7 @@ generated
 
 # backups
 /backup/
+*.bak-*
+*.backup-*
+*.bak.*
+*.before-*

@@ -1,5 +1,5 @@
 //===== Grass RO rAthena Script ===================================
-//= Unified Warper — Phase 1 v1.6 Travelling Bush (sprite 527) + grouped field regions
+//= Unified Warper — Phase 1 v1.12.1 Byalan Coordinate Correction
 //= Grass RO | Pre-Renewal | roBrowserLegacy
 //= Deployment: npc/custom/grass_ro_unified_warper.txt (one file)
 //= IMPORTANT: Test in an isolated rAthena environment before live use.
@@ -16,6 +16,16 @@ function	script	GRO_Key	{
 	.@id = getarg(0);
 	if (.@id < 1 || .@id > $@GRO_Count) return 0;
 	return $@GRO_Key[.@id];
+}
+
+// Original Satan Morroc episode disables these eight older Sograt maps.
+// Preserve registry IDs, saved GM settings, and Last Warp history.
+function	script	GRO_LegacySograt	{
+	.@map$ = getarg(0);
+	return (.@map$ == "moc_fild04" || .@map$ == "moc_fild05" ||
+		.@map$ == "moc_fild06" || .@map$ == "moc_fild08" ||
+		.@map$ == "moc_fild09" || .@map$ == "moc_fild10" ||
+		.@map$ == "moc_fild14" || .@map$ == "moc_fild15");
 }
 
 // Account-wide 30-bit bitmask, avoids sign bit and per-floor registries.
@@ -48,11 +58,14 @@ function	script	GRO_OwnsRealm	{
 }
 
 // Access result: 0 OK, 1 map/cell unavailable, 2 restricted, 3 GM-only,
-// 4 WoE grounds, 5 guild ownership, 6 undiscovered, 7 MVP policy.
+// 4 WoE grounds, 5 guild ownership, 6 undiscovered, 7 MVP policy,
+// 8 legacy Sograt map disabled in Travelling Bush (Satan Morroc enabled).
 function	script	GRO_Access	{
 	.@id = getarg(0);
 	if (.@id < 1 || .@id > $@GRO_Count) return 1;
 	.@map$ = $@GRO_Map$[.@id];
+	// Enforce through Last Warp too, not only the visible Fields menu.
+	if (callfunc("GRO_LegacySograt",.@map$)) return 8;
 	.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
 	.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
 	if (mapname2id(.@map$) < 0 || .@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) return 1;
@@ -62,7 +75,12 @@ function	script	GRO_Access	{
 	if (.@policy == 3 && getgmlevel() < 99) return 3;
 	if ($@GRO_CastleGround[.@id] && $GRO_WoeCastleAllow != 1 && (agitcheck() || agitcheck2() || agitcheck3())) return 4;
 	if ($@GRO_Cat[.@id] == 5 && !callfunc("GRO_OwnsRealm",$@GRO_Realm[.@id])) return 5;
-	if ($@GRO_Cat[.@id] == 3 && $GRO_DiscoveryBypass != 1 && !callfunc("GRO_HasDiscovery",.@id)) return 6;
+	// First floor access is an independent GM setting. Only registered entry floors
+	// are free: $@GRO_Depth == 0 is NOT sufficient for multi-branch dungeons.
+	// Still enforce map/cell, per-map, MVP, WoE, and guild rules above.
+	if ($@GRO_Cat[.@id] == 3 && $GRO_DiscoveryBypass != 1 &&
+		!($GRO_FreeFirstFloor == 1 && $@GRO_FirstFloor[.@id] == 1) &&
+		!callfunc("GRO_HasDiscovery",.@id)) return 6;
 	// Only explicit 'Allowed' policies can override global MVP map restrictions.
 	if ($GRO_MvpAllow != 1 && $GRO_MvpMap[.@key] && .@policy != 1) return 7;
 	return 0;
@@ -78,6 +96,7 @@ function	script	GRO_Reason	{
 		case 5: return "Guild Ownership Required";
 		case 6: return "Not Discovered";
 		case 7: return "MVP Restriction";
+		case 8: return "Unavailable During Satan Morroc";
 	}
 	return "Unknown";
 }
@@ -190,7 +209,13 @@ function	script	GRO_DungeonBrowse	{
 			clear;
 			.@floorMenu$ = "";
 			.@floorCount = 0;
-			for (.@id = .@groupFirst[.@g]; .@id <= .@groupLast[.@g]; ++.@id) {
+			// Byalan's first floor (iz_dun00) was added as ID 360 without
+			// renumbering saved discovery IDs for the older Byalan floors.
+			.@entries = .@groupLast[.@g] - .@groupFirst[.@g] + 1;
+			if (.@g == 5) ++.@entries;
+			for (.@step = 0; .@step < .@entries; ++.@step) {
+				.@id = .@groupFirst[.@g] + .@step;
+				if (.@g == 5) .@id = (.@step == 0 ? 360 : .@groupFirst[.@g] + .@step - 1);
 				if (!.@gm) {
 					.@map$ = $@GRO_Map$[.@id];
 					if (mapname2id(.@map$) < 0) continue;
@@ -233,23 +258,27 @@ function	script	GRO_DungeonBrowse	{
 }
 
 // Fields follow the stock Warper-style two-level menu: region, then numbered map.
+// Geffen IDs and stock landing coordinates are preserved (v1.7).
+// Einbroch Field 2 has ID 356; Satan Morroc fields 20-22 use IDs 357-359.
+// gef_fild15 (ID 58) remains excluded.
 // This avoids large menus, removes all field pagination, and keeps destination IDs
-// unchanged. Each selected region contains at most 19 or 20 destinations.
+// unchanged. Each selected region has at most 22 destinations.
 function	script	GRO_FieldBrowse	{
-	setarray .@fieldIDs[0], 30,31,32,33,34,35,36,37,38,39,40,41,42,44,45;
-	setarray .@fieldIDs[15], 46,47,48,49,50,43,52,59,60,61,62,63,64,65,66;
-	setarray .@fieldIDs[30], 53,54,55,56,57,58,51,67,68,69,70,71,72,73,74;
-	setarray .@fieldIDs[45], 75,76,77,78,79,80,81,82,83,87,88,89,90,91,92;
-	setarray .@fieldIDs[60], 93,94,84,85,86,95,96,97,98,99,102,103,104,105,106;
-	setarray .@fieldIDs[75], 107,108,109,100,101,110,111,114,115,116,117,118,119,120,121;
-	setarray .@fieldIDs[90], 112,113,122,127,128,129,130,131,132,133,134,123,124,125,126;
-	setarray .@fieldIDs[105], 135,146,147,148,149,150,151,152,153,136,137,138,139,140,141;
-	setarray .@fieldIDs[120], 142,143,144,145,154,155,156,157,158,159,160,161,162,163,164;
-	setarray .@fieldIDs[135], 165,166,167,168,172,173,174,175,176,177,178,179,169,170,171;
-	setarray .@groupFirst[0], 0,1,3,12,21,37,44,45,48,49,50,53;
-	setarray .@groupFirst[12], 65,67,69,80,92,105,124,127,131,138;
-	setarray .@groupLast[0], 0,2,11,20,36,43,44,47,48,49,52,64;
-	setarray .@groupLast[12], 66,68,79,91,104,123,126,130,137,149;
+	setarray .@fieldIDs[0],30,31,32,33,34,35,36,37,38,39,40,41,42,356,44;
+	setarray .@fieldIDs[15],45,46,47,48,49,50,43,355,52,59,60,61,62,63,64;
+	setarray .@fieldIDs[30],65,66,53,54,55,56,57,51,67,68,69,70,71,72,73;
+	setarray .@fieldIDs[45],74,75,76,77,78,79,80,81,82,83,87,88,89,90,91;
+	setarray .@fieldIDs[60],92,93,94,84,85,86,95,96,97,98,99,102,103,104,105;
+	setarray .@fieldIDs[75],106,107,108,109,100,101,110,111,114,115,116,117,118,119,120;
+	setarray .@fieldIDs[90],121,112,113,122,127,128,129,130,131,132,133,134,123,124,125;
+	setarray .@fieldIDs[105],126,135,146,147,148,149,150,151,152,153,136,137,138,139,140;
+	setarray .@fieldIDs[120],141,142,143,144,145,357,358,359,154,155,156,157,158,159,160;
+	setarray .@fieldIDs[135],161,162,163,164,165,166,167,168,172,173,174,175,176,177,178;
+	setarray .@fieldIDs[150],179,169,170,171;
+	setarray .@groupFirst[0], 0,1,3,12,22,38,45,46,49,50,51,54;
+	setarray .@groupFirst[12], 66,68,70,81,93,106,128,131,135,142;
+	setarray .@groupLast[0], 0,2,11,21,37,44,45,48,49,50,53,65;
+	setarray .@groupLast[12], 67,69,80,92,105,127,130,134,141,153;
 	setarray .@groupName$[0], "Amatsu Field","Ayothaya Field","Comodo Field","Einbroch Field","Geffen Field","Hugel Field","Kunlun Field","Lighthalzen Field";
 	setarray .@groupName$[8], "Louyang Field","Lutie Field","Manuk Field","Mjolnir","Moscovia Field","Niflheim Field","Payon Field","Prontera Field";
 	setarray .@groupName$[16], "Rachel Field","Sograt Desert","Splendide Field","Umbala Field","Veins Field","Yuno Field";
@@ -264,6 +293,7 @@ function	script	GRO_FieldBrowse	{
 			if (!.@available) {
 				for (.@i = .@groupFirst[.@g]; .@i <= .@groupLast[.@g]; ++.@i) {
 					.@id = .@fieldIDs[.@i];
+					if (callfunc("GRO_LegacySograt",$@GRO_Map$[.@id])) continue;
 					if (mapname2id($@GRO_Map$[.@id]) >= 0) { .@available = 1; break; }
 				}
 			}
@@ -289,12 +319,13 @@ function	script	GRO_FieldBrowse	{
 			.@fieldCount = 0;
 			for (.@i = .@groupFirst[.@g]; .@i <= .@groupLast[.@g]; ++.@i) {
 				.@id = .@fieldIDs[.@i];
+				.@map$ = $@GRO_Map$[.@id];
+				// Keep old Satan Morroc maps in the registry, not the Field menu, even for GMs.
+				if (callfunc("GRO_LegacySograt",.@map$)) continue;
 				if (!.@gm) {
-					.@map$ = $@GRO_Map$[.@id];
 					if (mapname2id(.@map$) < 0) continue;
-					.@x = ($GRO_XSet[.@id] ? $GRO_CustomX[.@id] : $@GRO_X[.@id]);
-					.@y = ($GRO_XSet[.@id] ? $GRO_CustomY[.@id] : $@GRO_Y[.@id]);
-					if (.@x <= 0 || .@y <= 0 || !checkcell(.@map$,.@x,.@y,cell_chkpass)) continue;
+					// Keep loaded fields visible even when the landing cell is invalid.
+					// GRO_Access labels them unavailable; GRO_WarpTo rejects the warp.
 					.@policy = $GRO_Policy[$@GRO_Key[.@id]];
 					if (!$GRO_ShowRestricted && (.@policy == 2 || .@policy == 3)) continue;
 				}
@@ -446,6 +477,8 @@ function	script	GRO_Collection	{
 	mes "[Grass RO Discovery Collection]";
 	mes "Account-wide discovered floors: ^0055FF" + .@found + " / " + .@total + "^000000";
 	mes "Manual discovery is " + ($GRO_DiscoveryBypass == 1 ? "suspended during soft release." : "active.");
+	if ($GRO_DiscoveryBypass != 1)
+		mes "First-floor direct access: " + ($GRO_FreeFirstFloor == 1 ? "Enabled" : "Discovery required");
 	mes "Reward claiming: ^FF5555DISABLED^000000 (Transaction Safety Ticket D-01).";
 	if ($GRO_RewardCount) {
 		mes "Published reward versions:";
@@ -475,9 +508,11 @@ function	script	GRO_RefreshBatch	{
 	if (!$@GRO_RefreshPending) return;
 	.@day = (gettimetick(2) + 28800) / 86400;
 	.@first = $@GRO_RefreshIndex;
-	if (.@first < 180 || .@first > 318) .@first = 180;
+	if (.@first < 180 || .@first > 360) .@first = 180;
+	if (.@first > 318 && .@first < 360) .@first = 360;
 	.@last = .@first + 2;
-	if (.@last > 318) .@last = 318;
+	if (.@first <= 318 && .@last > 318) .@last = 318;
+	if (.@last > 360) .@last = 360;
 	for (.@i = .@first; .@i <= .@last; ++.@i) {
 		.@npc$ = $@GRO_Poring$[.@i];
 		if (.@npc$ == "") continue;
@@ -522,8 +557,8 @@ function	script	GRO_RefreshBatch	{
 			enablenpc .@npc$;
 		} else disablenpc .@npc$;
 	}
-	$@GRO_RefreshIndex = .@last + 1;
-	if ($@GRO_RefreshIndex > 318) {
+	$@GRO_RefreshIndex = (.@last == 318 ? 360 : .@last + 1);
+	if ($@GRO_RefreshIndex > 360) {
 		for (.@i = 0; .@i < $@GRO_WarperNpcCount; ++.@i)
 			setnpcdisplay $@GRO_WarperNpc$[.@i],$GRO_MainSprite;
 		$@GRO_RefreshDay = .@day;
@@ -769,11 +804,12 @@ function	script	GRO_AdminDiscovery	{
 	while (1) {
 		clear;
 		mes "[GM / Discovery]";
-		mes "Bypass: " + $GRO_DiscoveryBypass + " (1=suspended/soft release)";
+		mes "Bypass: " + ($GRO_DiscoveryBypass == 1 ? "Enabled (soft release)" : "Disabled (discovery required)");
+		mes "First dungeon floor access: " + ($GRO_FreeFirstFloor == 1 ? "Free (no discovery)" : "Discovery required");
 		mes "Daily random Strange Poring: " + ($GRO_Randomize ? "Enabled" : "Disabled");
 		mes "Strange Poring sprite: " + $GRO_PoringSprite;
-		.@pick = select("Toggle discovery bypass:Toggle daily random placement:Change Strange Poring sprite:Grant/revoke online account discovery:Back");
-		if (.@pick == 5 || getgmlevel() < 99) return;
+		.@pick = select("Toggle discovery bypass:Toggle free first-floor access:Toggle daily random placement:Change Strange Poring sprite:Grant/revoke online account discovery:Back");
+		if (.@pick == 6 || getgmlevel() < 99) return;
 		if (.@pick == 1) {
 			mes "Enabling bypass permits direct floor warps but suspends ALL Strange Poring unlocks.";
 			if (select("Confirm critical setting:Cancel") != 1) continue;
@@ -783,6 +819,16 @@ function	script	GRO_AdminDiscovery	{
 			callfunc "GRO_Refresh";
 		}
 		else if (.@pick == 2) {
+			mes "When enabled, the entry floor of every registered dungeon can be warped to without discovery.";
+			mes "Deeper floors still require their individual discoveries when bypass is OFF.";
+			mes "Strange Porings on first floors stay active so players can complete the collection.";
+			if (select("Confirm first-floor policy change:Cancel") != 1) continue;
+			.@old = $GRO_FreeFirstFloor;
+			$GRO_FreeFirstFloor = !.@old;
+			callfunc "GRO_LogGM","FIRST_FLOOR_FREE old="+.@old+" new="+$GRO_FreeFirstFloor;
+			mes "First dungeon floor access: " + ($GRO_FreeFirstFloor == 1 ? "Enabled" : "Disabled");
+		}
+		else if (.@pick == 3) {
 			.@old = $GRO_Randomize;
 			$GRO_Randomize = !.@old;
 			callfunc "GRO_LogGM","PORING_RANDOM old="+.@old+" new="+$GRO_Randomize;
@@ -791,7 +837,7 @@ function	script	GRO_AdminDiscovery	{
 			else
 				mes "Saved. Random placement remains inactive while discovery bypass is ON.";
 		}
-		else if (.@pick == 3) {
+		else if (.@pick == 4) {
 			mes "Enter numeric NPC sprite class (1-2000):";
 			input .@sprite,1,2000;
 			.@old = $GRO_PoringSprite;
@@ -799,7 +845,7 @@ function	script	GRO_AdminDiscovery	{
 			callfunc "GRO_LogGM","PORING_SPRITE old="+.@old+" new="+.@sprite;
 			callfunc "GRO_Refresh";
 		}
-		else if (.@pick == 4) callfunc "GRO_AdminUnlock";
+		else if (.@pick == 5) callfunc "GRO_AdminUnlock";
 		clear;
 	}
 }
@@ -962,6 +1008,7 @@ function	script	GRO_ResetGeneral	{
 	$GRO_MvpAllow = 1;
 	$GRO_WoeCastleAllow = 0;
 	$GRO_DiscoveryBypass = 1;
+	$GRO_FreeFirstFloor = 1;
 	$GRO_Randomize = 0;
 	$GRO_Pricing = 0;
 	$GRO_TownFee = 0;
@@ -998,20 +1045,21 @@ function	script	GRO_AdminReset	{
 	.@pick = select("Reset individual general setting:Reset general settings category:Reset map settings category:FULL configuration reset:Back");
 	if (.@pick == 5 || getgmlevel() < 99) return;
 	if (.@pick == 1) {
-		.@which = select("Global MVP allow:Castle-ground WoE protection:Discovery bypass:Randomization:Pricing enabled:Player counts:Restricted map listings:Main sprite:Strange Poring sprite:Cancel");
-		if (.@which == 10) return;
+		.@which = select("Global MVP allow:Castle-ground WoE protection:Discovery bypass:Free first-floor access:Randomization:Pricing enabled:Player counts:Restricted map listings:Main sprite:Strange Poring sprite:Cancel");
+		if (.@which == 11) return;
 		mes "Restore selected general setting to its soft-release default?";
 		if (select("Confirm:Cancel") != 1) return;
 		switch (.@which) {
 			case 1: $GRO_MvpAllow=1; break;
 			case 2: $GRO_WoeCastleAllow=0; break;
 			case 3: $GRO_DiscoveryBypass=1; break;
-			case 4: $GRO_Randomize=0; break;
-			case 5: $GRO_Pricing=0; break;
-			case 6: $GRO_ShowCounts=1; break;
-			case 7: $GRO_ShowRestricted=1; break;
-			case 8: $GRO_MainSprite=527; break;
-			case 9: $GRO_PoringSprite=508; break;
+			case 4: $GRO_FreeFirstFloor=1; break;
+			case 5: $GRO_Randomize=0; break;
+			case 6: $GRO_Pricing=0; break;
+			case 7: $GRO_ShowCounts=1; break;
+			case 8: $GRO_ShowRestricted=1; break;
+			case 9: $GRO_MainSprite=527; break;
+			case 10: $GRO_PoringSprite=508; break;
 		}
 		callfunc "GRO_LogGM","RESET_INDIVIDUAL general="+.@which;
 	} else if (.@pick == 2) {
@@ -1022,7 +1070,7 @@ function	script	GRO_AdminReset	{
 		if (select("Confirm category reset:Cancel") != 1) return;
 		switch (.@category) {
 			case 1: $GRO_MvpAllow=1; $GRO_WoeCastleAllow=0; break;
-			case 2: $GRO_DiscoveryBypass=1; $GRO_Randomize=0; $GRO_PoringSprite=508; break;
+			case 2: $GRO_DiscoveryBypass=1; $GRO_FreeFirstFloor=1; $GRO_Randomize=0; $GRO_PoringSprite=508; break;
 			case 3:
 				$GRO_Pricing=0; $GRO_TownFee=0; $GRO_FieldFee=0;
 				$GRO_DungeonFee=0; $GRO_DepthFee=0; $GRO_CastleFee=0; $GRO_GuildFee=0;
@@ -1074,6 +1122,7 @@ function	script	GRO_Admin	{
 				mes "PH-day marker: "+((gettimetick(2)+28800)/86400);
 				mes "Last Poring refresh PH-day: "+$@GRO_RefreshDay;
 				mes "Discovery bypass: "+$GRO_DiscoveryBypass;
+				mes "Free first dungeon floor: "+$GRO_FreeFirstFloor;
 				mes "WoE FE/SE/TE: "+agitcheck()+"/"+agitcheck2()+"/"+agitcheck3();
 				mes "Collection claims: permanently LOCKED in Phase 1.";
 				break;
@@ -1086,7 +1135,7 @@ function	script	GRO_Admin	{
 // Predefined registry is global-temporary; durable settings/progress are $/## vars.
 -	script	GRO_Controller	-1,{
 OnInit:
-	$@GRO_Count = 354;
+	$@GRO_Count = 360;
 	setarray $@GRO_Map$[1],"aldebaran","alberta","amatsu","ayothaya","comodo","einbech","einbroch","geffen","hugel","izlude","jawaii","gonryun";
 	setarray $@GRO_Map$[13],"lighthalzen","louyang","xmas","manuk","mid_camp","morocc","moscovia","nameless_n","niflheim","payon","prontera","rachel";
 	setarray $@GRO_Map$[25],"splendide","thor_camp","umbala","veins","yuno","ama_fild01","ayo_fild01","ayo_fild02","cmd_fild01","cmd_fild02","cmd_fild03","cmd_fild04";
@@ -1133,10 +1182,10 @@ OnInit:
 	setarray $@GRO_Name$[157],"Umbala Field 1","Umbala Field 2","Umbala Field 3","Umbala Field 4","Veins Field 1","Veins Field 2","Veins Field 3","Veins Field 4","Veins Field 5","Veins Field 6","Veins Field 7","Yuno Field 1";
 	setarray $@GRO_Name$[169],"Yuno Field 10","Yuno Field 11","Yuno Field 12","Yuno Field 2","Yuno Field 3","Yuno Field 4","Yuno Field 5","Yuno Field 6","Yuno Field 7","Yuno Field 8","Yuno Field 9","Abyss Lake Floor 1";
 	setarray $@GRO_Name$[181],"Abyss Lake Floor 2","Abyss Lake Floor 3","Amatsu Dungeon Floor 1","Amatsu Dungeon Floor 2","Amatsu Dungeon Floor 3","Ant Hell Floor 1","Ant Hell Floor 2","Ayothaya Dungeon Floor 1","Ayothaya Dungeon Floor 2","Biolabs Floor 1","Biolabs Floor 2","Biolabs Floor 3";
-	setarray $@GRO_Name$[193],"Byalan Dungeon 1","Byalan Dungeon 2","Byalan Dungeon 3","Byalan Dungeon 4","Byalan Dungeon 5","Clock Tower 1","Clock Tower 2","Clock Tower 3","Clock Tower 4","Clock Tower Basement Floor 1","Clock Tower Basement Floor 2","Clock Tower Basement Floor 3";
+	setarray $@GRO_Name$[193],"Byalan Dungeon 2","Byalan Dungeon 3","Byalan Dungeon 4","Byalan Dungeon 5","Byalan Dungeon 6","Clock Tower 1","Clock Tower 2","Clock Tower 3","Clock Tower 4","Clock Tower Basement Floor 1","Clock Tower Basement Floor 2","Clock Tower Basement Floor 3";
 	setarray $@GRO_Name$[205],"Clock Tower Basement Floor 4","Coal Mines Floor 1","Coal Mines Floor 2","Coal Mines Floor 3","Comodo Beach Dungeon 1","Comodo Beach Dungeon 2","Comodo Beach Dungeon 3","Cursed Abbey Floor 1","Cursed Abbey Floor 2","Cursed Abbey Floor 3","Einbroch Mine Floor 1","Einbroch Mine Floor 2";
-	setarray $@GRO_Name$[217],"Geffen Dungeon 0","Geffen Dungeon 1","Geffen Dungeon 2","Geffen Dungeon 3","Geffenia 1","Geffenia 2","Geffenia 3","Geffenia 4","Glast Heim 1","Glast Heim 10","Glast Heim 11","Glast Heim 12";
-	setarray $@GRO_Name$[229],"Glast Heim 13","Glast Heim 14","Glast Heim 15","Glast Heim 16","Glast Heim 2","Glast Heim 3","Glast Heim 4","Glast Heim 5","Glast Heim 6","Glast Heim 7","Glast Heim 8","Glast Heim 9";
+	setarray $@GRO_Name$[217],"Geffen Dungeon 0","Geffen Dungeon 1","Geffen Dungeon 2","Geffen Dungeon 3","Geffenia 1","Geffenia 2","Geffenia 3","Geffenia 4","Glast Heim Entrance","Glast Heim Culvert 4","Glast Heim St. Abbey","Glast Heim Staircase Dungeon";
+	setarray $@GRO_Name$[229],"Glast Heim Underground Cave 1","Glast Heim Underground Cave 2","Glast Heim Underground Prison 1","Glast Heim Underground Prison 2","Glast Heim Castle 1","Glast Heim Castle 2","Glast Heim Chivalry 1","Glast Heim Chivalry 2","Glast Heim Churchyard","Glast Heim Culvert 1","Glast Heim Culvert 2","Glast Heim Culvert 3";
 	setarray $@GRO_Name$[241],"Hidden Maze Floor 1","Hidden Maze Floor 2","Hidden Maze Floor 3","Ice Dungeon Floor 1","Ice Dungeon Floor 2","Ice Dungeon Floor 3","Juperos 1","Juperos 2","Juperos 3","Juperos 4","Kiel Dungeon Floor 1","Kiel Dungeon Floor 2";
 	setarray $@GRO_Name$[253],"Kunlun Dungeon Floor 1","Kunlun Dungeon Floor 2","Kunlun Dungeon Floor 3","Louyang Royal Tomb Floor 1","Louyang Royal Tomb Floor 2","Louyang Royal Tomb Floor 3","Magma Dungeon Floor 1","Magma Dungeon Floor 2","Moscovia Dungeon Floor 1","Moscovia Dungeon Floor 2","Moscovia Dungeon Floor 3","Nidhogg's Dungeon Floor 1";
 	setarray $@GRO_Name$[265],"Nidhogg's Dungeon Floor 2","Odin Temple Floor 1","Odin Temple Floor 2","Odin Temple Floor 3","Orc Dungeon Floor 1","Orc Dungeon Floor 2","Payon Dungeon 0","Payon Dungeon 1","Payon Dungeon 2","Payon Dungeon 3","Payon Dungeon 4","Prontera Culvert Floor 1";
@@ -1181,8 +1230,8 @@ OnInit:
 	setarray $@GRO_X[13],158,217,147,282,210,156,223,256,202,179,155,130;
 	setarray $@GRO_X[25],201,246,97,216,157,190,173,212,180,231,191,228;
 	setarray $@GRO_X[37],224,190,234,194,172,142,196,187,185,216,195,272;
-	setarray $@GRO_X[49],173,207,214,46,221,178,136,240,235,211,213,195;
-	setarray $@GRO_X[61],257,188,166,248,195,186,268,222,232,252,196,216;
+	setarray $@GRO_X[49],173,207,214,213,178,136,240,235,211,211,195,257;
+	setarray $@GRO_X[61],188,166,248,195,186,221,268,222,232,252,196,216;
 	setarray $@GRO_X[73],227,220,240,185,240,229,115,35,35,84,204,245;
 	setarray $@GRO_X[85],180,196,175,208,179,181,195,235,188,205,82,131;
 	setarray $@GRO_X[97],215,167,158,160,194,151,205,186,134,193,200,137;
@@ -1193,7 +1242,7 @@ OnInit:
 	setarray $@GRO_X[157],217,223,237,202,186,196,222,51,202,150,149,189;
 	setarray $@GRO_X[169],200,195,210,192,221,226,223,187,231,196,183,261;
 	setarray $@GRO_X[181],275,116,228,34,119,35,168,275,24,150,150,140;
-	setarray $@GRO_X[193],168,253,236,32,26,199,148,65,56,297,127,277;
+	setarray $@GRO_X[193],253,236,32,26,141,199,148,65,56,297,127,277;
 	setarray $@GRO_X[205],268,52,381,302,266,255,23,51,150,120,22,292;
 	setarray $@GRO_X[217],104,115,106,203,40,203,266,130,370,68,156,12;
 	setarray $@GRO_X[229],133,224,14,150,199,104,150,157,147,258,108,171;
@@ -1211,8 +1260,8 @@ OnInit:
 	setarray $@GRO_Y[13],92,100,134,138,288,93,184,215,174,100,183,110;
 	setarray $@GRO_Y[25],147,68,153,123,51,197,134,150,178,160,172,194;
 	setarray $@GRO_Y[37],203,223,177,175,172,225,200,228,173,173,148,220;
-	setarray $@GRO_Y[49],214,174,75,199,117,218,328,181,235,185,204,212;
-	setarray $@GRO_Y[61],192,171,263,158,191,183,101,193,185,189,106,220;
+	setarray $@GRO_Y[49],214,174,75,204,218,328,181,235,185,185,212,192;
+	setarray $@GRO_Y[61],171,263,158,191,183,117,101,193,185,189,106,220;
 	setarray $@GRO_Y[73],197,227,179,235,226,187,145,236,262,365,120,223;
 	setarray $@GRO_Y[85],206,208,193,213,180,240,270,202,215,144,104,147;
 	setarray $@GRO_Y[97],229,234,206,205,150,219,148,247,204,235,177,189;
@@ -1223,7 +1272,7 @@ OnInit:
 	setarray $@GRO_Y[157],206,221,215,197,175,370,45,250,324,223,307,224;
 	setarray $@GRO_Y[169],124,226,304,207,157,199,177,232,174,203,214,272;
 	setarray $@GRO_Y[181],270,27,11,41,14,262,170,19,26,288,18,134;
-	setarray $@GRO_Y[193],168,252,204,63,27,159,283,147,155,25,169,178;
+	setarray $@GRO_Y[193],252,204,63,27,187,159,283,147,155,25,169,178;
 	setarray $@GRO_Y[205],74,17,343,262,67,244,260,14,11,10,14,290;
 	setarray $@GRO_Y[217],99,236,132,200,103,34,168,272,304,277,7,7;
 	setarray $@GRO_Y[229],271,274,70,14,29,25,15,287,15,255,291,283;
@@ -1447,6 +1496,99 @@ OnInit:
 	setarray $@GRO_Poring$[325],"","","","","","","","","","","","";
 	setarray $@GRO_Poring$[337],"","","","","","","","","","","","";
 	setarray $@GRO_Poring$[349],"","","","","","";
+	// v1.7: new Geffen Field 0 destination uses a fresh ID to preserve all existing IDs.
+	// ID 58 (gef_fild15) is retained for historical settings but omitted from the player menu.
+	$@GRO_Map$[355] = "gef_fild00";
+	$@GRO_Name$[355] = "Geffen Field 0";
+	$@GRO_Cat[355] = 2;
+	$@GRO_X[355] = 46;
+	$@GRO_Y[355] = 199;
+	$@GRO_Depth[355] = 0;
+	$@GRO_Realm[355] = 0;
+	$@GRO_Key[355] = 355;
+	$@GRO_DefaultMvp[355] = 0;
+	$@GRO_DiscoveryID[355] = 0;
+	$@GRO_CastleGround[355] = 0;
+	$@GRO_Poring$[355] = "";
+	$@GRO_AdminKeyID[328] = 355;
+	// v1.8: add Einbroch Field 2 without changing existing destination IDs.
+	// Stock Warper (Pre-RE restricts this destination by default).
+	$@GRO_Map$[356] = "ein_fild02";
+	$@GRO_Name$[356] = "Einbroch Field 2";
+	$@GRO_Cat[356] = 2;
+	$@GRO_X[356] = 182;
+	$@GRO_Y[356] = 141;
+	$@GRO_Depth[356] = 0;
+	$@GRO_Realm[356] = 0;
+	$@GRO_Key[356] = 356;
+	$@GRO_DefaultMvp[356] = 0;
+	$@GRO_DiscoveryID[356] = 0;
+	$@GRO_CastleGround[356] = 0;
+	$@GRO_Poring$[356] = "";
+	$@GRO_AdminKeyID[329] = 356;
+	// v1.9: Satan Morroc destination access, using the stock Warper coordinates.
+	// New IDs only: never change the existing destination or discovery IDs.
+	$@GRO_Map$[357] = "moc_fild20";
+	$@GRO_Name$[357] = "Sograt Desert 20";
+	$@GRO_Cat[357] = 2;
+	$@GRO_X[357] = 207;
+	$@GRO_Y[357] = 202;
+	$@GRO_Depth[357] = 0;
+	$@GRO_Realm[357] = 0;
+	$@GRO_Key[357] = 357;
+	$@GRO_DefaultMvp[357] = 0;
+	$@GRO_DiscoveryID[357] = 0;
+	$@GRO_CastleGround[357] = 0;
+	$@GRO_Poring$[357] = "";
+	$@GRO_Map$[358] = "moc_fild21";
+	$@GRO_Name$[358] = "Sograt Desert 21";
+	$@GRO_Cat[358] = 2;
+	$@GRO_X[358] = 31;
+	$@GRO_Y[358] = 195;
+	$@GRO_Depth[358] = 0;
+	$@GRO_Realm[358] = 0;
+	$@GRO_Key[358] = 358;
+	$@GRO_DefaultMvp[358] = 0;
+	$@GRO_DiscoveryID[358] = 0;
+	$@GRO_CastleGround[358] = 0;
+	$@GRO_Poring$[358] = "";
+	$@GRO_Map$[359] = "moc_fild22";
+	$@GRO_Name$[359] = "Sograt Desert 22";
+	$@GRO_Cat[359] = 2;
+	$@GRO_X[359] = 38;
+	$@GRO_Y[359] = 195;
+	$@GRO_Depth[359] = 0;
+	$@GRO_Realm[359] = 0;
+	$@GRO_Key[359] = 359;
+	$@GRO_DefaultMvp[359] = 1;
+	$@GRO_DiscoveryID[359] = 0;
+	$@GRO_CastleGround[359] = 0;
+	$@GRO_Poring$[359] = "";
+	// v1.11: new Byalan first-floor destination, preserves existing IDs.
+	// First Byalan floor is iz_dun00. Legacy 193..197 remain unchanged.
+	$@GRO_Map$[360] = "iz_dun00";
+	$@GRO_Name$[360] = "Byalan Dungeon 1";
+	$@GRO_Cat[360] = 3;
+	$@GRO_X[360] = 168;
+	$@GRO_Y[360] = 168;
+	$@GRO_Depth[360] = 0;
+	$@GRO_Realm[360] = 0;
+	$@GRO_Key[360] = 360;
+	$@GRO_DefaultMvp[360] = 0;
+	$@GRO_DiscoveryID[360] = 140;
+	$@GRO_CastleGround[360] = 0;
+	$@GRO_Poring$[360] = "Strange Poring#GRO_D360";
+	$@GRO_AdminKeyID[333] = 360;
+	// Explicit entry destinations for 36 dungeon groups. DO NOT infer from
+	// $@GRO_Depth: side-branch destinations may also have depth 0.
+	// Byalan begins at newly appended iz_dun00 (ID 360), not legacy ID 193.
+	setarray .@entryFloors[0],180,183,186,188,190,360,198,202,206,209,212,215;
+	setarray .@entryFloors[12],217,221,225,241,244,247,251,253,256,259;
+	setarray .@entryFloors[22],261,264,266,269,271,276,280,286,291,296,298,310,313,315;
+	for (.@i = 0; .@i < getarraysize(.@entryFloors); ++.@i)
+		$@GRO_FirstFloor[.@entryFloors[.@i]] = 1;
+	// Append to the GM map browser; exact map-name search also supports them.
+	setarray $@GRO_AdminKeyID[330],357,358,359;
 	$@GRO_WarperNpcCount = 28;
 	setarray $@GRO_AdminKeyID[0],212,213,214,180,181,182,2,202,203,204,205,331,1,183,184,185,30,3,186,187;
 	setarray $@GRO_AdminKeyID[20],321,349,188,189,31,32,4,209,210,211,198,199,200,201,33,34,35,36,37,38;
@@ -1474,6 +1616,17 @@ OnInit:
 		$GRO_DraftOldEligible = 1;
 		$GRO_DraftName$ = "Discovery Collection Reward";
 		$GRO_ConfigVersion = 1;
+	}
+	// One-time v1.12 migration; existing persistent configs stay untouched.
+	// A dedicated marker distinguishes an unset variable from a GM-selected OFF.
+	if ($GRO_FirstFloorSettingInitialized != 1) {
+		$GRO_FreeFirstFloor = 1;
+		$GRO_FirstFloorSettingInitialized = 1;
+	}
+	// Initialize the newly registered MVP map's policy without resetting older settings.
+	if ($GRO_SatanFieldMvpInitialized != 1) {
+		$GRO_MvpMap[359] = 1;
+		$GRO_SatanFieldMvpInitialized = 1;
 	}
 	// One-time default-sprite upgrade for previously installed v1.5 configurations.
 	// Preserve any GM-selected non-default sprite and all player progression.
@@ -1705,27 +1858,27 @@ lhz_dun03,140,134,4	script	Strange Poring#GRO_D192	508,{
 	end;
 }
 
-iz_dun01,168,168,4	script	Strange Poring#GRO_D193	508,{
+iz_dun01,253,252,4	script	Strange Poring#GRO_D193	508,{
 	callfunc "GRO_Discover",193;
 	end;
 }
 
-iz_dun02,253,252,4	script	Strange Poring#GRO_D194	508,{
+iz_dun02,236,204,4	script	Strange Poring#GRO_D194	508,{
 	callfunc "GRO_Discover",194;
 	end;
 }
 
-iz_dun03,236,204,4	script	Strange Poring#GRO_D195	508,{
+iz_dun03,32,63,4	script	Strange Poring#GRO_D195	508,{
 	callfunc "GRO_Discover",195;
 	end;
 }
 
-iz_dun04,32,63,4	script	Strange Poring#GRO_D196	508,{
+iz_dun04,26,27,4	script	Strange Poring#GRO_D196	508,{
 	callfunc "GRO_Discover",196;
 	end;
 }
 
-iz_dun05,26,27,4	script	Strange Poring#GRO_D197	508,{
+iz_dun05,141,187,4	script	Strange Poring#GRO_D197	508,{
 	callfunc "GRO_Discover",197;
 	end;
 }
@@ -2335,3 +2488,10 @@ tur_dun04,100,192,4	script	Strange Poring#GRO_D318	508,{
 	end;
 }
 
+
+// Added v1.11: Byalan first-floor discovery NPC.
+// This is independent of existing discovery IDs and safe on script reload.
+iz_dun00,168,168,4	script	Strange Poring#GRO_D360	508,{
+	callfunc "GRO_Discover",360;
+	end;
+}

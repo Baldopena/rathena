@@ -1,0 +1,117 @@
+"""Forward rAthena rare-drop announcements to a Discord webhook.
+
+Place this script and discord_webhook.txt in the rAthena root directory.
+Requires Python 3 only; no third-party packages.
+
+Usage:
+    python3 discord_rare_drops.py --test
+    python3 discord_rare_drops.py
+"""
+
+import json
+import sys
+import time
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parent
+LOG_FILE = ROOT / "log" / "discord_rare_drops.log"
+WEBHOOK_FILE = ROOT / "discord_webhook.txt"
+
+
+def read_webhook():
+    if not WEBHOOK_FILE.is_file():
+        raise SystemExit(
+            "Missing discord_webhook.txt. Create this file in the rAthena "
+            "root folder and paste your NEW Discord webhook URL into it."
+        )
+    webhook = WEBHOOK_FILE.read_text(encoding="utf-8").strip()
+    if not webhook.startswith("https://discord.com/api/webhooks/"):
+        raise SystemExit("discord_webhook.txt does not contain a valid Discord webhook URL.")
+    return webhook
+
+
+def post_to_discord(webhook, message):
+    payload = {
+        "username": "Ragnarok Rare Drops",
+        "embeds": [{
+            "title": "Rare Item Drop!",
+            "description": message[:4000],
+            "color": 0xF1C40F,
+        }],
+        "allowed_mentions": {"parse": []},
+    }
+    data = json.dumps(payload).encode("utf-8")
+
+    for attempt in range(5):
+        request = Request(
+            webhook + "?wait=true" if "?" not in webhook else webhook,
+            data=data,
+            headers={
+		"Content-Type": "application/json"},
+		"User-Agent": "Mozilla/5.0 (compatible; GrassRO-Webhook/1.0)"
+	},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=15):
+                print("Sent to Discord:", message, flush=True)
+                return True
+        except HTTPError as exc:
+            if exc.code == 429:  # Discord rate limit
+                try:
+                    delay = float(exc.headers.get("Retry-After", "2"))
+                except ValueError:
+                    delay = 2
+                time.sleep(max(1, min(delay, 60)))
+            elif exc.code >= 500:  # transient server error
+                print("Discord temporary error:", exc.code, flush=True)
+                time.sleep(5)
+            else:
+                raise SystemExit(
+                    f"Discord rejected the webhook (HTTP {exc.code}). "
+                    "Check the URL and channel permissions."
+                ) from exc
+        except (URLError, TimeoutError) as exc:
+            print("Network error:", exc, flush=True)
+            time.sleep(5)
+    return False
+
+
+def main():
+    webhook = read_webhook()
+
+    if "--test" in sys.argv:
+        if not post_to_discord(webhook, "TEST: Rare-drop webhook connected successfully!"):
+            raise SystemExit("Test failed due to repeated temporary errors.")
+        return
+
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LOG_FILE.touch(exist_ok=True)
+    print("Watching:", LOG_FILE, flush=True)
+    print("Leave this process running to forward new rare drops.", flush=True)
+
+    with LOG_FILE.open("r", encoding="utf-8", errors="replace") as stream:
+        stream.seek(0, 2)  # Only new announcements, not previous log lines
+        while True:
+            position = stream.tell()
+            line = stream.readline()
+            if not line:
+                # Handle an ordinary in-place log truncation.
+                if LOG_FILE.stat().st_size < position:
+                    stream.seek(0)
+                time.sleep(0.5)
+                continue
+            if not line.endswith("\n"):
+                stream.seek(position)  # Wait for a complete line
+                time.sleep(0.5)
+                continue
+            message = line.strip()
+            if message and not post_to_discord(webhook, message):
+                stream.seek(position)  # Retry this same event later
+                time.sleep(10)
+
+
+if __name__ == "__main__":
+    main()
