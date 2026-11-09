@@ -21,7 +21,7 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 	mes "View the server's greatest MVP hunters or check your personal hunting records.";
 	next;
 
-	switch(select("Top 20 Rankings:My Kill Stats:Exit")) {
+	switch(select("Top 20 Rankings:My Kill Stats:MVP Status Board:Exit")) {
 
 	case 1:
 		//==========================================
@@ -184,6 +184,67 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 		}
 		else {
 			mes "No recent kill information available.";
+		}
+
+		close;
+
+
+	case 3:
+		// GrassRO - MVP Status Board
+		// Latest recorded kill per MVP and map.
+
+		mes "[MVP Status Board]";
+		mes "Most recent recorded MVP kills.";
+		mes "Sorted newest to oldest.";
+		mes "Times are displayed in UTC.";
+		next;
+
+		.@rows = query_sql(
+			"SELECT mob_name, map_name, char_name, " +
+			"DATE_FORMAT(killed_at, '%Y-%m-%d %H:%i:%s'), kill_source " +
+			"FROM (" +
+			"SELECT mob_id, mob_name, map_name, char_name, " +
+			"killed_at, kill_source, id, " +
+			"ROW_NUMBER() OVER (" +
+			"PARTITION BY mob_id, map_name " +
+			"ORDER BY killed_at DESC, id DESC" +
+			") AS rn " +
+			"FROM grassro_mvp_kills" +
+			") AS t " +
+			"WHERE rn = 1 " +
+			"ORDER BY killed_at DESC, id DESC LIMIT 20",
+			.@mob$, .@map$, .@killer$, .@time$, .@source$
+		);
+
+		if (.@rows < 0) {
+			mes "[MVP Status Board]";
+			mes "Unable to retrieve MVP records.";
+			close;
+		}
+
+		if (.@rows == 0) {
+			mes "[MVP Status Board]";
+			mes "No MVP kills recorded yet.";
+			close;
+		}
+
+		mes "[MVP Status Board]";
+
+		for (.@i = 0; .@i < .@rows; .@i++) {
+			if (.@i > 0 && .@i % 3 == 0) {
+				next;
+				mes "[MVP Status Board]";
+			}
+
+			mes "^0000FF" + (.@i + 1) + ". " + .@mob$[.@i] + "^000000";
+			mes "Map: " + .@map$[.@i];
+			mes "Killed: " + .@time$[.@i] + " UTC";
+			mes "Killer: " + .@killer$[.@i];
+
+			if (.@source$[.@i] == "unknown")
+				mes "Origin: Unverified";
+			else
+				mes "Origin: " + .@source$[.@i];
 		}
 
 		close;
