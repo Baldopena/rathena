@@ -3607,43 +3607,7 @@ int32 mob_dead(mob_data *md, block_list *src, int32 type)
 				mercenary_kills(sd->md);
 		}
 
-
-	// GrassRO: MVP origin diagnostic.
-	// This does not write SQL or modify monster behavior.
-	if (md->db != nullptr && md->db->mexp > 0 && !md->state.npc_killmonster) {
-		const char* spawn_path = md->spawn ? md->spawn->filepath : "-";
-
-		const bool natural_candidate =
-			md->spawn != nullptr &&
-			md->spawn->state.boss &&
-			(
-				strncmp(spawn_path, "npc/pre-re/mobs/", sizeof("npc/pre-re/mobs/") - 1) == 0 ||
-				strncmp(spawn_path, "npc/mobs/", sizeof("npc/mobs/") - 1) == 0
-			);
-
-		const char* origin =
-			natural_candidate ? "natural_candidate" :
-			md->spawn ? "persistent_other" :
-			md->npc_event[0] ? "event" : "summoned_or_other";
-
-		ShowInfo(
-			"[GR_MVP_ORIGIN] gid=%d mob=%d map=%s origin=%s source=%s "
-			"spawn=%d,%d area=%d,%d delay=%u,%u\n",
-			md->id,
-			md->mob_id,
-			map_getmapdata(md->m)->name,
-			origin,
-			spawn_path,
-			md->spawn ? md->spawn->x : 0,
-			md->spawn ? md->spawn->y : 0,
-			md->spawn ? md->spawn->xs : 0,
-			md->spawn ? md->spawn->ys : 0,
-			md->spawn ? static_cast<unsigned int>(md->spawn->delay1) : 0u,
-			md->spawn ? static_cast<unsigned int>(md->spawn->delay2) : 0u
-		);
-	}
-
-	if( md->npc_event[0] && !md->state.npc_killmonster ) {
+		if( md->npc_event[0] && !md->state.npc_killmonster ) {
 			if( sd && battle_config.mob_npc_event_type ) {
 				pc_setparam(sd, SP_KILLEDGID, md->id);
 				pc_setparam(sd, SP_KILLEDRID, md->mob_id);
