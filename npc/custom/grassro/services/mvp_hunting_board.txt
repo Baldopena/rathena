@@ -1,0 +1,194 @@
+//==================================================
+// GrassRO - MVP Hunting Board v1.0
+//
+// Features:
+// - Top 20 MVP Rankings
+// - My Kill Statistics
+// - Personal MVP kill breakdown
+// - Most recent MVP kill
+//
+// Database: rathena
+// View: grassro_mvp_active_kills
+//
+// MVP Status Board and GM controls will be added
+// in subsequent versions.
+//==================================================
+
+prontera,172,184,4	script	MVP Hunting Board	56,{
+
+	mes "[MVP Hunting Board]";
+	mes "Welcome to the GrassRO MVP Hunting Board!";
+	mes "View the server's greatest MVP hunters or check your personal hunting records.";
+	next;
+
+	switch(select("Top 20 Rankings:My Kill Stats:Exit")) {
+
+	case 1:
+		//==========================================
+		// TOP 20 MVP RANKINGS
+		//==========================================
+
+		.@rows = query_sql(
+			"SELECT COALESCE(c.name, MAX(k.char_name)), COUNT(*) " +
+			"FROM grassro_mvp_active_kills AS k " +
+			"LEFT JOIN `char` AS c ON c.char_id = k.char_id " +
+			"LEFT JOIN grassro_mvp_exclusions AS e ON e.char_id = k.char_id " +
+			"WHERE e.char_id IS NULL " +
+			"GROUP BY k.char_id, c.name " +
+			"ORDER BY COUNT(*) DESC, k.char_id ASC LIMIT 20",
+			.@names$, .@kills
+		);
+
+		mes "[Top 20 MVP Rankings]";
+
+		if (.@rows < 0) {
+			mes "The ranking database is currently unavailable.";
+			close;
+		}
+
+		if (.@rows == 0) {
+			mes "No MVP kills have been recorded yet.";
+			close;
+		}
+
+		for (.@i = 0; .@i < .@rows; .@i++) {
+
+			if (.@i == 10) {
+				next;
+				mes "[Top 20 MVP Rankings]";
+			}
+
+			mes (.@i + 1) + ". " + .@names$[.@i] +
+				" - " + .@kills[.@i] + " kills";
+		}
+
+		close;
+
+	case 2:
+		//==========================================
+		// MY KILL STATISTICS
+		//==========================================
+
+		.@cid = getcharid(0);
+
+		.@rows = query_sql(
+			"SELECT COUNT(*) " +
+			"FROM grassro_mvp_active_kills " +
+			"WHERE char_id = " + .@cid,
+			.@total
+		);
+
+		if (.@rows < 0) {
+			mes "Unable to retrieve your statistics.";
+			close;
+		}
+
+		.@excluded = query_sql(
+			"SELECT 1 FROM grassro_mvp_exclusions " +
+			"WHERE char_id = " + .@cid + " LIMIT 1",
+			.@excluded_flag
+		);
+
+		if (.@excluded < 0) {
+			mes "Unable to check leaderboard eligibility.";
+			close;
+		}
+
+		mes "[My Kill Statistics]";
+		mes "Character: ^0000FF" + strcharinfo(0) + "^000000";
+		mes "Total MVP Kills: ^008800" + .@total + "^000000";
+
+		if (.@excluded > 0) {
+			mes "Server Rank: Excluded";
+		}
+		else if (.@total > 0) {
+
+			.@rank_rows = query_sql(
+				"SELECT q.rank_no FROM (" +
+				"SELECT t.char_id, ROW_NUMBER() OVER (" +
+				"ORDER BY t.total DESC, t.char_id ASC" +
+				") AS rank_no FROM (" +
+				"SELECT k.char_id, COUNT(*) AS total " +
+				"FROM grassro_mvp_active_kills AS k " +
+				"LEFT JOIN grassro_mvp_exclusions AS e " +
+				"ON e.char_id = k.char_id " +
+				"WHERE e.char_id IS NULL " +
+				"GROUP BY k.char_id" +
+				") AS t" +
+				") AS q WHERE q.char_id = " + .@cid,
+				.@rank
+			);
+
+			if (.@rank_rows > 0)
+				mes "Server Rank: ^0000FF#" + .@rank[0] + "^000000";
+			else
+				mes "Server Rank: Unavailable";
+		}
+		else {
+			mes "Server Rank: Unranked";
+		}
+
+		if (.@total <= 0) {
+			mes "You have not defeated any tracked MVPs yet.";
+			close;
+		}
+
+		next;
+
+		//==========================================
+		// PERSONAL MVP KILL BREAKDOWN
+		//==========================================
+
+		mes "[My MVP Kills]";
+
+		.@mob_rows = query_sql(
+			"SELECT MAX(mob_name), COUNT(*) " +
+			"FROM grassro_mvp_active_kills " +
+			"WHERE char_id = " + .@cid + " " +
+			"GROUP BY mob_id " +
+			"ORDER BY COUNT(*) DESC, mob_id ASC LIMIT 10",
+			.@mob_names$, .@mob_kills
+		);
+
+		if (.@mob_rows < 0) {
+			mes "Unable to retrieve your MVP breakdown.";
+			close;
+		}
+
+		for (.@i = 0; .@i < .@mob_rows; .@i++) {
+			mes .@mob_names$[.@i] + ": ^008800" +
+				.@mob_kills[.@i] + "^000000";
+		}
+
+		next;
+
+		//==========================================
+		// MOST RECENT MVP KILL
+		//==========================================
+
+		mes "[Most Recent MVP Kill]";
+
+		.@recent = query_sql(
+			"SELECT mob_name, map_name, " +
+			"DATE_FORMAT(killed_at, '%Y-%m-%d %H:%i:%s') " +
+			"FROM grassro_mvp_active_kills " +
+			"WHERE char_id = " + .@cid + " " +
+			"ORDER BY id DESC LIMIT 1",
+			.@last_mob$, .@last_map$, .@last_time$
+		);
+
+		if (.@recent > 0) {
+			mes "MVP: " + .@last_mob$[0];
+			mes "Map: " + .@last_map$[0];
+			mes "Killed: " + .@last_time$[0] + " UTC";
+		}
+		else {
+			mes "No recent kill information available.";
+		}
+
+		close;
+
+	default:
+		close;
+	}
+}

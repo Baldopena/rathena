@@ -1,0 +1,25 @@
+//==================================================
+// GrassRO - Global MVP Voucher Reward
+// Item: MVP Voucher (7615)
+// Applies to monsters granting MVP EXP
+//==================================================
+
+-	script	GR_MVPVoucher	-1,{
+
+OnNPCKillEvent:
+	if (getmonsterinfo(killedrid, MOB_MVPEXP) <= 0)
+		end;
+
+	if (rand(10000) >= .DropRate)
+		end;
+
+	getitem .VoucherID, 1;
+
+	dispbottom "[GrassRO] You received an MVP Voucher!";
+	end;
+
+OnInit:
+	.VoucherID = 7615;
+	.DropRate = 10000; // 100% chance
+	end;
+}

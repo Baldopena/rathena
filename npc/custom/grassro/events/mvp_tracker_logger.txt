@@ -1,0 +1,52 @@
+//==================================================
+// GrassRO - MVP Hunting Tracker v1.0
+// Global MVP Kill Recorder
+//
+// Database: rathena
+// Table: grassro_mvp_kills
+//
+// Records credited MVP kills.
+// Does not award items or send announcements.
+//==================================================
+
+-	script	GR_MVP_Tracker_Logger	-1,{
+
+OnNPCKillEvent:
+	.@mob_id = killedrid;
+
+	// Ignore invalid monster IDs and non-MVP monsters.
+	if (.@mob_id <= 0)
+		end;
+
+	if (getmonsterinfo(.@mob_id, MOB_MVPEXP) <= 0)
+		end;
+
+	// Identify credited character.
+	.@char_id = getcharid(0);
+	.@account_id = getcharid(3);
+
+	if (.@char_id <= 0 || .@account_id <= 0)
+		end;
+
+	// Collect kill information.
+	.@char_name$ = escape_sql(strcharinfo(0));
+	.@mob_name$ = escape_sql(getmonsterinfo(.@mob_id, MOB_NAME));
+	.@map_name$ = escape_sql(strcharinfo(3));
+
+	// Record kill to permanent database.
+	query_sql(
+		"INSERT INTO `grassro_mvp_kills` " +
+		"(`account_id`, `char_id`, `char_name`, " +
+		"`mob_id`, `mob_name`, `map_name`, " +
+		"`kill_source`, `killed_at`) VALUES (" +
+		.@account_id + "," +
+		.@char_id + ",'" +
+		.@char_name$ + "'," +
+		.@mob_id + ",'" +
+		.@mob_name$ + "','" +
+		.@map_name$ + "'," +
+		"'unknown', UTC_TIMESTAMP())"
+	);
+
+	end;
+}
