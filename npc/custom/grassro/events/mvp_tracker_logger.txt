@@ -12,6 +12,44 @@
 -	script	GR_MVP_Tracker_Logger	-1,{
 
 OnNPCKillEvent:
+	.@origin$ = "unknown";
+	.@spawn_id = 0;
+	goto OnRecordKill;
+
+OnPayonEddga:
+	// Only accept the expected MVP on its natural map.
+	if (killedrid != 1115 || strcharinfo(3) != "pay_fild11")
+		end;
+
+	// Preserve the existing rewards and announcements.
+	// doevent keeps the triggering player attached.
+	doevent "RagnarokCoinDrop::OnNPCKillEvent";
+	doevent "GR_MVPVoucher::OnNPCKillEvent";
+	doevent "GR_MVP_Kill_Announcement::OnNPCKillEvent";
+
+	// Match the natural spawn to the SQL registry.
+	.@origin$ = "unknown";
+	.@spawn_id = 0;
+
+	.@matches = query_sql(
+		"SELECT id FROM grassro_mvp_spawns " +
+		"WHERE enabled = 1 AND mob_id = 1115 " +
+		"AND map_name = 'pay_fild11' " +
+		"AND source_file = 'npc/pre-re/mobs/fields/payon.txt' " +
+		"LIMIT 2",
+		.@spawn_ids
+	);
+
+	if (.@matches == 1) {
+		.@spawn_id = .@spawn_ids[0];
+		.@origin$ = "natural";
+	} else {
+		logmes "[GR_MVP_TRACKER] Eddga natural spawn mapping missing or ambiguous.";
+	}
+
+	goto OnRecordKill;
+
+OnRecordKill:
 	.@mob_id = killedrid;
 
 	// Ignore invalid monster IDs and non-MVP monsters.
@@ -33,19 +71,24 @@ OnNPCKillEvent:
 	.@mob_name$ = escape_sql(getmonsterinfo(.@mob_id, MOB_NAME));
 	.@map_name$ = escape_sql(strcharinfo(3));
 
+	.@spawn_sql$ = "NULL";
+	if (.@spawn_id > 0)
+		.@spawn_sql$ = "" + .@spawn_id;
+
 	// Record kill to permanent database.
 	query_sql(
 		"INSERT INTO `grassro_mvp_kills` " +
 		"(`account_id`, `char_id`, `char_name`, " +
 		"`mob_id`, `mob_name`, `map_name`, " +
-		"`kill_source`, `killed_at`) VALUES (" +
+		"`spawn_id`, `kill_source`, `killed_at`) VALUES (" +
 		.@account_id + "," +
 		.@char_id + ",'" +
 		.@char_name$ + "'," +
 		.@mob_id + ",'" +
 		.@mob_name$ + "','" +
 		.@map_name$ + "'," +
-		"'unknown', UTC_TIMESTAMP())"
+		.@spawn_sql$ + ",'" +
+		.@origin$ + "', UTC_TIMESTAMP())"
 	);
 
 	end;
