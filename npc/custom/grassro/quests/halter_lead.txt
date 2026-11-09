@@ -1,0 +1,48 @@
+
+izlude,137,94,2	script	Mount Keeper#grassro	422,{
+
+	mes "[Mount Keeper]";
+	mes "Greetings, adventurer!";
+	mes "I can craft a ^0055FFHalter Lead^000000 for you.";
+	mes "It allows you to summon a mount and is permanently bound to your character.";
+	next;
+
+	mes "[Mount Keeper]";
+	mes "Required materials:";
+	mes "^FF6600200x Elastic Band^000000";
+	mes "^FF6600200x Brown Root^000000";
+	mes "";
+	mes "Your materials:";
+	mes "Elastic Band: "+countitem(7200)+"/200";
+	mes "Brown Root: "+countitem(7188)+"/200";
+	next;
+
+	if (select("Exchange materials:Cancel") == 2) {
+		mes "[Mount Keeper]";
+		mes "Come back when you're ready!";
+		close;
+	}
+
+	if (countitem(7200) < 200 || countitem(7188) < 200) {
+		mes "[Mount Keeper]";
+		mes "You don't have enough materials.";
+		close;
+	}
+
+	if (!checkweight(12622,1)) {
+		mes "[Mount Keeper]";
+		mes "Please make room in your inventory first.";
+		close;
+	}
+
+	delitem 7200,200;
+	delitem 7188,200;
+
+	getitembound 12622,1,Bound_Char;
+
+	mes "[Mount Keeper]";
+	mes "Success!";
+	mes "You received ^0055FF1x Halter Lead^000000!";
+	mes "This item is permanently bound to your character.";
+	close;
+}

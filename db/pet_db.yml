@@ -54,6 +54,8 @@ Header:
   Type: PET_DB
   Version: 1
 
+#AllowAutofeed: true
+
 Footer:
   Imports:
   - Path: db/pre-re/pet_db.yml

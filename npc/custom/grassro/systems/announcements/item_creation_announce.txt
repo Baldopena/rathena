@@ -1,0 +1,18 @@
+//============================================================
+// GrassRO - Item Creation Announcement System
+//============================================================
+
+function	script	F_GrassRO_ItemCreationAnnounce	{
+    .@item_id = getarg(0);
+    .@npc_name$ = getarg(1);
+
+    if (.@item_id <= 0)
+        return;
+
+    announce "[Item Creation] " + strcharinfo(0)
+        + " created " + getitemname(.@item_id)
+        + " through " + .@npc_name$ + "!",
+        bc_all, 0x00FF00;
+
+    return;
+}

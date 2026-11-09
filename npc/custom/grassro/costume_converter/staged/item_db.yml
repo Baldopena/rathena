@@ -1,0 +1,6980 @@
+# This file is a part of rAthena.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Item Database
+###########################################################################
+#
+# Item Settings
+#
+###########################################################################
+# - Id                      Item ID.
+#   AegisName               Server name to reference the item in scripts and lookups, should use no spaces.
+#   Name                    Name in English for displaying as output.
+#   Type                    Item type. (Default: Etc)
+#   SubType                 Weapon, Ammo or Card type. (Default: 0)
+#   Buy                     Buying price. When not specified, becomes double the sell price. (Default: 0)
+#   Sell                    Selling price. When not specified, becomes half the buy price. (Default: 0)
+#   Weight                  Item weight. Each 10 is 1 weight. (Default: 0)
+#   Attack                  Weapon's attack. (Default: 0)
+#   MagicAttack             Weapon's magic attack. (Default: 0)
+#   Defense                 Armor's defense. (Default: 0)
+#   Range                   Weapon's attack range. (Default: 0)
+#   Slots                   Available slots in item. (Default: 0)
+#   Jobs                    Jobs that can equip the item. (Map default is 'All: true')
+#   Classes                 Upper class types that can equip the item. (Map default is 'All: true')
+#   Gender                  Gender that can equip the item. (Default: Both)
+#   Locations               Equipment's placement. (Default: None)
+#   WeaponLevel             Weapon level. (Default: 1 for Weapons)
+#   ArmorLevel              Armor level. (Default: 1 for Armors)
+#   EquipLevelMin           Minimum required level to equip. (Default: 0)
+#   EquipLevelMax           Maximum level that can equip. (Default: 0)
+#   Refineable              If the item can be refined. (Default: false)
+#   Gradable                If the item can be graded. (Default: false)
+#   View                    View sprite of an item. (Default: 0)
+#   AliasName               Another item's AegisName that will be sent to the client instead of this item's AegisName. (Default: null)
+#   Flags:                  Item flags. (Default: null)
+#     BuyingStore           If the item is available for Buyingstores. (Default: false)
+#     DeadBranch            If the item is a Dead Branch. (Default: false)
+#     Container             If the item is part of a container. (Default: false)
+#     UniqueId              If the item is a unique stack. (Default: false)
+#     BindOnEquip           If the item is bound to the character upon equipping. (Default: false)
+#     DropAnnounce          If the item has a special announcement to self on drop. (Default: false)
+#     NoConsume             If the item is consumed on use. (Default: false)
+#     DropEffect            If the item has a special effect on the ground when dropped by a monster. (Default: None)
+#   Delay:                  Item use delay. (Default: null)
+#     Duration              Duration of delay in seconds.
+#     Status                Status Change used to track delay. (Default: None)
+#   Stack:                  Item stack amount. (Default: null)
+#     Amount                Maximum amount that can be stacked.
+#     Inventory             If the stack is applied to player's inventory. (Default: true)
+#     Cart                  If the stack is applied to the player's cart. (Default: false)
+#     Storage               If the stack is applied to the player's storage. (Default: false)
+#     GuildStorage          If the stack is applied to the player's guild storage. (Default: false)
+#   NoUse:                  Conditions when the item is unusable. (Default: null)
+#     Override              Group level to override these conditions. (Default: 100)
+#     Sitting               If the item can not be used while sitting. (Default: false)
+#   Trade:                  Trade restrictions. (Default: null)
+#     Override              Group level to override these conditions. (Default: 100)
+#     NoDrop                If the item can not be dropped. (Default: false)
+#     NoTrade               If the item can not be traded. (Default: false)
+#     TradePartner          If the item can not be traded to the player's partner. (Default: false)
+#     NoSell                If the item can not be sold. (Default: false)
+#     NoCart                If the item can not be put in a cart. (Default: false)
+#     NoStorage             If the item can not be put in a storage. (Default: false)
+#     NoGuildStorage        If the item can not be put in a guild storage. (Default: false)
+#     NoMail                If the item can not be put in a mail. (Default: false)
+#     NoAuction             If the item can not be put in an auction. (Default: false)
+#   Script                  Script to execute when the item is used/equipped. (Default: null)
+#   EquipScript             Script to execute when the item is equipped. (Default: null)
+#   UnEquipScript           Script to execute when the item is unequipped or when a rental item expires. (Default: null)
+###########################################################################
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+Body:
+  # GRASSRO.
+  - Id: 12887
+    AegisName: C_Wing_Of_Fly
+    Name: Infinite Flywing
+    Type: Usable
+    Weight: 0
+    Flags:
+      NoConsume: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      itemskill "AL_TELEPORT",1;
+  - Id: 1774
+    AegisName: Hunting_Arrow
+    Name: Hunting Arrow
+    Type: Ammo
+    SubType: Arrow
+    Buy: 10
+    Sell: 0
+    Weight: 1
+    Attack: 35
+    Jobs:
+      Archer: true
+      Assassin: true
+      BardDancer: true
+      Hunter: true
+      Rogue: true
+      Thief: true
+    Locations:
+      Ammo: true
+    EquipLevelMin: 1
+  - Id: 12622
+    AegisName: Boarding_Halter
+    Name: Reins Of Mount
+    Type: Usable
+    Flags:
+      NoConsume: true
+    Delay:
+      Duration: 3000
+      Status: All_Riding_Reuse_Limit
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoStorage: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      setmounting();
+    UnEquipScript: |
+      if (ismounting())
+        setmounting();
+#Body:
+# THQ Quest Items
+#=============================================================
+#  - Id: 1998
+#    AegisName: Jeramiah's_Jur
+#    Name: Jeramiah's Jur
+#    Type: Etc
+#    Sell: 10
+#    Weight: 10
+#    AliasName: Jur
+#  - Id: 1999
+#    AegisName: Zed's_Staff
+#    Name: Zed's Staff
+#    Type: Etc
+#    Sell: 10
+#    Weight: 10
+#    AliasName: Staff_Of_Soul
+#  - Id: 7950
+#    AegisName: THG_Membership
+#    Name: THG Membership
+#    Type: Etc
+#    Sell: 10
+#    Weight: 10
+#    AliasName: Foolishness_Of_Blind
+#  - Id: 7951
+#    AegisName: Gold_Tulip
+#    Name: Token Bag
+#    Type: Etc
+#    Sell: 10
+#    Weight: 10
+#    AliasName: Leather_Bag_Of_Infinity
+
+# Official Event Items that had their Effects removed after the event was completed
+#=============================================================
+#  - Id: 585
+#    AegisName: Wurst
+#    Name: Brusti
+#    Type: Delayconsume
+#    Buy: 2
+#    Weight: 40
+#    Script: |
+#      itemheal rand(15,20),0; itemskill "PR_MAGNIFICAT",3;
+#  - Id: 679
+#    AegisName: Gold_Pill
+#    Name: Pilule
+#    Type: Healing
+#    Buy: 5000
+#    Weight: 300
+#    Script: |
+#      percentheal 50,50;
+#  - Id: 2681
+#    AegisName: Republic_Ring
+#    Name: Republic Anniversary Ring
+#    Type: Armor
+#    Buy: 20
+#    Weight: 100
+#    Locations:
+#      Right_Accessory: true
+#      Left_Accessory: true
+#    Script: |
+#      bonus bAllStats,3;
+#  - Id: 5134
+#    AegisName: Pumpkin_Hat
+#    Name: Pumpkin-Head
+#    Type: Armor
+#    Buy: 20
+#    Weight: 200
+#    Defense: 2
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 206
+#    Script: |
+#      bonus2 bSubRace,RC_Demon,5;
+#  - Id: 5136
+#    AegisName: Santa's_Hat_
+#    Name: Louise's Santa Hat
+#    Type: Armor
+#    Buy: 20
+#    Weight: 100
+#    Defense: 3
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 20
+#    Script: |
+#      bonus bMdef,1; bonus bLuk,1; bonus3 bAutoSpellWhenHit,"AL_HEAL",3,50; bonus3 bAutoSpellWhenHit,"AL_BLESSING",10,50;
+#  - Id: 5145
+#    AegisName: Carnival_Joker_Jester
+#    Name: Carnival Jester
+#    Type: Armor
+#    Buy: 10
+#    Weight: 100
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 89
+#    Script: |
+#      bonus bAllStats,3;
+#  - Id: 5147
+#    AegisName: Baseball_Cap
+#    Name: Baseball Cap
+#    Type: Armor
+#    Weight: 200
+#    Defense: 3
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 216
+#    Script: |
+#      bonus2 bExpAddRace,RC_Boss,50; bonus2 bExpAddRace,RC_NonBoss,50;
+#  - Id: 5201
+#    AegisName: Party_Hat_B
+#    Name: 2nd Anniversary Party Hat
+#    Type: Armor
+#    Buy: 20
+#    Weight: 300
+#    Defense: 3
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 144
+#    Script: |
+#      bonus bAllStats,3;
+#  - Id: 5202
+#    AegisName: Pumpkin_Hat_
+#    Name: Pumpkin Hat
+#    Type: Armor
+#    Buy: 20
+#    Weight: 200
+#    Defense: 2
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 206
+#    Script: |
+#      bonus bAllStats,2; bonus2 bSubRace,RC_Demon,5; bonus3 bAddMonsterDropItem,529,RC_DemiHuman,1500;
+#  - Id: 5204
+#    AegisName: Event_Pierrot_Nose
+#    Name: Rudolf's Red Nose
+#    Type: Armor
+#    Buy: 20
+#    Weight: 100
+#    Locations:
+#      Head_Low: true
+#    View: 49
+#    Script: |
+#      bonus2 bResEff,Eff_Blind,3000; bonus2 bAddMonsterDropItem,12130,30;
+#  - Id: 5264
+#    AegisName: Aussie_Flag_Hat
+#    Name: Australian Flag Hat
+#    Type: Armor
+#    Buy: 20
+#    Weight: 500
+#    Defense: 4
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 304
+#    Script: |
+#      bonus bAllStats,2;
+#  - Id: 5356
+#    AegisName: Pumpkin_Hat_H
+#    Name: Pumpkin Hat
+#    Type: Armor
+#    Buy: 20
+#    Weight: 200
+#    Defense: 2
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 206
+#    Script: |
+#      bonus bAllStats,2; bonus2 bSubRace,RC_Demon,5; bonus2 bMagicAddRace,RC_Demon,5;
+#  - Id: 5384
+#    AegisName: Santa_Hat_1
+#    Name: Twin Pompom By JB
+#    Type: Armor
+#    Buy: 20
+#    Weight: 200
+#    Defense: 2
+#    Slots: 1
+#    Locations:
+#      Head_Top: true
+#    EquipLevelMin: 20
+#    Refineable: true
+#    View: 390
+#    Script: |
+#      bonus bLuk,3; bonus2 bResEff,Eff_Curse,2000; bonus bVariableCastrate,-2; bonus bAspdRate,4; bonus2 bAddMonsterDropItem,539,100; bonus2 bAddMonsterDropItem,529,200; bonus2 bAddMonsterDropItem,530,200; autobonus "{ bonus bCritical,10; }",10,5000;
+#  - Id: 5811
+#    AegisName: Santa_Beard
+#    Name: Santa Beard
+#    Type: Armor
+#    Buy: 20
+#    Weight: 100
+#    Defense: 5
+#    Locations:
+#      Head_Low: true
+#    View: 25
+#    Script: |
+#      bonus2 bSubRace,RC_Brute,5; bonus2 bSubRace,RC_Player_Doram,5;
+#  - Id: 11702
+#    AegisName: Moon_Cookie
+#    Name: Moon Cookie
+#    Type: Delayconsume
+#    Weight: 10
+#    Script: |
+#      sc_end SC_POISON; sc_end SC_SILENCE; sc_end SC_BLIND; sc_end SC_CONFUSION; sc_end SC_CURSE; sc_end SC_HALLUCINATION; itemskill "AL_BLESSING",7;
+#  - Id: 12131
+#    AegisName: Lucky_Potion
+#    Name: Lucky Potion
+#    Type: Healing
+#    Buy: 2
+#    Weight: 100
+#    Script: |
+#      sc_start SC_LUKFOOD,180000,15;
+#  - Id: 12143
+#    AegisName: Red_Can
+#    Name: Red Can
+#    Type: Usable
+#    Buy: 50000
+#    Weight: 300
+#    Script: |
+#      percentheal 25,25;
+
+# Event effect: Summon monster? Probably Rice_Cake. x_x
+#=============================================================
+#  - Id: 12199
+#    AegisName: Rice_Scroll
+#    Name: Rice Scroll
+#    Type: Usable
+#  - Id: 12200
+#    AegisName: Event_Cake
+#    Name: Event Cake
+#    Type: Usable
+#    Buy: 20
+#    Weight: 50
+#    Script: |
+#      itemskill "PR_MAGNIFICAT",3;
+#  - Id: 12238
+#    AegisName: New_Year_Rice_Cake_1
+#    Name: New Year Rice Cake
+#    Type: Healing
+#    Buy: 20
+#    Weight: 100
+#    Script: |
+#      percentheal 20,15; sc_start SC_STRFOOD,1200000,3; sc_start SC_INTFOOD,1200000,3; sc_start SC_LUKFOOD,1200000,3; sc_start SC_SPEEDUP1,5000,0;
+#  - Id: 12239
+#    AegisName: New_Year_Rice_Cake_2
+#    Name: New Year Rice Cake
+#    Type: Healing
+#    Buy: 20
+#    Weight: 100
+#    Script: |
+#      percentheal 20,15; sc_start SC_DEXFOOD,1200000,3; sc_start SC_AGIFOOD,1200000,3; sc_start SC_VITFOOD,1200000,3; sc_start SC_SPEEDUP1,5000,0;
+
+# iRO St. Patrick's Day Event 2008
+#=============================================================
+#  - Id: 7915
+#    AegisName: Copper_Coin_
+#    Name: Bronze Coin
+#    Type: Etc
+#    Weight: 10
+#    AliasName: Copper_Coin
+#  - Id: 7916
+#    AegisName: Silver_Coin_
+#    Name: Silver Coin
+#    Type: Etc
+#    Weight: 10
+#    AliasName: Silver_Coin
+#  - Id: 12715
+#    AegisName: Black_Treasure_Box
+#    Name: Black Treasure Chest
+#    Type: Usable
+#    Weight: 200
+#    AliasName: Treasure_Box_
+#    Script: |
+#      callfunc "F_08stpattyseventbox";
+
+# iRO Valentine's Day Event 2009
+#=============================================================
+#  - Id: 5817
+#    AegisName: Valentine_Pledge
+#    Name: Valentine's Emblem
+#    Type: Armor
+#    Buy: 10
+#    Defense: 3
+#    Locations:
+#      Right_Accessory: true
+#      Left_Accessory: true
+#    Script: |
+#      bonus bAtkRate,3; bonus bMatkRate,3; bonus bAllStats,2; bonus bFlee,10; bonus bAspd,1; bonus bMdef,3; bonus2 bSkillAtk,"AL_HEAL",10; bonus2 bSkillHeal,"AL_HEAL",10; bonus2 bSkillHeal,"AM_POTIONPITCHER",10; bonus2 bAddItemGroupHealRate,IG_Potion,10;
+#  - Id: 7946
+#    AegisName: Gold_Ring_Of_Valentine
+#    Name: Gold Ring Of Valentine
+#    Type: Etc
+#    Buy: 10
+#  - Id: 7947
+#    AegisName: Silver_Ring_Of_Valentine
+#    Name: Silver Ring Of Valentine
+#    Type: Etc
+#    Buy: 10
+#  - Id: 7948
+#    AegisName: Box
+#    Name: Box
+#    Type: Etc
+#    Buy: 10
+#    Weight: 10
+#  - Id: 12742
+#    AegisName: Valentine_Gift_Box_M
+#    Name: Valentine Gift Box
+#    Type: Usable
+#    Buy: 10
+#    Script: |
+#      getitem 7946,1;
+#  - Id: 12743
+#    AegisName: Valentine_Gift_Box_F
+#    Name: Valentine Gift Box
+#    Type: Usable
+#    Buy: 10
+#    Script: |
+#      getitem 7947,1;
+#  - Id: 12744
+#    AegisName: Chocolate_Box
+#    Name: Chocolate Box
+#    Type: Usable
+#    Buy: 10
+#    Script: |
+#      getitem 558,1;
+#  - Id: 14466
+#    AegisName: Valentine's_Emblem_Box
+#    Name: Valentine's Emblem Box
+#    Type: Usable
+#    Buy: 10
+#    Script: |
+#      getitem 5817,1;
+
+# iRO Halloween Event 2009
+#=============================================================
+#  - Id: 5668
+#    AegisName: Weird_Pumpkin_Hat
+#    Name: Weird Pumpkin Hat
+#    Type: Armor
+#    Buy: 20
+#    Defense: 5
+#    Locations:
+#      Head_Top: true
+#    Refineable: true
+#    View: 206
+#    Script: |
+#      bonus bMdef,5; bonus2 bAddMonsterDropItem,12192,2500;
+#  - Id: 6298
+#    AegisName: Pumpkin_Head_Crushed
+#    Name: Crushed Pumpkin
+#    Type: Etc
+#  - Id: 6299
+#    AegisName: Worn_Cloth_Piece
+#    Name: Worn Fabric
+#    Type: Etc
+
+# Old Tuxedo and Wedding Dress, will display the outfit when worn.
+#==================================================================
+#  - Id: 2338
+#    AegisName: Wedding_Dress
+#    Name: Wedding Dress
+#    Type: Armor
+#    Buy: 43000
+#    Weight: 500
+#    Jobs:
+#      All: true
+#      Novice: false
+#    Gender: Female
+#    Locations:
+#      Armor: true
+#    Refineable: true
+#    EquipScript: |
+#      sc_start SC_WEDDING,INFINITE_TICK,0;
+#    UnEquipScript: |
+#      sc_end SC_WEDDING;
+#  - Id: 7170
+#    AegisName: Tuxedo
+#    Name: Tuxedo
+#    Type: Armor
+#    Buy: 43000
+#    Weight: 10
+#    Jobs:
+#      All: true
+#      Novice: false
+#    Gender: Male
+#    Locations:
+#      Armor: true
+#    ArmorLevel: 1
+#    Refineable: true
+#    EquipScript: |
+#      sc_start SC_WEDDING,INFINITE_TICK,0;
+#    UnEquipScript: |
+#      sc_end SC_WEDDING;
+
+# Non-kRO Eden Group Mark effect
+#=============================================================
+#  - Id: 22508
+#    AegisName: Para_Team_Mark_
+#    Name: Eden Group Mark
+#    Type: Delayconsume
+#    Script: |
+#      unitskilluseid getcharid(3),"AL_TELEPORT",3;
+
+# Gender restrictions that were removed on official servers
+#=============================================================
+#  - Id: 2206
+#    Gender: Female
+#  - Id: 2208
+#    Gender: Female
+#  - Id: 2209
+#    Gender: Female
+#  - Id: 2234
+#    Gender: Female
+#  - Id: 2235
+#    Gender: Male
+#  - Id: 2407
+#    Gender: Female
+#  - Id: 2415
+#    Gender: Female
+#  - Id: 2494
+#    Gender: Female
+#  - Id: 5143
+#    Gender: Male
+#  - Id: 5164
+#    Gender: Female
+#  - Id: 5165
+#    Gender: Male
+#  - Id: 5191
+#    Gender: Female
+#  - Id: 5192
+#    Gender: Female
+#  - Id: 5193
+#    Gender: Female
+#  - Id: 5194
+#    Gender: Female
+#  - Id: 5195
+#    Gender: Female
+#  - Id: 5196
+#    Gender: Female
+#  - Id: 5197
+#    Gender: Female
+#  - Id: 5221
+#    Gender: Female
+#  - Id: 5354
+#    Gender: Male
+#  - Id: 5355
+#    Gender: Female
+#  - Id: 5400
+#    Gender: Female
+#  - Id: 5681
+#    Gender: Female
+#  - Id: 5735
+#    Gender: Female
+  # Grass Ro - Torn Berzebub card series (10% / 20%)
+  - Id: 39999
+    AegisName: GR_Torn_Berzebub_Card
+    Name: Torn Berzebub Card
+    Type: Card
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Both_Accessory: true
+    Script: |
+      bonus bCastrate,-10;
+  - Id: 40000
+    AegisName: GR_Partially_Restored_Berzebub_Card
+    Name: Partially Restored Berzebub Card
+    Type: Card
+    Buy: 0
+    Sell: 0
+    Weight: 10
+    Locations:
+      Both_Accessory: true
+    Script: |
+      bonus bCastrate,-20;
+
+# === GRASSRO GENERATED COSTUMES BEGIN ===
+# Generated by build_costumes.py; do not edit individual definitions.
+  - Id: 41001
+    AegisName: GR_C_2201
+    Name: "Costume Sunglasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 12
+  - Id: 41002
+    AegisName: GR_C_2202
+    Name: "Costume Sunglasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 12
+  - Id: 41003
+    AegisName: GR_C_2203
+    Name: "Costume Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 3
+  - Id: 41004
+    AegisName: GR_C_2204
+    Name: "Costume Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 3
+  - Id: 41005
+    AegisName: GR_C_2205
+    Name: "Costume Diver Goggles"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 10
+  - Id: 41006
+    AegisName: GR_C_2206
+    Name: "Costume Wedding Veil"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 44
+  - Id: 41007
+    AegisName: GR_C_2207
+    Name: "Costume Fancy Flower"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 4
+  - Id: 41008
+    AegisName: GR_C_2208
+    Name: "Costume Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 17
+  - Id: 41009
+    AegisName: GR_C_2209
+    Name: "Costume Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 17
+  - Id: 41010
+    AegisName: GR_C_2210
+    Name: "Costume Hair Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 9
+  - Id: 41011
+    AegisName: GR_C_2211
+    Name: "Costume Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 6
+  - Id: 41012
+    AegisName: GR_C_2212
+    Name: "Costume Eye Patch"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 13
+  - Id: 41013
+    AegisName: GR_C_2213
+    Name: "Costume Kitty Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 2
+  - Id: 41014
+    AegisName: GR_C_2214
+    Name: "Costume Bunny Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 15
+  - Id: 41015
+    AegisName: GR_C_2215
+    Name: "Costume Flower Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 5
+  - Id: 41016
+    AegisName: GR_C_2216
+    Name: "Costume Biretta"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 11
+  - Id: 41017
+    AegisName: GR_C_2217
+    Name: "Costume Biretta"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 11
+  - Id: 41018
+    AegisName: GR_C_2218
+    Name: "Costume Flu Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 8
+  - Id: 41019
+    AegisName: GR_C_2219
+    Name: "Costume Flu Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 8
+  - Id: 41020
+    AegisName: GR_C_2220
+    Name: "Costume Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 16
+  - Id: 41021
+    AegisName: GR_C_2221
+    Name: "Costume Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 16
+  - Id: 41022
+    AegisName: GR_C_2222
+    Name: "Costume Turban"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 7
+  - Id: 41023
+    AegisName: GR_C_2223
+    Name: "Costume Turban"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 7
+  - Id: 41024
+    AegisName: GR_C_2224
+    Name: "Costume Goggles"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 1
+  - Id: 41025
+    AegisName: GR_C_2225
+    Name: "Costume Goggles"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 1
+  - Id: 41026
+    AegisName: GR_C_2226
+    Name: "Costume Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 14
+  - Id: 41027
+    AegisName: GR_C_2227
+    Name: "Costume Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 14
+  - Id: 41028
+    AegisName: GR_C_2228
+    Name: "Costume Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 40
+  - Id: 41029
+    AegisName: GR_C_2229
+    Name: "Costume Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 40
+  - Id: 41030
+    AegisName: GR_C_2232
+    Name: "Costume Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41031
+    AegisName: GR_C_2233
+    Name: "Costume Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41032
+    AegisName: GR_C_2234
+    Name: "Costume Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 19
+  - Id: 41033
+    AegisName: GR_C_2235
+    Name: "Costume Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 45
+  - Id: 41034
+    AegisName: GR_C_2236
+    Name: "Costume Santa Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 20
+  - Id: 41035
+    AegisName: GR_C_2237
+    Name: "Costume Bandit Beard"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 21
+  - Id: 41036
+    AegisName: GR_C_2239
+    Name: "Costume Monocle"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 23
+  - Id: 41037
+    AegisName: GR_C_2240
+    Name: "Costume Beard"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 24
+  - Id: 41038
+    AegisName: GR_C_2241
+    Name: "Costume Grampa Beard"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 25
+  - Id: 41039
+    AegisName: GR_C_2242
+    Name: "Costume Purple Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 26
+  - Id: 41040
+    AegisName: GR_C_2243
+    Name: "Costume Geek Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 27
+  - Id: 41041
+    AegisName: GR_C_2244
+    Name: "Costume Big Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 28
+  - Id: 41042
+    AegisName: GR_C_2245
+    Name: "Costume Sweet Gent"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 29
+  - Id: 41043
+    AegisName: GR_C_2246
+    Name: "Costume Golden Gear"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 30
+  - Id: 41044
+    AegisName: GR_C_2247
+    Name: "Costume Romantic Gent"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 31
+  - Id: 41045
+    AegisName: GR_C_2248
+    Name: "Costume Western Grace"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 32
+  - Id: 41046
+    AegisName: GR_C_2249
+    Name: "Costume Coronet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 33
+  - Id: 41047
+    AegisName: GR_C_2250
+    Name: "Costume Cute Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 34
+  - Id: 41048
+    AegisName: GR_C_2251
+    Name: "Costume Monk Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 35
+  - Id: 41049
+    AegisName: GR_C_2252
+    Name: "Costume Wizard Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 36
+  - Id: 41050
+    AegisName: GR_C_2253
+    Name: "Costume Sunflower"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 37
+  - Id: 41051
+    AegisName: GR_C_2254
+    Name: "Costume Angel Wing"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 38
+  - Id: 41052
+    AegisName: GR_C_2255
+    Name: "Costume Evil Wing"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 39
+  - Id: 41053
+    AegisName: GR_C_2256
+    Name: "Costume Majestic Goat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 41
+  - Id: 41054
+    AegisName: GR_C_2257
+    Name: "Costume Unicorn Horn"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 42
+  - Id: 41055
+    AegisName: GR_C_2258
+    Name: "Costume Spiky Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 43
+  - Id: 41056
+    AegisName: GR_C_2259
+    Name: "Costume Mini Propeller"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 46
+  - Id: 41057
+    AegisName: GR_C_2260
+    Name: "Costume Mini Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 47
+  - Id: 41058
+    AegisName: GR_C_2261
+    Name: "Costume Army Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 48
+  - Id: 41059
+    AegisName: GR_C_2262
+    Name: "Costume Clown Nose"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 49
+  - Id: 41060
+    AegisName: GR_C_2263
+    Name: "Costume Zorro Masque"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 50
+  - Id: 41061
+    AegisName: GR_C_2264
+    Name: "Costume Munak Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 51
+  - Id: 41062
+    AegisName: GR_C_2265
+    Name: "Costume Gangster Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 52
+  - Id: 41063
+    AegisName: GR_C_2266
+    Name: "Costume Iron Cain"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 53
+  - Id: 41064
+    AegisName: GR_C_2267
+    Name: "Costume Cigarette"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 54
+  - Id: 41065
+    AegisName: GR_C_2268
+    Name: "Costume Pipe"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 55
+  - Id: 41066
+    AegisName: GR_C_2269
+    Name: "Costume Romantic Flower"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 56
+  - Id: 41067
+    AegisName: GR_C_2270
+    Name: "Costume Romantic Leaf"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 57
+  - Id: 41068
+    AegisName: GR_C_2271
+    Name: "Costume Jack be Dandy"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 58
+  - Id: 41069
+    AegisName: GR_C_2272
+    Name: "Costume Stop Post"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 59
+  - Id: 41070
+    AegisName: GR_C_2273
+    Name: "Costume Doctor Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 60
+  - Id: 41071
+    AegisName: GR_C_2274
+    Name: "Costume Ghost Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 61
+  - Id: 41072
+    AegisName: GR_C_2275
+    Name: "Costume Red Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 62
+  - Id: 41073
+    AegisName: GR_C_2276
+    Name: "Costume Angled Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 63
+  - Id: 41074
+    AegisName: GR_C_2277
+    Name: "Costume Nurse Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 64
+  - Id: 41075
+    AegisName: GR_C_2278
+    Name: "Costume Mr. Smile"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 65
+  - Id: 41076
+    AegisName: GR_C_2279
+    Name: "Costume Bomb Wick"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 66
+  - Id: 41077
+    AegisName: GR_C_2280
+    Name: "Costume Sakkat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 67
+  - Id: 41078
+    AegisName: GR_C_2281
+    Name: "Costume Opera Masque"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 68
+  - Id: 41079
+    AegisName: GR_C_2282
+    Name: "Costume Halo"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 69
+  - Id: 41080
+    AegisName: GR_C_2283
+    Name: "Costume Ear Muffs"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 70
+  - Id: 41081
+    AegisName: GR_C_2284
+    Name: "Costume Antlers"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 71
+  - Id: 41082
+    AegisName: GR_C_2285
+    Name: "Costume Apple of Archer"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 72
+  - Id: 41083
+    AegisName: GR_C_2286
+    Name: "Costume Elven Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 73
+  - Id: 41084
+    AegisName: GR_C_2287
+    Name: "Costume Pirate Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 74
+  - Id: 41085
+    AegisName: GR_C_2288
+    Name: "Costume Mr. Scream"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 75
+  - Id: 41086
+    AegisName: GR_C_2289
+    Name: "Costume Poo Poo Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 76
+  - Id: 41087
+    AegisName: GR_C_2290
+    Name: "Costume Funeral Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 77
+  - Id: 41088
+    AegisName: GR_C_2291
+    Name: "Costume Masquerade"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 78
+  - Id: 41089
+    AegisName: GR_C_2292
+    Name: "Costume Welding Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 79
+  - Id: 41090
+    AegisName: GR_C_2293
+    Name: "Costume Pretend Murdered"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 80
+  - Id: 41091
+    AegisName: GR_C_2294
+    Name: "Costume Stellar"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 81
+  - Id: 41092
+    AegisName: GR_C_2295
+    Name: "Costume Blinker"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 82
+  - Id: 41093
+    AegisName: GR_C_2296
+    Name: "Costume Binoculars"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 83
+  - Id: 41094
+    AegisName: GR_C_2297
+    Name: "Costume Goblin Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 84
+  - Id: 41095
+    AegisName: GR_C_2298
+    Name: "Costume Green Feeler"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 85
+  - Id: 41096
+    AegisName: GR_C_2299
+    Name: "Costume Orc Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 86
+  - Id: 41097
+    AegisName: GR_C_5001
+    Name: "Costume Headset"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 87
+  - Id: 41098
+    AegisName: GR_C_5002
+    Name: "Costume Jewel Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 88
+  - Id: 41099
+    AegisName: GR_C_5003
+    Name: "Costume Joker Jester"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 89
+  - Id: 41100
+    AegisName: GR_C_5004
+    Name: "Costume Oxygen Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 90
+  - Id: 41101
+    AegisName: GR_C_5005
+    Name: "Costume Gas Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 91
+  - Id: 41102
+    AegisName: GR_C_5006
+    Name: "Costume Machoman's Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 92
+  - Id: 41103
+    AegisName: GR_C_5007
+    Name: "Costume Grand Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 93
+  - Id: 41104
+    AegisName: GR_C_5008
+    Name: "Costume Puppy Love"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 94
+  - Id: 41105
+    AegisName: GR_C_5009
+    Name: "Costume Safety Helmet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 95
+  - Id: 41106
+    AegisName: GR_C_5010
+    Name: "Costume Indian Fillet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 96
+  - Id: 41107
+    AegisName: GR_C_5011
+    Name: "Costume Aerial"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 97
+  - Id: 41108
+    AegisName: GR_C_5012
+    Name: "Costume Ph.D Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 98
+  - Id: 41109
+    AegisName: GR_C_5013
+    Name: "Costume Lord Kaho's Horn"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 99
+  - Id: 41110
+    AegisName: GR_C_5014
+    Name: "Costume Fin Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 100
+  - Id: 41111
+    AegisName: GR_C_5015
+    Name: "Costume Egg Shell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 101
+  - Id: 41112
+    AegisName: GR_C_5016
+    Name: "Costume Boy's Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 102
+  - Id: 41113
+    AegisName: GR_C_5017
+    Name: "Costume Bone Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 103
+  - Id: 41114
+    AegisName: GR_C_5018
+    Name: "Costume Feather Bonnet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 104
+  - Id: 41115
+    AegisName: GR_C_5019
+    Name: "Costume Corsair"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 105
+  - Id: 41116
+    AegisName: GR_C_5020
+    Name: "Costume Kafra Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 106
+  - Id: 41117
+    AegisName: GR_C_5021
+    Name: "Costume Grief for Greed"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 107
+  - Id: 41118
+    AegisName: GR_C_5022
+    Name: "Costume Hat of the Sun God"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 138
+  - Id: 41119
+    AegisName: GR_C_5023
+    Name: "Costume Parcel Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 108
+  - Id: 41120
+    AegisName: GR_C_5024
+    Name: "Costume Cake Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 109
+  - Id: 41121
+    AegisName: GR_C_5025
+    Name: "Costume Helm of Angel"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 110
+  - Id: 41122
+    AegisName: GR_C_5026
+    Name: "Costume Chef Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 111
+  - Id: 41123
+    AegisName: GR_C_5027
+    Name: "Costume Mage Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 112
+  - Id: 41124
+    AegisName: GR_C_5028
+    Name: "Costume Candle"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 113
+  - Id: 41125
+    AegisName: GR_C_5029
+    Name: "Costume Spore Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 114
+  - Id: 41126
+    AegisName: GR_C_5030
+    Name: "Costume Panda Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 115
+  - Id: 41127
+    AegisName: GR_C_5031
+    Name: "Costume Mine Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 116
+  - Id: 41128
+    AegisName: GR_C_5032
+    Name: "Costume Sunday Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 117
+  - Id: 41129
+    AegisName: GR_C_5033
+    Name: "Costume Raccoon Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 118
+  - Id: 41130
+    AegisName: GR_C_5034
+    Name: "Costume Bulb Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 119
+  - Id: 41131
+    AegisName: GR_C_5035
+    Name: "Costume Poring Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 120
+  - Id: 41132
+    AegisName: GR_C_5036
+    Name: "Costume Cross Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 121
+  - Id: 41133
+    AegisName: GR_C_5037
+    Name: "Costume Nut Shell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 122
+  - Id: 41134
+    AegisName: GR_C_5038
+    Name: "Costume Deviruchi Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 123
+  - Id: 41135
+    AegisName: GR_C_5039
+    Name: "Costume Rainbow Eggshell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 124
+  - Id: 41136
+    AegisName: GR_C_5040
+    Name: "Costume Blush"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 125
+  - Id: 41137
+    AegisName: GR_C_5041
+    Name: "Costume Heart Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 126
+  - Id: 41138
+    AegisName: GR_C_5042
+    Name: "Costume Bao Bao"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 127
+  - Id: 41139
+    AegisName: GR_C_5043
+    Name: "Costume Opera Phantom Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 128
+  - Id: 41140
+    AegisName: GR_C_5044
+    Name: "Costume Evil Wing Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 129
+  - Id: 41141
+    AegisName: GR_C_5045
+    Name: "Costume Magician Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 130
+  - Id: 41142
+    AegisName: GR_C_5046
+    Name: "Costume Bongun Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 139
+  - Id: 41143
+    AegisName: GR_C_5047
+    Name: "Costume Fashionable Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 131
+  - Id: 41144
+    AegisName: GR_C_5048
+    Name: "Costume Cresent Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 132
+  - Id: 41145
+    AegisName: GR_C_5049
+    Name: "Costume Striped Hairband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 133
+  - Id: 41146
+    AegisName: GR_C_5050
+    Name: "Costume Wonder Nutshell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 134
+  - Id: 41147
+    AegisName: GR_C_5051
+    Name: "Costume Pussy Cat Bell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 135
+  - Id: 41148
+    AegisName: GR_C_5052
+    Name: "Costume Blue Hairband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 136
+  - Id: 41149
+    AegisName: GR_C_5053
+    Name: "Costume Sphinx Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 137
+  - Id: 41150
+    AegisName: GR_C_5054
+    Name: "Costume Assassin Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 180
+  - Id: 41151
+    AegisName: GR_C_5055
+    Name: "Costume Novice False Eggshell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 101
+  - Id: 41152
+    AegisName: GR_C_5056
+    Name: "Costume Fruit of Love"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 140
+  - Id: 41153
+    AegisName: GR_C_5057
+    Name: "Costume Black Cat Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 141
+  - Id: 41154
+    AegisName: GR_C_5058
+    Name: "Costume Drooping Cat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 142
+  - Id: 41155
+    AegisName: GR_C_5059
+    Name: "Costume Teddybear Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 143
+  - Id: 41156
+    AegisName: GR_C_5060
+    Name: "Costume Party Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 144
+  - Id: 41157
+    AegisName: GR_C_5061
+    Name: "Costume Flower Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 145
+  - Id: 41158
+    AegisName: GR_C_5062
+    Name: "Costume Straw Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 146
+  - Id: 41159
+    AegisName: GR_C_5063
+    Name: "Costume Giant Band Aid"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 147
+  - Id: 41160
+    AegisName: GR_C_5064
+    Name: "Costume Smokie Leaf"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 148
+  - Id: 41161
+    AegisName: GR_C_5065
+    Name: "Costume Blue Fish"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 149
+  - Id: 41162
+    AegisName: GR_C_5066
+    Name: "Costume Succubus Horn"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 150
+  - Id: 41163
+    AegisName: GR_C_5067
+    Name: "Costume Sombrero"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 151
+  - Id: 41164
+    AegisName: GR_C_5068
+    Name: "Costume Evil Wing Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 152
+  - Id: 41165
+    AegisName: GR_C_5069
+    Name: "Costume Kitsune Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 153
+  - Id: 41166
+    AegisName: GR_C_5070
+    Name: "Costume Hot-blooded Headband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 154
+  - Id: 41167
+    AegisName: GR_C_5071
+    Name: "Costume Indian Headband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 155
+  - Id: 41168
+    AegisName: GR_C_5072
+    Name: "Costume Incubus Horn"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 156
+  - Id: 41169
+    AegisName: GR_C_5073
+    Name: "Costume Model Training Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 157
+  - Id: 41170
+    AegisName: GR_C_5074
+    Name: "Costume Angel Wing Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 158
+  - Id: 41171
+    AegisName: GR_C_5075
+    Name: "Costume Cowboy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 159
+  - Id: 41172
+    AegisName: GR_C_5076
+    Name: "Costume Beanie"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 160
+  - Id: 41173
+    AegisName: GR_C_5077
+    Name: "Costume Tulip Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 161
+  - Id: 41174
+    AegisName: GR_C_5078
+    Name: "Costume Sea-Otter Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 162
+  - Id: 41175
+    AegisName: GR_C_5079
+    Name: "Costume X Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 163
+  - Id: 41176
+    AegisName: GR_C_5080
+    Name: "Costume Crown of Ancient Queen"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 164
+  - Id: 41177
+    AegisName: GR_C_5081
+    Name: "Costume Crown of Mistress"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 165
+  - Id: 41178
+    AegisName: GR_C_5082
+    Name: "Costume Decorative Mushroom"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 166
+  - Id: 41179
+    AegisName: GR_C_5083
+    Name: "Costume Red Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 167
+  - Id: 41180
+    AegisName: GR_C_5084
+    Name: "Costume Lazy Smokie"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 168
+  - Id: 41181
+    AegisName: GR_C_5085
+    Name: "Costume Small Ribbons"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 169
+  - Id: 41182
+    AegisName: GR_C_5086
+    Name: "Costume Alarm Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 170
+  - Id: 41183
+    AegisName: GR_C_5087
+    Name: "Costume Poker Face"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 171
+  - Id: 41184
+    AegisName: GR_C_5088
+    Name: "Costume Surprised Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 172
+  - Id: 41185
+    AegisName: GR_C_5089
+    Name: "Costume Annoyed Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 173
+  - Id: 41186
+    AegisName: GR_C_5090
+    Name: "Costume Goblin Leader Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 174
+  - Id: 41187
+    AegisName: GR_C_5091
+    Name: "Costume Decorative Golden Bell"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 175
+  - Id: 41188
+    AegisName: GR_C_5092
+    Name: "Costume Coif"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 176
+  - Id: 41189
+    AegisName: GR_C_5093
+    Name: "Costume Coif"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 177
+  - Id: 41190
+    AegisName: GR_C_5094
+    Name: "Costume Helmet of Orc Hero"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 178
+  - Id: 41191
+    AegisName: GR_C_5096
+    Name: "Costume Assassin Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 180
+  - Id: 41192
+    AegisName: GR_C_5097
+    Name: "Costume Holiday Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 144
+  - Id: 41193
+    AegisName: GR_C_5099
+    Name: "Costume Neko Mimi"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 182
+  - Id: 41194
+    AegisName: GR_C_5101
+    Name: "Costume Takius's Blindfold"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 184
+  - Id: 41195
+    AegisName: GR_C_5102
+    Name: "Costume Blank Eyes"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 185
+  - Id: 41196
+    AegisName: GR_C_5104
+    Name: "Costume Dark Blinder"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 187
+  - Id: 41197
+    AegisName: GR_C_5105
+    Name: "Costume 2nd Anniversary Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 109
+  - Id: 41198
+    AegisName: GR_C_5106
+    Name: "Costume 2nd Anniversary Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 144
+  - Id: 41199
+    AegisName: GR_C_5107
+    Name: "Costume Crunch Toast"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 188
+  - Id: 41200
+    AegisName: GR_C_5108
+    Name: "Costume Renown Detective's Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 189
+  - Id: 41201
+    AegisName: GR_C_5109
+    Name: "Costume Red Bonnet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 190
+  - Id: 41202
+    AegisName: GR_C_5110
+    Name: "Costume Baby Pacifier"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 191
+  - Id: 41203
+    AegisName: GR_C_5111
+    Name: "Costume Galapago Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 192
+  - Id: 41204
+    AegisName: GR_C_5112
+    Name: "Costume Super Novice Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 193
+  - Id: 41205
+    AegisName: GR_C_5113
+    Name: "Costume Angry Snarl"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 194
+  - Id: 41206
+    AegisName: GR_C_5114
+    Name: "Costume Bucket Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 195
+  - Id: 41207
+    AegisName: GR_C_5115
+    Name: "Costume Winter Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 196
+  - Id: 41208
+    AegisName: GR_C_5116
+    Name: "Costume Banana Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 197
+  - Id: 41209
+    AegisName: GR_C_5117
+    Name: "Costume Mystic Rose"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 198
+  - Id: 41210
+    AegisName: GR_C_5118
+    Name: "Costume Puppy Headband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 199
+  - Id: 41211
+    AegisName: GR_C_5119
+    Name: "Costume Super Novice Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 193
+  - Id: 41212
+    AegisName: GR_C_5120
+    Name: "Costume Bucket Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 195
+  - Id: 41213
+    AegisName: GR_C_5121
+    Name: "Costume Zealotus Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 200
+  - Id: 41214
+    AegisName: GR_C_5122
+    Name: "Costume Magni's Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 250
+  - Id: 41215
+    AegisName: GR_C_5123
+    Name: "Costume Ulle's Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 254
+  - Id: 41216
+    AegisName: GR_C_5124
+    Name: "Costume Fricca's Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 251
+  - Id: 41217
+    AegisName: GR_C_5125
+    Name: "Costume Angel's Kiss"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 255
+  - Id: 41218
+    AegisName: GR_C_5126
+    Name: "Costume Morpheus's Hood"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 256
+  - Id: 41219
+    AegisName: GR_C_5127
+    Name: "Costume Morrigane's Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 257
+  - Id: 41220
+    AegisName: GR_C_5128
+    Name: "Costume Goibne's Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 258
+  - Id: 41221
+    AegisName: GR_C_5129
+    Name: "Costume Bird Nest"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 201
+  - Id: 41222
+    AegisName: GR_C_5130
+    Name: "Costume Lion Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 202
+  - Id: 41223
+    AegisName: GR_C_5131
+    Name: "Costume Close Helmet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 203
+  - Id: 41224
+    AegisName: GR_C_5132
+    Name: "Costume Angeling Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 204
+  - Id: 41225
+    AegisName: GR_C_5134
+    Name: "Costume Pumpkin-Head"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 206
+  - Id: 41226
+    AegisName: GR_C_5135
+    Name: "Costume Cyclop's Eye"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 207
+  - Id: 41227
+    AegisName: GR_C_5136
+    Name: "Costume Antonio's Santa Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 20
+  - Id: 41228
+    AegisName: GR_C_5137
+    Name: "Costume Alice Doll"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 208
+  - Id: 41229
+    AegisName: GR_C_5138
+    Name: "Costume Magic Eyes"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 209
+  - Id: 41230
+    AegisName: GR_C_5139
+    Name: "Costume Hibiscus"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 210
+  - Id: 41231
+    AegisName: GR_C_5140
+    Name: "Costume Charming Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 211
+  - Id: 41232
+    AegisName: GR_C_5141
+    Name: "Costume Marionette Doll"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 212
+  - Id: 41233
+    AegisName: GR_C_5142
+    Name: "Costume Crescent Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 213
+  - Id: 41234
+    AegisName: GR_C_5143
+    Name: "Costume Kabuki Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 214
+  - Id: 41235
+    AegisName: GR_C_5144
+    Name: "Costume Gambler Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 16
+  - Id: 41236
+    AegisName: GR_C_5145
+    Name: "Costume Carnival Joker Jester"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 89
+  - Id: 41237
+    AegisName: GR_C_5146
+    Name: "Costume Elephant Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 215
+  - Id: 41238
+    AegisName: GR_C_5147
+    Name: "Costume Baseball Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 216
+  - Id: 41239
+    AegisName: GR_C_5148
+    Name: "Costume Phrygian Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 217
+  - Id: 41240
+    AegisName: GR_C_5149
+    Name: "Costume Silver Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 218
+  - Id: 41241
+    AegisName: GR_C_5150
+    Name: "Costume Joker Jester"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 219
+  - Id: 41242
+    AegisName: GR_C_5151
+    Name: "Costume Note Headphones"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 220
+  - Id: 41243
+    AegisName: GR_C_5152
+    Name: "Costume Chinese Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 221
+  - Id: 41244
+    AegisName: GR_C_5153
+    Name: "Costume Angeling Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 222
+  - Id: 41245
+    AegisName: GR_C_5157
+    Name: "Costume Orc Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 86
+  - Id: 41246
+    AegisName: GR_C_5158
+    Name: "Costume Monk Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 35
+  - Id: 41247
+    AegisName: GR_C_5159
+    Name: "Costume Golden Gear"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 30
+  - Id: 41248
+    AegisName: GR_C_5160
+    Name: "Costume Majestic Goat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 41
+  - Id: 41249
+    AegisName: GR_C_5161
+    Name: "Costume Spiky Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 43
+  - Id: 41250
+    AegisName: GR_C_5162
+    Name: "Costume Bone Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 103
+  - Id: 41251
+    AegisName: GR_C_5163
+    Name: "Costume Corsair"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 105
+  - Id: 41252
+    AegisName: GR_C_5164
+    Name: "Costume Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 19
+  - Id: 41253
+    AegisName: GR_C_5165
+    Name: "Costume Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 45
+  - Id: 41254
+    AegisName: GR_C_5166
+    Name: "Costume Sphinx Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 137
+  - Id: 41255
+    AegisName: GR_C_5167
+    Name: "Costume Munak Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 51
+  - Id: 41256
+    AegisName: GR_C_5168
+    Name: "Costume Bongun Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 139
+  - Id: 41257
+    AegisName: GR_C_5169
+    Name: "Costume Bride Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 223
+  - Id: 41258
+    AegisName: GR_C_5170
+    Name: "Costume Feather Beret"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 224
+  - Id: 41259
+    AegisName: GR_C_5171
+    Name: "Costume Valkyrie Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 225
+  - Id: 41260
+    AegisName: GR_C_5172
+    Name: "Costume Beret"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 226
+  - Id: 41261
+    AegisName: GR_C_5173
+    Name: "Costume Magistrate Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 227
+  - Id: 41262
+    AegisName: GR_C_5174
+    Name: "Costume Ayam"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 228
+  - Id: 41263
+    AegisName: GR_C_5175
+    Name: "Costume Censor Bar"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 229
+  - Id: 41264
+    AegisName: GR_C_5176
+    Name: "Costume Hahoe Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 230
+  - Id: 41265
+    AegisName: GR_C_5177
+    Name: "Costume Mythical Lion Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 231
+  - Id: 41266
+    AegisName: GR_C_5178
+    Name: "Costume Candle"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 113
+  - Id: 41267
+    AegisName: GR_C_5179
+    Name: "Costume Golden Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 232
+  - Id: 41268
+    AegisName: GR_C_5180
+    Name: "Costume France Holiday Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 217
+  - Id: 41269
+    AegisName: GR_C_5181
+    Name: "Costume Helm of Darkness"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 233
+  - Id: 41270
+    AegisName: GR_C_5182
+    Name: "Costume Puppy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 234
+  - Id: 41271
+    AegisName: GR_C_5183
+    Name: "Costume Bird Nest Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 235
+  - Id: 41272
+    AegisName: GR_C_5184
+    Name: "Costume Captain's Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 236
+  - Id: 41273
+    AegisName: GR_C_5185
+    Name: "Costume Laurel Wreath"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 237
+  - Id: 41274
+    AegisName: GR_C_5186
+    Name: "Costume Geographer Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 238
+  - Id: 41275
+    AegisName: GR_C_5187
+    Name: "Costume Twin Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 239
+  - Id: 41276
+    AegisName: GR_C_5188
+    Name: "Costume Wandering Minstrel Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 240
+  - Id: 41277
+    AegisName: GR_C_5189
+    Name: "Costume Autumn Leaves"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 241
+  - Id: 41278
+    AegisName: GR_C_5190
+    Name: "Costume Independence Memorial Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 216
+  - Id: 41279
+    AegisName: GR_C_5191
+    Name: "Costume Black Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 242
+  - Id: 41280
+    AegisName: GR_C_5192
+    Name: "Costume Yellow Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 243
+  - Id: 41281
+    AegisName: GR_C_5193
+    Name: "Costume Green Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 244
+  - Id: 41282
+    AegisName: GR_C_5194
+    Name: "Costume Pink Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 245
+  - Id: 41283
+    AegisName: GR_C_5195
+    Name: "Costume Red Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 246
+  - Id: 41284
+    AegisName: GR_C_5196
+    Name: "Costume Orange Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 247
+  - Id: 41285
+    AegisName: GR_C_5197
+    Name: "Costume White Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 248
+  - Id: 41286
+    AegisName: GR_C_5198
+    Name: "Costume Drooping Bunny"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 249
+  - Id: 41287
+    AegisName: GR_C_5199
+    Name: "Costume Baseball Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 216
+  - Id: 41288
+    AegisName: GR_C_5200
+    Name: "Costume Coppola"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 252
+  - Id: 41289
+    AegisName: GR_C_5202
+    Name: "Costume Fantastic Pumpkin-Head"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 206
+  - Id: 41290
+    AegisName: GR_C_5203
+    Name: "Costume Smiling Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 253
+  - Id: 41291
+    AegisName: GR_C_5204
+    Name: "Costume Rudolph's Nose"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 49
+  - Id: 41292
+    AegisName: GR_C_5205
+    Name: "Costume Emperor's Laurel Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 261
+  - Id: 41293
+    AegisName: GR_C_5207
+    Name: "Costume Angel Blessing"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 260
+  - Id: 41294
+    AegisName: GR_C_5208
+    Name: "Costume Rideword Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 262
+  - Id: 41295
+    AegisName: GR_C_5209
+    Name: "Costume Love Dad Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 263
+  - Id: 41296
+    AegisName: GR_C_5211
+    Name: "Costume Dress Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 265
+  - Id: 41297
+    AegisName: GR_C_5212
+    Name: "Costume Satellite Hairband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 266
+  - Id: 41298
+    AegisName: GR_C_5213
+    Name: "Costume Sheila Hairnet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 267
+  - Id: 41299
+    AegisName: GR_C_5214
+    Name: "Costume Moonlight Flower Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 268
+  - Id: 41300
+    AegisName: GR_C_5225
+    Name: "Costume Parade Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 269
+  - Id: 41301
+    AegisName: GR_C_5244
+    Name: "Costume Elven Blindfold"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 288
+  - Id: 41302
+    AegisName: GR_C_5245
+    Name: "Costume Elven Sunglasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 289
+  - Id: 41303
+    AegisName: GR_C_5246
+    Name: "Costume Angelic Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 290
+  - Id: 41304
+    AegisName: GR_C_5247
+    Name: "Costume Satanic Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 291
+  - Id: 41305
+    AegisName: GR_C_5248
+    Name: "Costume Robotic Blindfold"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 292
+  - Id: 41306
+    AegisName: GR_C_5249
+    Name: "Costume Human Blindfold"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 293
+  - Id: 41307
+    AegisName: GR_C_5250
+    Name: "Costume Robotic Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 294
+  - Id: 41308
+    AegisName: GR_C_5251
+    Name: "Costume Round Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 295
+  - Id: 41309
+    AegisName: GR_C_5252
+    Name: "Costume Drooping Ninetail"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 296
+  - Id: 41310
+    AegisName: GR_C_5253
+    Name: "Costume Lif Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 297
+  - Id: 41311
+    AegisName: GR_C_5254
+    Name: "Costume Deviling Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 298
+  - Id: 41312
+    AegisName: GR_C_5255
+    Name: "Costume Triple Poring Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 299
+  - Id: 41313
+    AegisName: GR_C_5258
+    Name: "Costume Afro Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 302
+  - Id: 41314
+    AegisName: GR_C_5259
+    Name: "Costume Elephant Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 215
+  - Id: 41315
+    AegisName: GR_C_5260
+    Name: "Costume Cookie Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 217
+  - Id: 41316
+    AegisName: GR_C_5261
+    Name: "Costume Silver Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 218
+  - Id: 41317
+    AegisName: GR_C_5262
+    Name: "Costume Golden Tiara"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 232
+  - Id: 41318
+    AegisName: GR_C_5264
+    Name: "Costume Australian Flag Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 304
+  - Id: 41319
+    AegisName: GR_C_5269
+    Name: "Costume Flapping Angel Wing"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 264
+  - Id: 41320
+    AegisName: GR_C_5270
+    Name: "Costume Autumn Leaves"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 241
+  - Id: 41321
+    AegisName: GR_C_5271
+    Name: "Costume Phoenix Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 221
+  - Id: 41322
+    AegisName: GR_C_5272
+    Name: "Costume Tongue Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 253
+  - Id: 41323
+    AegisName: GR_C_5273
+    Name: "Costume Happy Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 305
+  - Id: 41324
+    AegisName: GR_C_5274
+    Name: "Costume Shiny Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 306
+  - Id: 41325
+    AegisName: GR_C_5275
+    Name: "Costume Marvelous Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 307
+  - Id: 41326
+    AegisName: GR_C_5276
+    Name: "Costume Fantastic Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 308
+  - Id: 41327
+    AegisName: GR_C_5279
+    Name: "Costume Refined Drooping Cat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 142
+  - Id: 41328
+    AegisName: GR_C_5280
+    Name: "Costume Baphomet Horns"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 41
+  - Id: 41329
+    AegisName: GR_C_5281
+    Name: "Costume Refined Deviruchi Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 123
+  - Id: 41330
+    AegisName: GR_C_5282
+    Name: "Costume Europe Baseball Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 216
+  - Id: 41331
+    AegisName: GR_C_5290
+    Name: "Costume Drooping Bunny"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 249
+  - Id: 41332
+    AegisName: GR_C_5296
+    Name: "Costume Drooping Nine Tail"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 296
+  - Id: 41333
+    AegisName: GR_C_5297
+    Name: "Costume Soul Wing"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 301
+  - Id: 41334
+    AegisName: GR_C_5298
+    Name: "Costume Dokebi's Wig"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 307
+  - Id: 41335
+    AegisName: GR_C_5299
+    Name: "Costume Pagdayaw"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 303
+  - Id: 41336
+    AegisName: GR_C_5301
+    Name: "Costume Victory Hairband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 323
+  - Id: 41337
+    AegisName: GR_C_5302
+    Name: "Costume Flower Lily"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 324
+  - Id: 41338
+    AegisName: GR_C_5303
+    Name: "Costume Flower Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 325
+  - Id: 41339
+    AegisName: GR_C_5309
+    Name: "Costume Wool Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 331
+  - Id: 41340
+    AegisName: GR_C_5316
+    Name: "Costume Umbrella Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 338
+  - Id: 41341
+    AegisName: GR_C_5317
+    Name: "Costume Fisherman's Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 339
+  - Id: 41342
+    AegisName: GR_C_5319
+    Name: "Costume Hello Mother Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 341
+  - Id: 41343
+    AegisName: GR_C_5321
+    Name: "Costume Bandana Merah Putih"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 342
+  - Id: 41344
+    AegisName: GR_C_5325
+    Name: "Costume Robo Eye"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 345
+  - Id: 41345
+    AegisName: GR_C_5326
+    Name: "Costume Masquerade C"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 78
+  - Id: 41346
+    AegisName: GR_C_5327
+    Name: "Costume Refined Helmet of Orc Hero"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 178
+  - Id: 41347
+    AegisName: GR_C_5328
+    Name: "Costume Evil Wing Ears C"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 152
+  - Id: 41348
+    AegisName: GR_C_5329
+    Name: "Costume Dark Blindfold C"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 187
+  - Id: 41349
+    AegisName: GR_C_5330
+    Name: "Costume kRO Drooping Kitty C"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 142
+  - Id: 41350
+    AegisName: GR_C_5331
+    Name: "Costume Corsair C"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 105
+  - Id: 41351
+    AegisName: GR_C_5332
+    Name: "Costume Loki Mask"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 346
+  - Id: 41352
+    AegisName: GR_C_5334
+    Name: "Costume Flapping Angeling"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 348
+  - Id: 41353
+    AegisName: GR_C_5335
+    Name: "Costume Jumping Poring"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 349
+  - Id: 41354
+    AegisName: GR_C_5340
+    Name: "Costume Defolty Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 354
+  - Id: 41355
+    AegisName: GR_C_5341
+    Name: "Costume Glaris Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 355
+  - Id: 41356
+    AegisName: GR_C_5342
+    Name: "Costume Sorin Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 356
+  - Id: 41357
+    AegisName: GR_C_5343
+    Name: "Costume Telling Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 357
+  - Id: 41358
+    AegisName: GR_C_5344
+    Name: "Costume Bennit Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 358
+  - Id: 41359
+    AegisName: GR_C_5345
+    Name: "Costume W Doll Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 359
+  - Id: 41360
+    AegisName: GR_C_5347
+    Name: "Costume Ph.D Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 98
+  - Id: 41361
+    AegisName: GR_C_5348
+    Name: "Costume Big Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 28
+  - Id: 41362
+    AegisName: GR_C_5349
+    Name: "Costume Boy's Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 102
+  - Id: 41363
+    AegisName: GR_C_5350
+    Name: "Costume Pirate Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 74
+  - Id: 41364
+    AegisName: GR_C_5351
+    Name: "Costume Sunflower"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 37
+  - Id: 41365
+    AegisName: GR_C_5353
+    Name: "Costume Hat of the Sun God"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 138
+  - Id: 41366
+    AegisName: GR_C_5354
+    Name: "Costume Muslim Hat M"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 362
+  - Id: 41367
+    AegisName: GR_C_5355
+    Name: "Costume Selendang"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 363
+  - Id: 41368
+    AegisName: GR_C_5356
+    Name: "Costume Festival Pumpkin Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 206
+  - Id: 41369
+    AegisName: GR_C_5363
+    Name: "Costume Helm Of Abyss"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 371
+  - Id: 41370
+    AegisName: GR_C_5364
+    Name: "Costume Evil Snake Lord Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 372
+  - Id: 41371
+    AegisName: GR_C_5365
+    Name: "Costume Magnolia Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 373
+  - Id: 41372
+    AegisName: GR_C_5366
+    Name: "Costume Love Dad Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 374
+  - Id: 41373
+    AegisName: GR_C_5370
+    Name: "Costume Orchid Hairband"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 376
+  - Id: 41374
+    AegisName: GR_C_5379
+    Name: "Costume Tam"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 385
+  - Id: 41375
+    AegisName: GR_C_5384
+    Name: "Costume Twin Pompom By JB"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 390
+  - Id: 41376
+    AegisName: GR_C_5386
+    Name: "Costume Ayam"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 228
+  - Id: 41377
+    AegisName: GR_C_5390
+    Name: "Costume Frozen Twin Pompom"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 395
+  - Id: 41378
+    AegisName: GR_C_5392
+    Name: "Costume Luoyang NewYear Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 396
+  - Id: 41379
+    AegisName: GR_C_5393
+    Name: "Costume Love Valentine's Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 397
+  - Id: 41380
+    AegisName: GR_C_5396
+    Name: "Costume Jasper Crest"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 399
+  - Id: 41381
+    AegisName: GR_C_5398
+    Name: "Costume Bone Head"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 401
+  - Id: 41382
+    AegisName: GR_C_5399
+    Name: "Costume Mandragora Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 402
+  - Id: 41383
+    AegisName: GR_C_5400
+    Name: "Costume Fox Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 403
+  - Id: 41384
+    AegisName: GR_C_5408
+    Name: "Costume Old Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 6
+  - Id: 41385
+    AegisName: GR_C_5409
+    Name: "Costume Purple Cowboy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 411
+  - Id: 41386
+    AegisName: GR_C_5410
+    Name: "Costume Brown Paperbag Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 412
+  - Id: 41387
+    AegisName: GR_C_5411
+    Name: "Costume White Snake Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 413
+  - Id: 41388
+    AegisName: GR_C_5412
+    Name: "Costume Sweet Candy"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 414
+  - Id: 41389
+    AegisName: GR_C_5413
+    Name: "Costume Pop Corn Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 415
+  - Id: 41390
+    AegisName: GR_C_5414
+    Name: "Costume Camp Fire Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 416
+  - Id: 41391
+    AegisName: GR_C_5415
+    Name: "Costume Poring Cake Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 417
+  - Id: 41392
+    AegisName: GR_C_5416
+    Name: "Costume Beer Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 418
+  - Id: 41393
+    AegisName: GR_C_5417
+    Name: "Costume Crown Parrots"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 419
+  - Id: 41394
+    AegisName: GR_C_5418
+    Name: "Costume Legionnaire Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 420
+  - Id: 41395
+    AegisName: GR_C_5419
+    Name: "Costume Leaves Of Grass"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 57
+  - Id: 41396
+    AegisName: GR_C_5422
+    Name: "Costume Linguistic Book Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 423
+  - Id: 41397
+    AegisName: GR_C_5424
+    Name: "Costume Fanta Orange Can Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 425
+  - Id: 41398
+    AegisName: GR_C_5425
+    Name: "Costume Fanta Grape Can Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 426
+  - Id: 41399
+    AegisName: GR_C_5426
+    Name: "Costume Karada Meguricha Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 427
+  - Id: 41400
+    AegisName: GR_C_5427
+    Name: "Costume Black Tea Kochakaden Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 428
+  - Id: 41401
+    AegisName: GR_C_5431
+    Name: "Costume Chicken Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 432
+  - Id: 41402
+    AegisName: GR_C_5432
+    Name: "Costume bRO 4th Anniversary Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 433
+  - Id: 41403
+    AegisName: GR_C_5433
+    Name: "Costume Golden Laurel"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 434
+  - Id: 41404
+    AegisName: GR_C_5435
+    Name: "Costume Red Minstrel Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 436
+  - Id: 41405
+    AegisName: GR_C_5436
+    Name: "Costume Bride's Corolla"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 437
+  - Id: 41406
+    AegisName: GR_C_5437
+    Name: "Costume Fairy Flower"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 438
+  - Id: 41407
+    AegisName: GR_C_5438
+    Name: "Costume Cute Green Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 439
+  - Id: 41408
+    AegisName: GR_C_5439
+    Name: "Costume Cute Red Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 440
+  - Id: 41409
+    AegisName: GR_C_5440
+    Name: "Costume Cute Blue Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 441
+  - Id: 41410
+    AegisName: GR_C_5441
+    Name: "Costume Cute White Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 442
+  - Id: 41411
+    AegisName: GR_C_5442
+    Name: "Costume Necktie"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 443
+  - Id: 41412
+    AegisName: GR_C_5443
+    Name: "Costume Statue Of Baby Angel"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 444
+  - Id: 41413
+    AegisName: GR_C_5444
+    Name: "Costume Hair Brush"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 445
+  - Id: 41414
+    AegisName: GR_C_5445
+    Name: "Costume Candy Cane In Mouth"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 446
+  - Id: 41415
+    AegisName: GR_C_5446
+    Name: "Costume Catfoot Hairpin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 447
+  - Id: 41416
+    AegisName: GR_C_5447
+    Name: "Costume Frog Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 448
+  - Id: 41417
+    AegisName: GR_C_5448
+    Name: "Costume Soloplay Box1"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 449
+  - Id: 41418
+    AegisName: GR_C_5449
+    Name: "Costume Soloplay Box2"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 450
+  - Id: 41419
+    AegisName: GR_C_5454
+    Name: "Costume Puppy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 234
+  - Id: 41420
+    AegisName: GR_C_5455
+    Name: "Costume Decorative Geographer"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 238
+  - Id: 41421
+    AegisName: GR_C_5456
+    Name: "Costume Summer Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 315
+  - Id: 41422
+    AegisName: GR_C_5458
+    Name: "Costume Pinwheel Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 456
+  - Id: 41423
+    AegisName: GR_C_5459
+    Name: "Costume Drooping Bunny"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 249
+  - Id: 41424
+    AegisName: GR_C_5477
+    Name: "Costume Brazilian Flag Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 474
+  - Id: 41425
+    AegisName: GR_C_5485
+    Name: "Costume Tiger Face"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 483
+  - Id: 41426
+    AegisName: GR_C_5486
+    Name: "Costume Anniversary Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 395
+  - Id: 41427
+    AegisName: GR_C_5487
+    Name: "Costume Poring Cake Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 417
+  - Id: 41428
+    AegisName: GR_C_5488
+    Name: "Costume Twin Santa Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 390
+  - Id: 41429
+    AegisName: GR_C_5489
+    Name: "Costume Love Daddy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 484
+  - Id: 41430
+    AegisName: GR_C_5506
+    Name: "Costume Blue Night Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 501
+  - Id: 41431
+    AegisName: GR_C_5507
+    Name: "Costume Pink Night Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 502
+  - Id: 41432
+    AegisName: GR_C_5510
+    Name: "Costume Shower Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 507
+  - Id: 41433
+    AegisName: GR_C_5512
+    Name: "Costume Aquarius Diadem"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 509
+  - Id: 41434
+    AegisName: GR_C_5513
+    Name: "Costume Aquarius Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 510
+  - Id: 41435
+    AegisName: GR_C_5514
+    Name: "Costume Pisces Diadem"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 511
+  - Id: 41436
+    AegisName: GR_C_5515
+    Name: "Costume Pisces Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 512
+  - Id: 41437
+    AegisName: GR_C_5516
+    Name: "Costume hawk Eyes"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 23
+  - Id: 41438
+    AegisName: GR_C_5517
+    Name: "Costume Hawk Eyes"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 23
+  - Id: 41439
+    AegisName: GR_C_5518
+    Name: "Costume Gigantic Majestic Goat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 513
+  - Id: 41440
+    AegisName: GR_C_5520
+    Name: "Costume Rabbit Earplugs"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 515
+  - Id: 41441
+    AegisName: GR_C_5522
+    Name: "Costume Fanta Zero Lemon Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 516
+  - Id: 41442
+    AegisName: GR_C_5523
+    Name: "Costume Sakura Mist Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 517
+  - Id: 41443
+    AegisName: GR_C_5524
+    Name: "Costume Sakura Milk Tea Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 518
+  - Id: 41444
+    AegisName: GR_C_5525
+    Name: "Costume Flower Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 519
+  - Id: 41445
+    AegisName: GR_C_5531
+    Name: "Costume Baby Dragon Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 525
+  - Id: 41446
+    AegisName: GR_C_5533
+    Name: "Costume Emperor Wreath"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 261
+  - Id: 41447
+    AegisName: GR_C_5535
+    Name: "Costume Side Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 529
+  - Id: 41448
+    AegisName: GR_C_5540
+    Name: "Costume Freyja SCirclet7"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41449
+    AegisName: GR_C_5541
+    Name: "Costume Freyja SCirclet30"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41450
+    AegisName: GR_C_5542
+    Name: "Costume Freyja SCirclet60"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41451
+    AegisName: GR_C_5543
+    Name: "Costume Freyja SCirclet90"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 18
+  - Id: 41452
+    AegisName: GR_C_5552
+    Name: "Costume Festival Grand Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 93
+  - Id: 41453
+    AegisName: GR_C_5553
+    Name: "Costume Festival Bunny Band"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 15
+  - Id: 41454
+    AegisName: GR_C_5556
+    Name: "Costume Seal Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 540
+  - Id: 41455
+    AegisName: GR_C_5558
+    Name: "Costume Luxury Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 542
+  - Id: 41456
+    AegisName: GR_C_5559
+    Name: "Costume Piece Of White Cloth"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 543
+  - Id: 41457
+    AegisName: GR_C_5560
+    Name: "Costume Bullock Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 322
+  - Id: 41458
+    AegisName: GR_C_5561
+    Name: "Costume Magic Rabbit Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 497
+  - Id: 41459
+    AegisName: GR_C_5562
+    Name: "Costume Luxurious Wedding Veil"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 489
+  - Id: 41460
+    AegisName: GR_C_5568
+    Name: "Costume Rabbit Bonnet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 549
+  - Id: 41461
+    AegisName: GR_C_5572
+    Name: "Costume Savage Babe Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 553
+  - Id: 41462
+    AegisName: GR_C_5573
+    Name: "Costume Dokebi Horn"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 554
+  - Id: 41463
+    AegisName: GR_C_5575
+    Name: "Costume Rice Ball Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 556
+  - Id: 41464
+    AegisName: GR_C_5578
+    Name: "Costume Voyage_Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 236
+  - Id: 41465
+    AegisName: GR_C_5585
+    Name: "Costume Rune Cloth Circlet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 564
+  - Id: 41466
+    AegisName: GR_C_5586
+    Name: "Costume Mosquito Coil"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 563
+  - Id: 41467
+    AegisName: GR_C_5590
+    Name: "Costume Poring Cake Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 417
+  - Id: 41468
+    AegisName: GR_C_5592
+    Name: "Costume Sigrun's Wings"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 568
+  - Id: 41469
+    AegisName: GR_C_5593
+    Name: "Costume Rabbit Bonnet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 549
+  - Id: 41470
+    AegisName: GR_C_5594
+    Name: "Costume Donut In Mouth"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 569
+  - Id: 41471
+    AegisName: GR_C_5600
+    Name: "Costume Brazil Twin Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 575
+  - Id: 41472
+    AegisName: GR_C_5660
+    Name: "Costume Gryphon Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 591
+  - Id: 41473
+    AegisName: GR_C_5664
+    Name: "Costume Filir's Pinions"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 595
+  - Id: 41474
+    AegisName: GR_C_5665
+    Name: "Costume Shaman Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 596
+  - Id: 41475
+    AegisName: GR_C_5666
+    Name: "Costume Golden Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 597
+  - Id: 41476
+    AegisName: GR_C_5671
+    Name: "Costume Drooping Morocc Minion"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 600
+  - Id: 41477
+    AegisName: GR_C_5681
+    Name: "Costume Green Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 244
+  - Id: 41478
+    AegisName: GR_C_5682
+    Name: "Costume Triangle Rune Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 610
+  - Id: 41479
+    AegisName: GR_C_5683
+    Name: "Costume Baphomet Horns"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 41
+  - Id: 41480
+    AegisName: GR_C_5684
+    Name: "Costume Ornate Crown"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 88
+  - Id: 41481
+    AegisName: GR_C_5685
+    Name: "Costume Army Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 48
+  - Id: 41482
+    AegisName: GR_C_5686
+    Name: "Costume Nice Hat Feather"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 104
+  - Id: 41483
+    AegisName: GR_C_5687
+    Name: "Costume Orc Helm"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 86
+  - Id: 41484
+    AegisName: GR_C_5690
+    Name: "Costume Red Wing Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 613
+  - Id: 41485
+    AegisName: GR_C_5691
+    Name: "Costume Sailor's Bandana"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 542
+  - Id: 41486
+    AegisName: GR_C_5692
+    Name: "Costume Sea Cat Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 539
+  - Id: 41487
+    AegisName: GR_C_5742
+    Name: "Costume Rudolph Santa Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 619
+  - Id: 41488
+    AegisName: GR_C_5771
+    Name: "Costume Family Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 109
+  - Id: 41489
+    AegisName: GR_C_5775
+    Name: "Costume Choco Donut In Mouth"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 653
+  - Id: 41490
+    AegisName: GR_C_5781
+    Name: "Costume Persika"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 659
+  - Id: 41491
+    AegisName: GR_C_5788
+    Name: "Costume 3D Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 661
+  - Id: 41492
+    AegisName: GR_C_5792
+    Name: "Costume Fish Pin"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 669
+  - Id: 41493
+    AegisName: GR_C_5793
+    Name: "Costume Ribbon Of Life"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 575
+  - Id: 41494
+    AegisName: GR_C_5794
+    Name: "Costume 3D Glasses"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 661
+  - Id: 41495
+    AegisName: GR_C_5800
+    Name: "Costume Blush of Groom"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 125
+  - Id: 41496
+    AegisName: GR_C_5801
+    Name: "Costume Red Tailed Ribbon"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 167
+  - Id: 41497
+    AegisName: GR_C_5802
+    Name: "Costume Upgraded Elephant Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 215
+  - Id: 41498
+    AegisName: GR_C_5803
+    Name: "Costume Love Flower Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 5
+  - Id: 41499
+    AegisName: GR_C_5804
+    Name: "Costume Pirate Eye Bandage"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 13
+  - Id: 41500
+    AegisName: GR_C_5807
+    Name: "Costume October Fest Cap"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 104
+  - Id: 41501
+    AegisName: GR_C_5808
+    Name: "Costume Dark Bacilium"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 364
+  - Id: 41502
+    AegisName: GR_C_5809
+    Name: "Costume Boom Boom Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 216
+  - Id: 41503
+    AegisName: GR_C_5810
+    Name: "Costume Ph.D Hat V"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 98
+  - Id: 41504
+    AegisName: GR_C_5811
+    Name: "Costume Santa's Beard"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 25
+  - Id: 41505
+    AegisName: GR_C_5815
+    Name: "Costume Classic Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 475
+  - Id: 41506
+    AegisName: GR_C_5816
+    Name: "Costume Purple Cowboy Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 411
+  - Id: 41507
+    AegisName: GR_C_5824
+    Name: "Costume Fools Day Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 265
+  - Id: 41508
+    AegisName: GR_C_5826
+    Name: "Costume Valkyrie Helmet"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 225
+  - Id: 41509
+    AegisName: GR_C_5827
+    Name: "Costume Book File Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 423
+  - Id: 41510
+    AegisName: GR_C_5846
+    Name: "Costume Buzzy Ball Gum"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 572
+  - Id: 41511
+    AegisName: GR_C_5851
+    Name: "Costume Summer Knight"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 138
+  - Id: 41512
+    AegisName: GR_C_18503
+    Name: "Costume Small Devil Horns"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 562
+  - Id: 41513
+    AegisName: GR_C_18505
+    Name: "Costume Umbala Spirit"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 675
+  - Id: 41514
+    AegisName: GR_C_18506
+    Name: "Costume Hattah Black"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+      Costume_Head_Mid: true
+      Costume_Head_Low: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 676
+  - Id: 41515
+    AegisName: GR_C_18507
+    Name: "Costume Elven Ears"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Mid: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 73
+  - Id: 41516
+    AegisName: GR_C_18595
+    Name: "Costume Horn of Ancient"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 757
+  - Id: 41517
+    AegisName: GR_C_18596
+    Name: "Costume Sprout Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 758
+  - Id: 41518
+    AegisName: GR_C_18597
+    Name: "Costume Mercury Riser"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 759
+  - Id: 41519
+    AegisName: GR_C_18600
+    Name: "Costume Cat Ear Beret"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 761
+  - Id: 41520
+    AegisName: GR_C_18612
+    Name: "Costume White Musang Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 770
+  - Id: 41521
+    AegisName: GR_C_18613
+    Name: "Costume Black Musang Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 771
+  - Id: 41522
+    AegisName: GR_C_18656
+    Name: "Costume Witch's Pumpkin Hat"
+    Type: Armor
+    Weight: 0
+    Defense: 0
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    ArmorLevel: 1
+    Refineable: false
+    View: 717
+# === GRASSRO GENERATED COSTUMES END ===

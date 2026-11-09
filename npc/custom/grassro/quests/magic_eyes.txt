@@ -1,0 +1,115 @@
+
+geffen,103,61,3	script	Suspicious Magician	926,{
+
+	mes "[Suspicious Magician]";
+	mes "Psst... Adventurer. Come closer.";
+	mes "Hehehe... You look like someone searching for something extraordinary.";
+	mes "Perhaps a pair of ^0055FFMagic Eyes^000000?";
+	next;
+
+	switch(select("What are Magic Eyes?:View crafting requirements:Craft Magic Eyes:Leave")) {
+
+	case 1:
+		mes "[Suspicious Magician]";
+		mes "A peculiar creation made from the powers of fire and frost.";
+		mes "With a little magic, I can turn an ordinary Blinker into something extraordinary.";
+		mes "Of course... my services aren't free. Hehehe.";
+		close;
+
+	case 2:
+		mes "[Suspicious Magician]";
+		mes "Here's what I need:";
+		mes "^0055FF200 Burning Hearts^000000";
+		mes "^0055FF200 Glacial Hearts^000000";
+		mes "^0055FF1 Blinker^000000";
+		mes "^0055FF100 Opals^000000";
+		mes "^FF99005,000,000 Zeny^000000";
+		mes "Bring everything, and the Magic Eyes shall be yours.";
+		close;
+
+	case 3:
+		break;
+
+	case 4:
+		mes "[Suspicious Magician]";
+		mes "Leaving so soon? Hehehe...";
+		close;
+	}
+
+	mes "[Suspicious Magician]";
+	mes "Ready to trust a suspicious magician with your precious materials?";
+	next;
+
+	if (select("Yes, craft Magic Eyes:Not yet") != 1) {
+		mes "[Suspicious Magician]";
+		mes "Having second thoughts? I'll be here.";
+		close;
+	}
+
+	// Do not consume an equipped Blinker.
+	if (isequipped(2295)) {
+		mes "[Suspicious Magician]";
+		mes "Remove your equipped Blinker first.";
+		close;
+	}
+
+	// Validate all requirements.
+	.@missing = 0;
+
+	if (countitem(7097) < 200) {
+		mes "Missing "+(200-countitem(7097))+" Burning Hearts.";
+		.@missing = 1;
+	}
+
+	if (countitem(7561) < 200) {
+		mes "Missing "+(200-countitem(7561))+" Glacial Hearts.";
+		.@missing = 1;
+	}
+
+	if (countitem(2295) < 1) {
+		mes "Missing 1 Blinker.";
+		.@missing = 1;
+	}
+
+	if (countitem(727) < 100) {
+		mes "Missing "+(100-countitem(727))+" Opals.";
+		.@missing = 1;
+	}
+
+	if (Zeny < 5000000) {
+		mes "Missing "+(5000000-Zeny)+" Zeny.";
+		.@missing = 1;
+	}
+
+	if (.@missing) {
+		mes "Come back when you have everything.";
+		close;
+	}
+
+	// Check inventory capacity before consuming anything.
+	if (!checkweight(5138,1)) {
+		mes "[Suspicious Magician]";
+		mes "Your inventory cannot hold the Magic Eyes.";
+		mes "Make some room and try again.";
+		close;
+	}
+
+	// Consume required materials and Zeny.
+	delitem 7097,200;
+	delitem 7561,200;
+	delitem 2295,1;
+	delitem 727,100;
+	Zeny -= 5000000;
+
+	// Grant the reward.
+	getitem 5138,1;
+
+	callfunc "F_GrassRO_ItemCreationAnnounce", 5138, "Suspicious Magician";
+
+	mes "[Suspicious Magician]";
+	mes "Hehehe... Perfect!";
+	mes "Behold! Your very own ^0055FFMagic Eyes^000000!";
+	mes "Use them wisely, adventurer.";
+	mes "Some secrets are better left unseen.";
+	close;
+}

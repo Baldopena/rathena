@@ -1,0 +1,105 @@
+//===== GrassRO ==================================================
+//= OCA / MCA announcement observer (NPC-script only)
+//= Announcement-only: does not select, give, remove, or reroll items.
+//= Requires two callfunc lines around the existing getgroupitem in
+//= the Old Card Album (616) and Mystical Card Album (12246) scripts.
+//===============================================================
+
+function	script	F_GrassRO_AlbumBefore	{
+    .@album = getarg(0);
+
+    // Invalidate any previous snapshot before making a new one.
+    @GR_AlbumSource = 0;
+    @GR_AlbumOldCount = 0;
+    if (.@album != 616 && .@album != 12246)
+        return;
+
+    getinventorylist;
+    @GR_AlbumOldCount = @inventorylist_count;
+    for (.@i = 0; .@i < @GR_AlbumOldCount; .@i++) {
+        @GR_AlbumOldID[.@i] = @inventorylist_id[.@i];
+        @GR_AlbumOldQty[.@i] = @inventorylist_amount[.@i];
+    }
+
+    @GR_AlbumSource = .@album;
+    debugmes "[GR-ALBUM] BEFORE album=" + .@album + " slots=" + @GR_AlbumOldCount;
+    return;
+}
+
+function	script	F_GrassRO_AlbumAfter	{
+    .@album = getarg(0);
+    debugmes "[GR-ALBUM] AFTER entry album=" + .@album + " source=" + @GR_AlbumSource;
+    if ((.@album != 616 && .@album != 12246) || @GR_AlbumSource != .@album)
+        return;
+
+    // No duplicate announcement if After is accidentally invoked twice.
+    @GR_AlbumSource = 0;
+    getinventorylist;
+
+    .@rewardID = 0;
+    .@rewardAmount = 0;
+    .@distinctGains = 0;
+
+    // Bounded inventory comparison.
+    freeloop(1);
+
+    // Compare quantities by ITEM ID, not by inventory slot.
+    // Stacked cards and multiple slots containing the same card are safe.
+    for (.@i = 0; .@i < @inventorylist_count; .@i++) {
+        .@itemID = @inventorylist_id[.@i];
+
+        // Albums must award a card, not an unrelated inventory item.
+        if (getiteminfo(.@itemID, ITEMINFO_TYPE) != IT_CARD)
+            continue;
+
+        // Each item ID should be evaluated only once.
+        .@seen = 0;
+        for (.@j = 0; .@j < .@i; .@j++) {
+            if (@inventorylist_id[.@j] == .@itemID) {
+                .@seen = 1;
+                break;
+            }
+        }
+        if (.@seen)
+            continue;
+
+        .@before = 0;
+        for (.@j = 0; .@j < @GR_AlbumOldCount; .@j++) {
+            if (@GR_AlbumOldID[.@j] == .@itemID)
+                .@before += @GR_AlbumOldQty[.@j];
+        }
+
+        .@after = 0;
+        for (.@j = 0; .@j < @inventorylist_count; .@j++) {
+            if (@inventorylist_id[.@j] == .@itemID)
+                .@after += @inventorylist_amount[.@j];
+        }
+
+        if (.@after > .@before) {
+            .@distinctGains++;
+            .@rewardID = .@itemID;
+            .@rewardAmount = .@after - .@before;
+        }
+    }
+
+    debugmes "[GR-ALBUM] RESULT gains=" + .@distinctGains + " amount=" + .@rewardAmount + " card=" + .@rewardID;
+    freeloop(0);
+    @GR_AlbumOldCount = 0;
+
+    // Current OCA and MCA each award exactly one card.
+    // A failed grant or unexpected change produces no announcement.
+    if (.@distinctGains != 1 || .@rewardAmount != 1)
+        return;
+
+    if (.@album == 616)
+        announce "[OCA] " + strcharinfo(0) + " opened an Old Card Album and received " + getitemname(.@rewardID) + "!", bc_all, 0x00FF00;
+    else
+        announce "[MCA] " + strcharinfo(0) + " opened a Mystical Card Album and received " + getitemname(.@rewardID) + "!", bc_all, 0x00FF00;
+    // Discord World Feed: successful album openings only.
+    if (.@album == 616)
+        logmes "[GR_WORLD_FEED_OCA] [OCA] " + strcharinfo(0) + " opened an Old Card Album and received " + getitemname(.@rewardID) + "!";
+    else
+        logmes "[GR_WORLD_FEED_MCA] [MCA] " + strcharinfo(0) + " opened a Mystical Card Album and received " + getitemname(.@rewardID) + "!";
+
+    return;
+}

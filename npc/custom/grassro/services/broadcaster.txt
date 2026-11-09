@@ -82,6 +82,8 @@ prontera,131,217,5	script	Broadcaster	113,{
 
 	// Send global announcement
 	announce "[Broadcast] " + strcharinfo(0) + ": " + .@message$, bc_all, 0x00FF00;
+	// Explicit Discord event source: paid broadcasts only.
+	logmes "[GR_WORLD_FEED_PLAYER_BROADCAST] " + strcharinfo(0) + ": " + .@message$;
 
 	mes "[Broadcaster]";
 	mes "Your announcement has been broadcast!";

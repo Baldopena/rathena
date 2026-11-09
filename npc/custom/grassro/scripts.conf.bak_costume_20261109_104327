@@ -1,0 +1,45 @@
+//============================================================
+// Grass Ro - Custom NPC Registry
+//============================================================
+
+//SYSTEMS
+npc: npc/custom/grassro/systems/coindrop_grassro.txt
+npc: npc/custom/grassro/systems/announcements/mvp_kill_announce.txt
+npc: npc/custom/grassro/systems/announcements/item_creation_announce.txt
+
+// SERVICES
+npc: npc/custom/grassro/services/poring_coin_shop.txt
+npc: npc/custom/grassro/services/kafra_services.txt
+npc: npc/custom/grassro/services/player_settings.txt
+npc: npc/custom/grassro/services/broadcaster.txt
+npc: npc/custom/grassro/services/grass_ro_unified_warper.txt
+npc: npc/custom/grassro/services/jobmaster.txt
+npc: npc/custom/grassro/services/platinum_skills.txt
+npc: npc/custom/grassro/services/healer.txt
+npc: npc/custom/grassro/services/breeder.txt
+npc: npc/custom/grassro/services/resetnpc.txt
+npc: npc/custom/grassro/services/grassro_welcome_guide.txt
+
+// QUESTS
+npc: npc/custom/grassro/quests/kahohorn.txt
+//npc: npc/custom/grassro/quests/hunting_missions.txt
+npc: npc/custom/grassro/quests/berzebub.txt
+npc: npc/custom/grassro/quests/halter_lead.txt
+
+//QUESTS > HEADGEARS
+npc: npc/custom/grassro/quests/magic_eyes.txt
+npc: npc/custom/grassro/quests/gangster_scarf.txt
+// EVENTS
+npc: npc/custom/grassro/events/blackjack.txt
+npc: npc/custom/grassro/events/disguise.txt
+npc: npc/custom/grassro/events/woe_controller.txt
+npc: npc/custom/grassro/events/grassro_floating_rates.txt
+
+// Grass Ro - Sir Reseton / Castle Administration
+npc: npc/custom/grassro/admin/kriemhild_reset_once.txt
+
+// Grass Ro - Player Activity Tracker (Phase 1)
+npc: npc/custom/grassro/admin/player_activity.txt
+
+npc: npc/custom/grassro/services/wakim_public.txt
+npc: npc/custom/grassro/systems/announcements/card_album_announce.txt

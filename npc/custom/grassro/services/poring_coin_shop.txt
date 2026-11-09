@@ -1,0 +1,123 @@
+
+ //===== rAthena Script =============================================
+ //= GrassRO - Poring Coin Shop
+ //===== Description: ===============================================
+ //= Exchange Poring Coins (7539) for utility items and consumables.
+ //= Unlimited Fly Wing (12887) is rented for 30 days.
+ //==================================================================
+
+prontera,183,213,3	script	Poring Coin Shop	412,{
+
+	mes "[Poring Coin Shop]";
+	mes "Welcome! Exchange your Poring Coins for useful supplies.";
+	mes "You currently have ^00AA00" + countitem(.coinItem) + "^000000 Poring Coin(s).";
+	next;
+
+	.@choice = select(
+		"Unlimited Fly Wing (30-Day Rental) - " + .flyPrice + " Coins:" +
+		"Battle Manual Box (10 Manuals) - " + .manualPrice + " Coins:" +
+		"Bubble Gum Box (10 Gums) - " + .gumPrice + " Coins:" +
+		"HE Bubble Gum (2 pcs) - " + .heGumPrice + " Coins:" +
+		"Cancel"
+	);
+
+	.@amount = 1;
+	.@rental = 0;
+
+	switch (.@choice) {
+	case 1:
+		.@item = .flyItem;
+		.@price = .flyPrice;
+		.@rental = 1;
+		break;
+
+	case 2:
+		.@item = .manualBox;
+		.@price = .manualPrice;
+		break;
+
+	case 3:
+		.@item = .gumBox;
+		.@price = .gumPrice;
+		break;
+
+	case 4:
+		.@item = .heGum;
+		.@price = .heGumPrice;
+		.@amount = 2;
+		break;
+
+	default:
+		close;
+	}
+
+	mes "[Poring Coin Shop]";
+
+	if (.@rental) {
+		mes "Rent ^0055FF" + getitemname(.@item) + "^000000 for ^FF8800" + .@price + " Poring Coins^000000?";
+		mes "Duration: ^00AA0030 days^000000 from purchase.";
+		mes "The rental item will expire automatically.";
+	} else {
+		mes "Purchase ^0055FF" + getitemname(.@item) + "^000000 x" + .@amount + " for ^FF8800" + .@price + " Poring Coins^000000?";
+	}
+	next;
+
+	if (select(.@rental ? "Confirm Rental:Cancel" : "Confirm Purchase:Cancel") == 2)
+		close;
+
+	if (countitem(.coinItem) < .@price) {
+		mes "[Poring Coin Shop]";
+		mes "You don't have enough Poring Coins.";
+		mes "Required: " + .@price + " | Owned: " + countitem(.coinItem);
+		close;
+	}
+
+	if (!checkweight(.@item, .@amount)) {
+		mes "[Poring Coin Shop]";
+		mes "Your inventory is too full or you can't carry this item.";
+		mes "Please make room and try again.";
+		close;
+	}
+
+	delitem .coinItem, .@price;
+
+	if (.@rental) {
+		rentitem .@item, .flyRentalSeconds;
+
+		dispbottom "Poring Coin Shop: Rented " + getitemname(.@item) + " for 30 days (" + .@price + " Poring Coins).";
+
+		mes "[Poring Coin Shop]";
+		mes "Rental successful!";
+		mes "Received: ^0055FF" + getitemname(.@item) + " (30-day rental)^000000.";
+	} else {
+		getitem .@item, .@amount;
+
+		dispbottom "Poring Coin Shop: Purchased " + getitemname(.@item) + " x" + .@amount + " for " + .@price + " Poring Coins.";
+
+		mes "[Poring Coin Shop]";
+		mes "Purchase successful!";
+		mes "Received: ^0055FF" + getitemname(.@item) + " x" + .@amount + "^000000.";
+	}
+
+	mes "Remaining Poring Coins: " + countitem(.coinItem);
+	close;
+
+OnInit:
+	// Item IDs
+	.coinItem = 7539;      // Poring Coin
+	.flyItem = 12887;      // Unlimited Fly Wing
+	.manualBox = 12900;    // Battle Manual Box
+	.gumBox = 12902;       // Bubble Gum Box
+	.heGum = 12412;        // HE Bubble Gum
+
+	// Prices
+	.flyPrice = 10;
+	.manualPrice = 50;
+	.gumPrice = 100;
+	.heGumPrice = 200;
+
+	// Rental duration (30 days in seconds)
+	.flyRentalSeconds = 30 * 24 * 60 * 60;
+
+	end;
+}

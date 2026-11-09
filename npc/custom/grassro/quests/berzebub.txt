@@ -1,259 +1,287 @@
-//===== Grass RO Custom Quest ==================================
-//= Torn Berzebub Card collection and restoration, v3.1 (unbound, quantity-safe).
-//= NPC: Old Woman; source adapted from original Old Woman quest.
-//= 39999 Torn Berzebub Card: -10% casting time.
-//= 40000 Partially Restored Berzebub Card: -20% casting time.
-//= Original MVP card 4145 is NOT a quest reward.
+//===== GrassRO Old Woman =======================================
+//= Unified repeatable Berzebub Card creation/restoration, v4.0
+//= 39999 Torn Berzebub Card (10%)
+//= 40000 Partially Restored Berzebub Card (20%)
+//= 4145 Original Beelzebub Card (30%)
 //=
-//= SAFETY: The account-level #GR_BerzTxn recovery marker remains set if
-//= an exchange is interrupted. GM must reconcile inventory, zeny and
-//= transaction logs before clearing it. This is NOT an atomic transaction.
-//= Never load alongside the legacy 4145-rewarding Old Woman NPC.
-//===============================================================
+//= All recipes repeatable. No character/account completion flags.
+//= No bind commands. Item trade permissions are controlled by item DB.
+//= Previous-stage cards must be loose in inventory and are consumed.
+//= #GR_BerzTxn is a persistent fail-closed recovery marker:
+//=   1 = Torn creation, 2 = 20% upgrade, 3 = 30% upgrade.
+//= Interrupted exchanges are NOT atomic. GM must reconcile manually.
+//= Requires F_GrassRO_ItemCreationAnnounce in scripts.conf.
+//==============================================================
 prontera,165,178,8	script	Old Woman#GR_Berz	103,{
 	mes "[Old Woman]";
-
-	// Fail closed after an interrupted exchange. Never auto-clear this marker.
 	if (#GR_BerzTxn) {
-		mes "I cannot perform another restoration for this account yet.";
-		mes "An earlier exchange needs manual review.";
-		mes "Please contact a GM and mention Berzebub transaction stage " + #GR_BerzTxn + ".";
+		mes "A previous card exchange on this account needs manual review.";
+		mes "Please contact a GM and report transaction stage " + #GR_BerzTxn + ".";
 		close;
 	}
 
-	if (#GR_TornBerzUpgrade) {
-		mes "Your account has completed both stages of my card restoration quest.";
-	} else if (#GR_TornBerzQuest) {
-		mes "Your account has already earned the Torn Berzebub Card.";
-		mes "If you still have the uninserted card, I may be able to restore more of its power.";
-	} else {
-		mes "I found a mysterious damaged card near Glast Heim.";
-		mes "Perhaps we can bring back some of its lost power.";
-	}
+	mes "I can create or restore Berzebub Cards, provided you bring the required materials.";
+	mes "Each restoration consumes the previous card. All three services are repeatable.";
 	next;
 
-	switch (select("Create Torn Berzebub Card (10%):Upgrade Torn Card (20%):Learn about the cards:Leave")) {
-		case 1:
-			if (#GR_TornBerzQuest) goto L_AlreadyCollected;
-			goto L_Collect;
-		case 2:
-			if (!#GR_TornBerzQuest) goto L_UpgradeLocked;
-			if (#GR_TornBerzUpgrade) goto L_AlreadyUpgraded;
-			goto L_Upgrade;
-		case 3:
-			goto L_Info;
-		default:
-			close;
+	switch (select("Create Torn Card (10%):Restore to 20%:Restore to original 30%:Learn about the cards:Leave")) {
+	case 1: goto L_Torn;
+	case 2: goto L_Restored;
+	case 3: goto L_Original;
+	case 4: goto L_Info;
+	default: close;
 	}
-
-L_AlreadyCollected:
-	mes "[Old Woman]";
-	mes "Your account has already claimed the Torn Berzebub Card.";
-	mes "The collection reward may only be claimed once per account.";
-	close;
-
-L_UpgradeLocked:
-	mes "[Old Woman]";
-	mes "You must first complete the 10% collection quest on this account.";
-	close;
-
-L_AlreadyUpgraded:
-	mes "[Old Woman]";
-	mes "Your account has already completed the 20% restoration.";
-	mes "I cannot upgrade another Torn Card for this account.";
-	close;
 
 L_Info:
 	mes "[Old Woman]";
-	mes "^008800Torn Berzebub Card^000000 reduces casting time by 10%.";
-	mes "^008800Partially Restored Berzebub Card^000000 reduces casting time by 20%.";
-	mes "Neither is account-bound. Trading, dropping and selling remain restricted; personal Kafra storage is allowed.";
-	next;
-	mes "[Old Woman]";
-	mes "A card must be loose in your inventory to be upgraded.";
-	mes "Once you put the Torn Card into an accessory, I cannot extract it for restoration.";
-	mes "The original 30% Berzebub Card is available only from the Beelzebub MVP, not from me.";
+	mes "Torn Berzebub Card: 10% cast-time reduction.";
+	mes "Partially Restored Berzebub Card: 20% cast-time reduction.";
+	mes "Original Beelzebub Card: 30% cast-time reduction.";
+	mes "The 20% upgrade consumes one loose Torn Card.";
+	mes "The 30% upgrade consumes one loose Partially Restored Card.";
+	mes "You can repeat any stage, even using cards acquired through trade.";
+	mes "Once a card is inserted into equipment, I cannot extract it.";
+	mes "Whether a card can be traded, sold or stored is governed by its item definition.";
 	close;
 
-L_Collect:
+L_Torn:
 	mes "[Old Woman]";
-	mes "Bring me some materials and I can make you a Torn Berzebub Card.";
-	mes "It can only be claimed ^FF0000once per account^000000.";
+	mes "Create ^008800" + getitemname(.TornId) + "^000000 (10%).";
+	mes "Required materials:";
+	for (.@i = 0; .@i < getarraysize(.TornIds); .@i++)
+		mes " - " + .TornQty[.@i] + "x " + getitemname(.TornIds[.@i]);
+	mes " - " + .TornZeny + " Zeny";
 	next;
-	mes "[Old Woman]";
-	mes "Required collection materials:";
-	for (.@i = 0; .@i < getarraysize(.CollectIds); .@i++)
-		mes " - " + .CollectQty[.@i] + "x " + getitemname(.CollectIds[.@i]);
-	mes " - " + .CollectZeny + " Zeny";
-	next;
-	if (select("Exchange materials now:Not yet") != 1)
-		close;
+	if (select("Create this card:Cancel") != 1) close;
 
-	// NO dialogue pauses between final checks and irreversible operations.
-	if (#GR_BerzTxn || #GR_TornBerzQuest) {
-		mes "[Old Woman]";
-		mes "This account cannot claim another collection reward.";
-		close;
-	}
-	if (Zeny < .CollectZeny) {
+	// Recheck immediately before committing; no more dialogue pauses.
+	if (#GR_BerzTxn) close;
+	if (Zeny < .TornZeny) {
 		mes "[Old Woman]";
 		mes "You do not have enough Zeny.";
 		close;
 	}
-	for (.@i = 0; .@i < getarraysize(.CollectIds); .@i++) {
-		if (countitem(.CollectIds[.@i]) < .CollectQty[.@i]) {
+	for (.@i = 0; .@i < getarraysize(.TornIds); .@i++) {
+		if (countitem(.TornIds[.@i]) < .TornQty[.@i]) {
 			mes "[Old Woman]";
-			mes "You are missing some of the collection materials.";
+			mes "You are missing some of the required materials.";
 			close;
 		}
 	}
-	if (!checkweight(.TornId,1)) {
+	if (!checkweight(.TornId, 1)) {
 		mes "[Old Woman]";
 		mes "Please free an inventory slot and enough carrying capacity.";
 		close;
 	}
 
-	// Measure existing copies regardless of binding so the grant can be verified.
 	.@before = 0;
 	getinventorylist;
-	for (.@i = 0; .@i < @inventorylist_count; .@i++) {
+	for (.@i = 0; .@i < @inventorylist_count; .@i++)
 		if (@inventorylist_id[.@i] == .TornId)
 			.@before += @inventorylist_amount[.@i];
-	}
 
-	// The recovery marker and logs distinguish attempted from completed exchanges.
 	#GR_BerzTxn = 1;
-	logmes "[GR_BERZ_V2] collection_begin account=" + getcharid(3) + " char=" + getcharid(0);
-	Zeny -= .CollectZeny;
-	for (.@i = 0; .@i < getarraysize(.CollectIds); .@i++)
-		delitem .CollectIds[.@i],.CollectQty[.@i];
-	getitem .TornId,1;
+	logmes "[GR_BERZ_V4] torn_begin account=" + getcharid(3) + " char=" + getcharid(0);
+	Zeny -= .TornZeny;
+	for (.@i = 0; .@i < getarraysize(.TornIds); .@i++)
+		delitem .TornIds[.@i], .TornQty[.@i];
+	getitem .TornId, 1;
 
 	.@after = 0;
 	getinventorylist;
-	for (.@i = 0; .@i < @inventorylist_count; .@i++) {
+	for (.@i = 0; .@i < @inventorylist_count; .@i++)
 		if (@inventorylist_id[.@i] == .TornId)
 			.@after += @inventorylist_amount[.@i];
-	}
 	if (.@after != .@before + 1) {
-		logmes "[GR_BERZ_V2] collection_REVIEW_REQUIRED account=" + getcharid(3) + " char=" + getcharid(0) + " before=" + .@before + " after=" + .@after;
+		logmes "[GR_BERZ_V4] torn_REVIEW_REQUIRED account=" + getcharid(3) + " char=" + getcharid(0) + " before=" + .@before + " after=" + .@after;
 		mes "[Old Woman]";
-		mes "The exchange needs GM review; please do not retry.";
-		mes "A recovery marker has been placed on your account.";
+		mes "The exchange needs GM review. Please do not retry.";
 		close;
 	}
 
-	#GR_TornBerzQuest = 1;
-	logmes "[GR_BERZ_V2] collection_complete account=" + getcharid(3) + " char=" + getcharid(0) + " reward=" + .TornId;
+	logmes "[GR_BERZ_V4] torn_complete account=" + getcharid(3) + " char=" + getcharid(0);
 	#GR_BerzTxn = 0;
+	callfunc "F_GrassRO_ItemCreationAnnounce", .TornId, "Old Woman";
 	mes "[Old Woman]";
 	mes "Your Torn Berzebub Card is ready!";
-	mes "You can return to me when you wish to restore it further.";
 	emotion ET_CONGRATULATION;
 	close;
 
-L_Upgrade:
+L_Restored:
 	mes "[Old Woman]";
-	mes "I can restore more of your Torn Card's power.";
-	mes "Your ^FF0000uncompounded 10% card^000000 will be consumed.";
-	mes "The result is a ^00880020% Partially Restored Berzebub Card^000000.";
-	next;
-	mes "[Old Woman]";
-	mes "Required upgrade materials:";
+	mes "Restore a loose ^008800" + getitemname(.TornId) + "^000000 into ^008800" + getitemname(.RestoredId) + "^000000 (20%).";
+	mes "The Torn Card will be consumed.";
+	mes "Required materials:";
 	mes " - 1x " + getitemname(.TornId);
-	for (.@i = 0; .@i < getarraysize(.UpgradeIds); .@i++)
-		mes " - " + .UpgradeQty[.@i] + "x " + getitemname(.UpgradeIds[.@i]);
-	mes " - " + .UpgradeZeny + " Zeny";
+	for (.@i = 0; .@i < getarraysize(.RestoredIds); .@i++)
+		mes " - " + .RestoredQty[.@i] + "x " + getitemname(.RestoredIds[.@i]);
+	mes " - " + .RestoredZeny + " Zeny";
 	next;
-	if (select("Restore the card now:Not yet") != 1)
-		close;
+	if (select("Restore this card:Cancel") != 1) close;
 
-	// A compounded card cannot be selected from the loose inventory.
-	if (#GR_BerzTxn || !#GR_TornBerzQuest || #GR_TornBerzUpgrade) {
-		mes "[Old Woman]";
-		mes "This account cannot perform the upgrade.";
-		close;
-	}
-	if (Zeny < .UpgradeZeny) {
+	if (#GR_BerzTxn) close;
+	if (Zeny < .RestoredZeny) {
 		mes "[Old Woman]";
 		mes "You do not have enough Zeny.";
 		close;
 	}
-	for (.@i = 0; .@i < getarraysize(.UpgradeIds); .@i++) {
-		if (countitem(.UpgradeIds[.@i]) < .UpgradeQty[.@i]) {
+	for (.@i = 0; .@i < getarraysize(.RestoredIds); .@i++) {
+		if (countitem(.RestoredIds[.@i]) < .RestoredQty[.@i]) {
 			mes "[Old Woman]";
-			mes "You do not have all of the upgrade materials.";
+			mes "You are missing some of the required materials.";
 			close;
 		}
 	}
-	if (!checkweight(.RestoredId,1)) {
+	if (!checkweight(.RestoredId, 1)) {
 		mes "[Old Woman]";
 		mes "Please free an inventory slot and enough carrying capacity.";
 		close;
 	}
 
-	.@cardIndex = -1;
+	.@sourceIndex = -1;
 	.@before = 0;
 	getinventorylist;
 	for (.@i = 0; .@i < @inventorylist_count; .@i++) {
-		if (@inventorylist_id[.@i] == .TornId && @inventorylist_equip[.@i] == 0 && .@cardIndex < 0)
-			.@cardIndex = @inventorylist_idx[.@i];
+		if (@inventorylist_id[.@i] == .TornId && @inventorylist_equip[.@i] == 0 && .@sourceIndex < 0)
+			.@sourceIndex = @inventorylist_idx[.@i];
 		if (@inventorylist_id[.@i] == .RestoredId)
 			.@before += @inventorylist_amount[.@i];
 	}
-	if (.@cardIndex < 0) {
+	if (.@sourceIndex < 0) {
 		mes "[Old Woman]";
-		mes "You need a loose, uncompounded Torn Card in your inventory.";
-		mes "Retrieve it from Kafra storage if necessary.";
+		mes "You need one loose, uncompounded Torn Card in your inventory.";
 		close;
 	}
 
-	// The inventory index is used immediately; no dialogue pauses here.
 	#GR_BerzTxn = 2;
-	logmes "[GR_BERZ_V2] upgrade_begin account=" + getcharid(3) + " char=" + getcharid(0) + " torn_idx=" + .@cardIndex;
-	if (!delitemidx(.@cardIndex,1)) {
-		// Deletion was explicitly rejected: no Zeny/materials were taken.
-		logmes "[GR_BERZ_V2] upgrade_delete_rejected account=" + getcharid(3) + " char=" + getcharid(0);
+	logmes "[GR_BERZ_V4] restored_begin account=" + getcharid(3) + " char=" + getcharid(0) + " index=" + .@sourceIndex;
+	if (!delitemidx(.@sourceIndex, 1)) {
+		logmes "[GR_BERZ_V4] restored_delete_rejected account=" + getcharid(3) + " char=" + getcharid(0);
 		#GR_BerzTxn = 0;
 		mes "[Old Woman]";
 		mes "The Torn Card could not be consumed. Nothing else was taken.";
 		close;
 	}
-	Zeny -= .UpgradeZeny;
-	for (.@i = 0; .@i < getarraysize(.UpgradeIds); .@i++)
-		delitem .UpgradeIds[.@i],.UpgradeQty[.@i];
-	getitem .RestoredId,1;
+	Zeny -= .RestoredZeny;
+	for (.@i = 0; .@i < getarraysize(.RestoredIds); .@i++)
+		delitem .RestoredIds[.@i], .RestoredQty[.@i];
+	getitem .RestoredId, 1;
 
 	.@after = 0;
 	getinventorylist;
-	for (.@i = 0; .@i < @inventorylist_count; .@i++) {
+	for (.@i = 0; .@i < @inventorylist_count; .@i++)
 		if (@inventorylist_id[.@i] == .RestoredId)
 			.@after += @inventorylist_amount[.@i];
-	}
 	if (.@after != .@before + 1) {
-		logmes "[GR_BERZ_V2] upgrade_REVIEW_REQUIRED account=" + getcharid(3) + " char=" + getcharid(0) + " before=" + .@before + " after=" + .@after;
+		logmes "[GR_BERZ_V4] restored_REVIEW_REQUIRED account=" + getcharid(3) + " char=" + getcharid(0) + " before=" + .@before + " after=" + .@after;
 		mes "[Old Woman]";
-		mes "The exchange needs GM review; please do not retry.";
-		mes "A recovery marker has been placed on your account.";
+		mes "The exchange needs GM review. Please do not retry.";
 		close;
 	}
 
-	#GR_TornBerzUpgrade = 1;
-	logmes "[GR_BERZ_V2] upgrade_complete account=" + getcharid(3) + " char=" + getcharid(0) + " used=" + .TornId + " reward=" + .RestoredId;
+	logmes "[GR_BERZ_V4] restored_complete account=" + getcharid(3) + " char=" + getcharid(0);
 	#GR_BerzTxn = 0;
+	callfunc "F_GrassRO_ItemCreationAnnounce", .RestoredId, "Old Woman";
 	mes "[Old Woman]";
 	mes "Your Partially Restored Berzebub Card is ready!";
+	emotion ET_CONGRATULATION;
+	close;
+
+L_Original:
+	mes "[Old Woman]";
+	mes "Restore a loose ^008800" + getitemname(.RestoredId) + "^000000 into ^FF0000" + getitemname(.OriginalId) + "^000000 (30%).";
+	mes "The Partially Restored Card will be consumed.";
+	mes "Required materials:";
+	mes " - 1x " + getitemname(.RestoredId);
+	for (.@i = 0; .@i < getarraysize(.OriginalIds); .@i++)
+		mes " - " + .OriginalQty[.@i] + "x " + getitemname(.OriginalIds[.@i]);
+	mes " - " + .OriginalZeny + " Zeny";
+	next;
+	if (select("Restore the original card:Cancel") != 1) close;
+
+	if (#GR_BerzTxn) close;
+	if (Zeny < .OriginalZeny) {
+		mes "[Old Woman]";
+		mes "You do not have enough Zeny.";
+		close;
+	}
+	for (.@i = 0; .@i < getarraysize(.OriginalIds); .@i++) {
+		if (countitem(.OriginalIds[.@i]) < .OriginalQty[.@i]) {
+			mes "[Old Woman]";
+			mes "You are missing some of the required materials.";
+			close;
+		}
+	}
+	if (!checkweight(.OriginalId, 1)) {
+		mes "[Old Woman]";
+		mes "Please free an inventory slot and enough carrying capacity.";
+		close;
+	}
+
+	.@sourceIndex = -1;
+	.@before = 0;
+	getinventorylist;
+	for (.@i = 0; .@i < @inventorylist_count; .@i++) {
+		if (@inventorylist_id[.@i] == .RestoredId && @inventorylist_equip[.@i] == 0 && .@sourceIndex < 0)
+			.@sourceIndex = @inventorylist_idx[.@i];
+		if (@inventorylist_id[.@i] == .OriginalId)
+			.@before += @inventorylist_amount[.@i];
+	}
+	if (.@sourceIndex < 0) {
+		mes "[Old Woman]";
+		mes "You need one loose, uncompounded Partially Restored Card in your inventory.";
+		close;
+	}
+
+	#GR_BerzTxn = 3;
+	logmes "[GR_BERZ_V4] original_begin account=" + getcharid(3) + " char=" + getcharid(0) + " index=" + .@sourceIndex;
+	if (!delitemidx(.@sourceIndex, 1)) {
+		logmes "[GR_BERZ_V4] original_delete_rejected account=" + getcharid(3) + " char=" + getcharid(0);
+		#GR_BerzTxn = 0;
+		mes "[Old Woman]";
+		mes "The Partially Restored Card could not be consumed. Nothing else was taken.";
+		close;
+	}
+	Zeny -= .OriginalZeny;
+	for (.@i = 0; .@i < getarraysize(.OriginalIds); .@i++)
+		delitem .OriginalIds[.@i], .OriginalQty[.@i];
+	getitem .OriginalId, 1;
+
+	.@after = 0;
+	getinventorylist;
+	for (.@i = 0; .@i < @inventorylist_count; .@i++)
+		if (@inventorylist_id[.@i] == .OriginalId)
+			.@after += @inventorylist_amount[.@i];
+	if (.@after != .@before + 1) {
+		logmes "[GR_BERZ_V4] original_REVIEW_REQUIRED account=" + getcharid(3) + " char=" + getcharid(0) + " before=" + .@before + " after=" + .@after;
+		mes "[Old Woman]";
+		mes "The exchange needs GM review. Please do not retry.";
+		close;
+	}
+
+	logmes "[GR_BERZ_V4] original_complete account=" + getcharid(3) + " char=" + getcharid(0);
+	#GR_BerzTxn = 0;
+	callfunc "F_GrassRO_ItemCreationAnnounce", .OriginalId, "Old Woman";
+	mes "[Old Woman]";
+	mes "Your original Beelzebub Card is ready!";
 	emotion ET_CONGRATULATION;
 	close;
 
 OnInit:
 	.TornId = 39999;
 	.RestoredId = 40000;
-	.CollectZeny = 1000000;
-	.UpgradeZeny = 5000000;
-	setarray .CollectIds[0],714,1061,1095,618,1551,727;
-	setarray .CollectQty[0],5,150,200,5,1,10;
-	setarray .UpgradeIds[0],714,1061,1095,618,1551,1614,727;
-	setarray .UpgradeQty[0],20,400,500,15,1,1,30;
+	.OriginalId = 4145;
+	.TornZeny = 1000000;
+	.RestoredZeny = 3000000;
+	.OriginalZeny = 7000000;
+
+	setarray .TornIds[0], 714,1061,1095,618,1551,727;
+	setarray .TornQty[0], 5,100,150,5,1,10;
+
+	setarray .RestoredIds[0], 714,1061,1095,618,1551,1614,727;
+	setarray .RestoredQty[0], 15,250,350,10,1,1,20;
+
+	setarray .OriginalIds[0], 714,1061,1095,618,1551,1614,727;
+	setarray .OriginalQty[0], 40,650,850,25,2,2,60;
 	end;
 }

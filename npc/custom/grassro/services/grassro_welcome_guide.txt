@@ -1,0 +1,332 @@
+// GrassRO Welcome Guide - pre-renewal rAthena
+// Location: new_1-1 62,116; facing 3; sprite 403
+// SQL tables: grassro_welcome_claims, grassro_welcome_events
+// Safety: public claims OFF until .PublicEnabled is set to 1 in OnInit.
+// IMPORTANT: A reservation left in ISSUING must be GM-reviewed, NEVER auto-reissued.
+// IMPORTANT: Infinite Flywing (12887) is a rental and relies on global item Trade restrictions.
+
+new_1-1,62,116,3	script	GrassRO Welcome Guide	403,{
+	mes "[GrassRO Welcome Guide]";
+	if (getgroupid() == 99) {
+		.@gmchoice = select("Welcome package:GM reports:Leave");
+		if (.@gmchoice == 2) goto GM_Menu;
+		if (.@gmchoice == 3) close;
+	}
+
+	.@account_id = getcharid(3);
+	.@char_id = getcharid(0);
+	if (.@account_id <= 0 || .@char_id <= 0) {
+		mes "Unable to verify your account. Please contact a GM.";
+		close;
+	}
+
+	// Database check is the authoritative eligibility check, not an NPC variable.
+	.@rows = query_sql("SELECT `status`,`char_name` FROM `grassro_welcome_claims` WHERE `account_id`="+.@account_id+" LIMIT 1", .@old_status$, .@old_name$);
+	if (.@rows < 0) {
+		mes "Our welcome system is temporarily unavailable.";
+		close;
+	}
+	if (.@rows > 0) {
+		if (.@old_status$[0] == "COMPLETE") {
+			mes "Your account already received its welcome package.";
+			mes "Claimed by: "+.@old_name$[0];
+		} else {
+			mes "A welcome claim already exists for this account.";
+			mes "Its status is: "+.@old_status$[0];
+			mes "Please ask a GM to review it; no items will be issued twice.";
+		}
+		close;
+	}
+	if (!.PublicEnabled && getgroupid() != 99 && (.TestAccountID <= 0 || .@account_id != .TestAccountID)) {
+		mes "Welcome gifts are being tested and are not yet available.";
+		close;
+	}
+
+	mes "Welcome to GrassRO! We have a one-time starter package for you:";
+	mes "1 Reins of Mount (permanent)";
+	mes "1 Infinite Flywing (30-day rental)";
+	mes "5 Battle Manuals";
+	mes "5 Bubble Gums";
+	mes "All rewards are for THIS CHARACTER ONLY.";
+	mes "They cannot be traded, partner-traded, dropped, stored, mailed or sold.";
+	mes "Only ONE character per ACCOUNT can ever claim these.";
+	next;
+	if (select("Continue:Maybe later") != 1) close;
+
+	mes "[GrassRO Welcome Guide]";
+	mes "Where did you first hear about GrassRO?";
+	mes "Please choose one option.";
+	next;
+	.@source_choice = select("Facebook:Discord:YouTube:TikTok:Ragnarok server listing:Google or web search:Friend or player referral:Other:Prefer not to say");
+	switch (.@source_choice) {
+		case 1: .@source$ = "Facebook"; break;
+		case 2: .@source$ = "Discord"; break;
+		case 3: .@source$ = "YouTube"; break;
+		case 4: .@source$ = "TikTok"; break;
+		case 5: .@source$ = "Ragnarok server listing"; break;
+		case 6: .@source$ = "Google or web search"; break;
+		case 7: .@source$ = "Friend or player referral"; break;
+		case 8: .@source$ = "Other"; break;
+		case 9: .@source$ = "Prefer not to say"; break;
+		default: close;
+	}
+	.@other$ = "";
+	if (.@source_choice == 8) {
+		mes "[GrassRO Welcome Guide]";
+		mes "Would you like to specify the other source?";
+		next;
+		if (select("Enter a source:Skip") == 1) {
+			mes "[GrassRO Welcome Guide]";
+			mes "Please enter the source (up to 80 characters).";
+			next;
+			if (input(.@other$,1,80) != 0) {
+				mes "[GrassRO Welcome Guide]";
+				mes "Please start again and use a shorter answer.";
+				close;
+			}
+		}
+	}
+
+	mes "[GrassRO Welcome Guide]";
+	mes "Were you referred by another player?";
+	mes "This question is optional.";
+	next;
+	.@referred = 0;
+	.@referrer$ = "";
+	switch (select("Yes:No:Skip")) {
+		case 1:
+			.@referred = 1;
+			mes "[GrassRO Welcome Guide]";
+			mes "You can provide a referrer's character name or nickname.";
+			next;
+			if (select("Enter referrer's name:Leave blank") == 1) {
+				mes "[GrassRO Welcome Guide]";
+				mes "Enter the name (up to 64 characters).";
+				next;
+				if (input(.@referrer$,1,64) != 0) {
+					mes "[GrassRO Welcome Guide]";
+					mes "Please start again and use a shorter name.";
+					close;
+				}
+			}
+			break;
+		case 2:
+		case 3:
+			break;
+	}
+
+	mes "[GrassRO Welcome Guide]";
+	mes "Review your answers:";
+	mes "Discovered through: "+.@source$;
+	if (.@other$ != "") mes "Other details: "+.@other$;
+	if (.@referred) {
+		if (.@referrer$ != "") mes "Referred by: "+.@referrer$;
+		else mes "Referred by: Name not supplied";
+	} else mes "Referral: None specified";
+	mes "^FF6600IMPORTANT:^000000 Your ONE claim belongs to THIS character.";
+	mes "Deleting this character will NOT restore your account's eligibility.";
+	mes "The Flywing expires 30 real-world days after claiming.";
+	next;
+	if (select("Confirm and claim:Cancel") != 1) close;
+
+	// Preflight (also checks available inventory slots on standard rAthena).
+	if (!checkweight(12622,1,12887,1,12208,5,12210,5)) {
+		mes "[GrassRO Welcome Guide]";
+		mes "Please free some inventory space or reduce your carried weight.";
+		mes "No claim was recorded and you can return later.";
+		close;
+	}
+	if (rentalcountitem(12887) > 0) {
+		mes "[GrassRO Welcome Guide]";
+		mes "You already have an Infinite Flywing rental.";
+		mes "Please ask a GM to review this before claiming.";
+		close;
+	}
+
+	// Escape all user-supplied strings before building SQL.
+	.@safe_name$ = escape_sql(strcharinfo(0));
+	.@safe_source$ = escape_sql(.@source$);
+	.@safe_other$ = escape_sql(.@other$);
+	.@safe_referrer$ = escape_sql(.@referrer$);
+
+	// INSERT IGNORE + unique account_id establishes the one-account reservation.
+	// ROW_COUNT() must be read immediately on the same SQL connection.
+	.@sql_result = query_sql("INSERT IGNORE INTO `grassro_welcome_claims` (`account_id`,`char_id`,`char_name`,`discovery_source`,`source_other`,`was_referred`,`referrer_name`,`status`) VALUES ("+.@account_id+","+.@char_id+",'"+.@safe_name$+"','"+.@safe_source$+"','"+.@safe_other$+"',"+.@referred+",'"+.@safe_referrer$+"','ISSUING')");
+	if (.@sql_result < 0) {
+		mes "[GrassRO Welcome Guide]";
+		mes "Database error. No rewards were issued. Please contact a GM.";
+		close;
+	}
+	.@rc_rows = query_sql("SELECT ROW_COUNT()", .@inserted);
+	if (.@rc_rows != 1 || .@inserted[0] != 1) {
+		mes "[GrassRO Welcome Guide]";
+		mes "This account already has a claim or the reservation failed.";
+		mes "No rewards have been issued in this attempt.";
+		close;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'CLAIM_RESERVED','Welcome package distribution started')");
+
+	// Once ISSUING is written, NEVER automatically restart a failed claim.
+	// If the server crashes after an award, a GM must reconcile inventory and SQL.
+	.@fail_reason$ = "";
+
+	// 1/4: Permanent character-bound Reins.
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `review_note`='Issuing Reins' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error before Reins"; goto Claim_Failed;
+	}
+	.@before = countitem(12622);
+	getitembound 12622,1,Bound_Char;
+	if (countitem(12622) != .@before + 1) {
+		.@fail_reason$ = "Reins count verification failed"; goto Claim_Failed;
+	}
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `issued_reins`=1 WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error after Reins"; goto Claim_Failed;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'REINS_ISSUED','1 character-bound Reins')");
+
+	// 2/4: Flywing rental is NOT formally Bound_Char; transfer prevention is item-level.
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `review_note`='Issuing Flywing' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error before Flywing"; goto Claim_Failed;
+	}
+	.@before = rentalcountitem(12887);
+	.@fly_start = gettimetick(2);
+	rentitem 12887,2592000;
+	if (rentalcountitem(12887) != .@before + 1) {
+		.@fail_reason$ = "Flywing rental verification failed"; goto Claim_Failed;
+	}
+	.@fly_expires = .@fly_start + 2592000;
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `issued_flywing`=1,`flywing_expires_at`=FROM_UNIXTIME("+.@fly_expires+") WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error after Flywing"; goto Claim_Failed;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'FLYWING_ISSUED','1 30-day Infinite Flywing rental')");
+
+	// 3/4: Five character-bound Battle Manuals.
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `review_note`='Issuing Battle Manuals' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error before Battle Manuals"; goto Claim_Failed;
+	}
+	.@before = countitem(12208);
+	getitembound 12208,5,Bound_Char;
+	if (countitem(12208) != .@before + 5) {
+		.@fail_reason$ = "Battle Manual count verification failed"; goto Claim_Failed;
+	}
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `issued_manuals`=1 WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error after Battle Manuals"; goto Claim_Failed;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'MANUALS_ISSUED','5 character-bound Battle Manuals')");
+
+	// 4/4: Five character-bound Bubble Gums.
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `review_note`='Issuing Bubble Gums' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error before Bubble Gums"; goto Claim_Failed;
+	}
+	.@before = countitem(12210);
+	getitembound 12210,5,Bound_Char;
+	if (countitem(12210) != .@before + 5) {
+		.@fail_reason$ = "Bubble Gum count verification failed"; goto Claim_Failed;
+	}
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `issued_bubble_gum`=1 WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'") < 0) {
+		.@fail_reason$ = "SQL error after Bubble Gum"; goto Claim_Failed;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'GUM_ISSUED','5 character-bound Bubble Gums')");
+
+	// Complete only when all distribution checks have passed.
+	if (query_sql("UPDATE `grassro_welcome_claims` SET `status`='COMPLETE',`completed_at`=NOW(),`review_note`='' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING' AND `issued_reins`=1 AND `issued_flywing`=1 AND `issued_manuals`=1 AND `issued_bubble_gum`=1") < 0) {
+		.@fail_reason$ = "SQL error completing claim"; goto Claim_Failed;
+	}
+	.@verify_rows = query_sql("SELECT `status` FROM `grassro_welcome_claims` WHERE `account_id`="+.@account_id+" LIMIT 1", .@final_status$);
+	if (.@verify_rows != 1 || .@final_status$[0] != "COMPLETE") {
+		.@fail_reason$ = "Completion verification failed"; goto Claim_Failed;
+	}
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'CLAIM_COMPLETE','All four rewards confirmed')");
+	mes "[GrassRO Welcome Guide]";
+	mes "Your GrassRO welcome package is ready!";
+	mes "The Infinite Flywing expires after 30 days.";
+	mes "Thank you for telling us how you discovered GrassRO.";
+	close;
+
+Claim_Failed:
+	// Best-effort change to NEEDS_REVIEW. If this SQL also fails, ISSUING remains
+	// on disk and still blocks duplicate attempts.
+	query_sql("UPDATE `grassro_welcome_claims` SET `status`='NEEDS_REVIEW',`review_note`='"+escape_sql(.@fail_reason$)+"' WHERE `account_id`="+.@account_id+" AND `status`='ISSUING'");
+	query_sql("INSERT INTO `grassro_welcome_events` (`account_id`,`char_id`,`event_type`,`detail`) VALUES ("+.@account_id+","+.@char_id+",'CLAIM_INTERRUPTED','"+escape_sql(.@fail_reason$)+"')");
+	debugmes "GrassRO Welcome needs review: account="+.@account_id+" char="+.@char_id+" reason="+.@fail_reason$;
+	mes "[GrassRO Welcome Guide]";
+	mes "Part of your claim could not be verified.";
+	mes "Your record is reserved for GM review.";
+	mes "Please do not discard any items you received.";
+	close;
+
+GM_Menu:
+	// Only access through getgroupid()==99 above; independently re-check here.
+	if (getgroupid() != 99) close;
+	mes "[GrassRO GM Reports]";
+	next;
+	switch (select("Recent claims:Discovery statistics:Player lookup:Referral records:Claims needing review:Exit")) {
+	case 1:
+		mes "[Latest welcome claims]";
+		.@n = query_sql("SELECT `account_id`,`char_name`,`discovery_source`,`status` FROM `grassro_welcome_claims` ORDER BY `created_at` DESC LIMIT 10", .@ids, .@names$, .@sources$, .@states$);
+		if (.@n < 0) { mes "SQL query failed."; close; }
+		if (!.@n) mes "No claims yet.";
+		for (.@i=0; .@i<.@n; ++.@i) {
+			mes "#"+.@ids[.@i]+" "+.@names$[.@i]+" / "+.@states$[.@i];
+			mes "Source: "+.@sources$[.@i];
+			if (.@i == 4 && .@n > 5) next;
+		}
+		close;
+	case 2:
+		mes "[Discovery statistics]";
+		.@n = query_sql("SELECT `discovery_source`,COUNT(*) FROM `grassro_welcome_claims` WHERE `status`='COMPLETE' GROUP BY `discovery_source` ORDER BY COUNT(*) DESC", .@sources$, .@counts);
+		if (.@n < 0) { mes "SQL query failed."; close; }
+		if (!.@n) mes "No completed claims yet.";
+		for (.@i=0; .@i<.@n; ++.@i) mes .@sources$[.@i]+": "+.@counts[.@i];
+		close;
+	case 3:
+		mes "[Player lookup]";
+		mes "Enter the account ID to review.";
+		next;
+		input .@lookup_id;
+		if (.@lookup_id <= 0) close;
+		.@n = query_sql("SELECT `char_name`,`discovery_source`,`source_other`,`referrer_name`,`status`,IFNULL(DATE_FORMAT(`created_at`,'%Y-%m-%d %H:%i'),'-'),IFNULL(DATE_FORMAT(`flywing_expires_at`,'%Y-%m-%d %H:%i'),'-'),`issued_reins`,`issued_flywing`,`issued_manuals`,`issued_bubble_gum`,`review_note` FROM `grassro_welcome_claims` WHERE `account_id`="+.@lookup_id+" LIMIT 1", .@nm$, .@src$, .@other$, .@ref$, .@st$, .@dt$, .@exp$, .@r, .@f, .@m, .@g, .@note$);
+		if (.@n < 0) { mes "SQL query failed."; close; }
+		if (!.@n) { mes "No claim found for that account."; close; }
+		mes "[Account #"+.@lookup_id+"]";
+		mes "Character: "+.@nm$[0];
+		mes "Status: "+.@st$[0];
+		mes "Source: "+.@src$[0];
+		if (.@other$[0] != "") mes "Other details: "+.@other$[0];
+		mes "Referrer: "+(.@ref$[0] == "" ? "Not provided" : .@ref$[0]);
+		mes "Claimed: "+.@dt$[0];
+		mes "Flywing expiry: "+.@exp$[0];
+		mes "Delivery flags (R/F/M/G): "+.@r[0]+"/"+.@f[0]+"/"+.@m[0]+"/"+.@g[0];
+		if (.@note$[0] != "") mes "Review note: "+.@note$[0];
+		close;
+	case 4:
+		mes "[Recent referrals]";
+		.@n = query_sql("SELECT `char_name`,`referrer_name`,`discovery_source` FROM `grassro_welcome_claims` WHERE `was_referred`=1 ORDER BY `created_at` DESC LIMIT 10", .@names$, .@refs$, .@sources$);
+		if (.@n < 0) { mes "SQL query failed."; close; }
+		if (!.@n) mes "No referrals recorded.";
+		for (.@i=0; .@i<.@n; ++.@i) {
+			mes .@names$[.@i]+" -> "+(.@refs$[.@i] == "" ? "(not given)" : .@refs$[.@i]);
+			mes "Source: "+.@sources$[.@i];
+			if (.@i == 4 && .@n > 5) next;
+		}
+		close;
+	case 5:
+		mes "[Claims needing review]";
+		.@n = query_sql("SELECT `account_id`,`char_name`,`status`,`review_note` FROM `grassro_welcome_claims` WHERE `status` IN ('ISSUING','NEEDS_REVIEW') ORDER BY `created_at` DESC LIMIT 10", .@ids, .@names$, .@states$, .@notes$);
+		if (.@n < 0) { mes "SQL query failed."; close; }
+		if (!.@n) mes "No outstanding claims.";
+		for (.@i=0; .@i<.@n; ++.@i) {
+			mes "#"+.@ids[.@i]+" "+.@names$[.@i]+" / "+.@states$[.@i];
+			if (.@notes$[.@i] != "") mes "Note: "+.@notes$[.@i];
+			if (.@i == 4 && .@n > 5) next;
+		}
+		close;
+	default:
+		close;
+	}
+
+OnInit:
+	.PublicEnabled = 1; // TESTING: change to 1 only after validating on GrassRO.
+	.TestAccountID = 2000002; // Optional: set to a throwaway NORMAL player account ID for safe tests.
+	end;
+}

@@ -1,0 +1,23 @@
+diff --git a/db/pre-re/item_db_usable.yml b/db/pre-re/item_db_usable.yml
+--- a/db/pre-re/item_db_usable.yml
++++ b/db/pre-re/item_db_usable.yml
+@@ -1199,7 +1199,9 @@
+       BuyingStore: true
+       Container: true
+     Script: |
++      callfunc "F_GrassRO_AlbumBefore", 616;
+       getgroupitem(IG_CARDALBUM);
++      callfunc "F_GrassRO_AlbumAfter", 616;
+   - Id: 617
+     AegisName: Old_Violet_Box
+     Name: Old Purple Box
+@@ -5245,7 +5247,9 @@
+       BuyingStore: true
+       Container: true
+     Script: |
++      callfunc "F_GrassRO_AlbumBefore", 12246;
+       getgroupitem(IG_MAGICCARDALBUM);
++      callfunc "F_GrassRO_AlbumAfter", 12246;
+   - Id: 12247
+     AegisName: Halohalo
+     Name: Halo-Halo

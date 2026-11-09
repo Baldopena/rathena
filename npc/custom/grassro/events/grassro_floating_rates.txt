@@ -1,0 +1,291 @@
+//===== GrassRO ======================================================
+//= Player-Sponsored Floating Rates - NPC-only pilot v1
+//= No custom SQL, no persistence, no direct Discord webhook.
+//= DEPLOYMENT: Sponsorship payments DISABLED after load/reload.
+//= GM Group ID 99 may enable payments for supervised testing.
+//= @reloadscript or map-server restart ENDS events and loses remaining time.
+//= During script reload, known 2x battle rates are restored to 10x.
+//= Edit the hard-coded baseline before use if GrassRO rates change.
+//===================================================================
+
+prontera,141,227,5	script	Sponsorship#GRFR	506,{
+	mes "[GrassRO Float Rates]";
+	mes "Sponsor a server-wide rate event.";
+	mes "EXP/Job: 10,000,000 Zeny per hour.";
+	mes "Eligible Drops: 20,000,000 Zeny per hour.";
+	mes "Minimum contribution: 15 minutes.";
+	if (!.Enabled) mes "^FF0000Sponsorships are currently disabled.^000000";
+	next;
+	.@menu$ = "View event status:Sponsor 2x EXP/Job:Sponsor 2x Drops";
+	if (getgroupid() == 99) .@menu$ += ":GM controls";
+	.@menu$ += ":Cancel";
+	.@choice = select(.@menu$);
+	if (.@choice == 1) goto L_Status;
+	if (.@choice == 2 || .@choice == 3) {
+		.@kind = .@choice - 2; // 0 = EXP; 1 = drops
+		goto L_Sponsor;
+	}
+	if (.@choice == 4 && getgroupid() == 99) goto L_GM;
+	close;
+
+L_Status:
+	callsub S_Expire;
+	.@now = gettimetick(2);
+	mes "[GrassRO Float Rates]";
+	if (.Active[0] && .EndAt[0] > .@now) {
+		.@left = .EndAt[0] - .@now;
+		mes "^FF9900EXP 2x: ACTIVE^000000";
+		mes "Sponsor: " + .Sponsor$[0];
+		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+	} else mes "EXP 2x: Not Active";
+	if (.Active[1] && .EndAt[1] > .@now) {
+		.@left = .EndAt[1] - .@now;
+		mes "^EE82EEDROP 2x: ACTIVE^000000";
+		mes "Sponsor: " + .Sponsor$[1];
+		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+	} else mes "DROP 2x: Not Active";
+	close;
+
+L_Sponsor:
+	if (!.Enabled) {
+		mes "Sponsorships are disabled while the NPC is being tested.";
+		close;
+	}
+	.@price = (.@kind == 0) ? .ExpPrice : .DropPrice;
+	.@minimum = .@price / 4;
+	mes "[GrassRO Float Rates]";
+	mes (.@kind == 0 ? "EXP/Job 2x" : "Eligible Drops 2x") + " sponsorship";
+	mes "One hour costs " + .@price + " Zeny.";
+	mes "Minimum: " + .@minimum + " Zeny (15 minutes).";
+	next;
+	switch(select("Sponsor 1 hour:Use my Zeny (up to 1 hour):Enter a Zeny amount:Cancel")) {
+	case 1:
+		.@cost = .@price;
+		break;
+	case 2:
+		.@cost = Zeny;
+		if (.@cost > .@price) .@cost = .@price;
+		// Round down to 1,000-Zeny increments for safe integer arithmetic.
+		.@cost = (.@cost / 1000) * 1000;
+		break;
+	case 3:
+		mes "Enter a contribution in multiples of 1,000 Zeny.";
+		input .@cost;
+		break;
+	default:
+		close;
+	}
+	if (.@cost < .@minimum || .@cost > .@price || .@cost % 1000 != 0) {
+		mes "Contribution must be between " + .@minimum + " and " + .@price + " Zeny, in 1,000-Zeny increments.";
+		close;
+	}
+	// Multiplying the amount by 3600 directly may exceed 32-bit bounds.
+	// Dividing both monetary values by 1000 first avoids that risk.
+	.@seconds = ((.@cost / 1000) * 3600) / (.@price / 1000);
+	if (.@seconds < 900) {
+		mes "Minimum sponsored duration is 15 minutes.";
+		close;
+	}
+	mes "[Confirm Sponsorship]";
+	mes "Cost: " + .@cost + " Zeny.";
+	mes "Time added: " + (.@seconds / 3600) + "h " + ((.@seconds % 3600) / 60) + "m " + (.@seconds % 60) + "s.";
+	mes "This extends an active event. It does not stack above 2x.";
+	next;
+	if (select("Confirm payment:Cancel") != 1) close;
+
+	// Final checks are performed without next/sleep/input between validation,
+	// battle-flag change, Zeny debit and state update.
+	callsub S_Expire;
+	if (!.Enabled) {
+		mes "Sponsorships were disabled. No Zeny was deducted.";
+		close;
+	}
+	if (Zeny < .@cost) {
+		mes "You do not have enough Zeny. No payment made.";
+		close;
+	}
+	.@now = gettimetick(2);
+	.@started = (.Active[.@kind] && .EndAt[.@kind] > .@now);
+	.@baseend = .@started ? .EndAt[.@kind] : .@now;
+	.@newend = .@baseend + .@seconds;
+	if (.CapHours > 0 && .@newend - .@now > .CapHours * 3600) {
+		mes "The GM-configured remaining-duration limit would be exceeded.";
+		mes "No Zeny was deducted.";
+		close;
+	}
+	if (!.@started) {
+		// Refuse to overwrite unexpected external rate changes.
+		if (!callsub(S_Apply, .@kind)) {
+			mes "Rate configuration conflict. No payment was made.";
+			mes "Please notify a GM.";
+			close;
+		}
+	}
+	Zeny -= .@cost;
+	.Active[.@kind] = 1;
+	.EndAt[.@kind] = .@newend;
+	.Sponsor$[.@kind] = strcharinfo(0); // latest contributing character
+	.@name$ = .Sponsor$[.@kind];
+	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
+	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
+	if (.@started)
+		announce "[GrassRO] " + .@name$ + " extended DOUBLE " + .@kindname$ + " by " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
+	else
+		announce "[GrassRO] " + .@name$ + " sponsored DOUBLE " + .@kindname$ + " for " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
+	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " sponsor=" + .@name$ + " zeny=" + .@cost + " seconds=" + .@seconds + " extended=" + .@started;
+	mes "Thank you! Your contribution is now active.";
+	close;
+
+L_GM:
+	if (getgroupid() != 99) close;
+	mes "[Float Rates - GM]";
+	mes "Payments: " + (.Enabled ? "ENABLED" : "DISABLED");
+	mes "Maximum remaining time: " + (.CapHours ? .CapHours + " hours" : "Unlimited");
+	next;
+	switch(select("Toggle sponsorship payments:Configure time limit:End EXP now:End Drops now:Cancel")) {
+	case 1:
+		.Enabled = !.Enabled;
+		mes "Sponsorship payments are now " + (.Enabled ? "ENABLED" : "DISABLED") + ".";
+		break;
+	case 2:
+		mes "Enter maximum remaining hours (0 = unlimited; 1-720 allowed).";
+		input .@hours;
+		if (.@hours < 0 || .@hours > 720) { mes "Invalid cap."; close; }
+		.CapHours = .@hours;
+		mes "Limit updated.";
+		break;
+	case 3:
+		mes "End EXP immediately? This does not refund contributions.";
+		if (select("Yes:No") == 1) callsub S_Stop,0,1;
+		break;
+	case 4:
+		mes "End Drops immediately? This does not refund contributions.";
+		if (select("Yes:No") == 1) callsub S_Stop,1,1;
+		break;
+	default:
+		close;
+	}
+	close;
+
+// Player command: @floatevent, Group ID >= 1 only.
+OnAtStatus:
+	if (getgroupid() < 1) {
+		dispbottom "[GrassRO] @floatevent requires Group ID 1 or higher.",0xFF5555;
+		end;
+	}
+	callsub S_Expire;
+	.@now = gettimetick(2);
+	if (.Active[0] && .EndAt[0] > .@now) {
+		.@left = .EndAt[0] - .@now;
+		dispbottom "EXP 2x: ACTIVE | Sponsor: " + .Sponsor$[0] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xFF9900;
+	} else dispbottom "EXP 2x: Not Active",0xFF9900;
+	if (.Active[1] && .EndAt[1] > .@now) {
+		.@left = .EndAt[1] - .@now;
+		dispbottom "DROP 2x: ACTIVE | Sponsor: " + .Sponsor$[1] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xEE82EE;
+	} else dispbottom "DROP 2x: Not Active",0xEE82EE;
+	end;
+
+// No player RID is needed for NPC-timer events.
+OnTimer1000:
+	callsub S_Expire;
+	initnpctimer;
+	end;
+
+OnInit:
+	.ExpPrice = 10000000;
+	.DropPrice = 20000000;
+	.Enabled = 0; // IMPORTANT: no paid sponsorship on first load/reload
+	.CapHours = 0; // unlimited by default
+	setarray .Active[0],0,0;
+	setarray .EndAt[0],0,0;
+	setarray .Sponsor$[0],"","";
+	setarray .ExpFlags$[0],"base_exp_rate","job_exp_rate";
+	setarray .DropFlags$[0],
+		"item_rate_common","item_rate_heal","item_rate_use","item_rate_equip","item_rate_card",
+		"item_rate_common_boss","item_rate_heal_boss","item_rate_use_boss","item_rate_equip_boss","item_rate_card_boss";
+	// These baselines are the verified GrassRO config values on 2026-11-05.
+	// All managed EXP and eligible drop flags are 1000 (10x).
+	.Base = 1000;
+	// NPC-only state cannot recover its expiry after script reload or restart.
+	// Restore recognized leftover double-rates so events cannot remain forever.
+	.@staleExp = 0;
+	for (.@i = 0; .@i < 2; .@i++)
+		if (getbattleflag(.ExpFlags$[.@i]) == .Base * 2) .@staleExp = 1;
+	if (.@staleExp) {
+		callsub S_Restore,0;
+		debugmes "[GR_FLOAT_EVENT] Exp rates restored on script load; previous duration not recoverable.";
+	}
+	.@staleDrop = 0;
+	for (.@i = 0; .@i < 10; .@i++)
+		if (getbattleflag(.DropFlags$[.@i]) == .Base * 2) .@staleDrop = 1;
+	if (.@staleDrop) {
+		callsub S_Restore,1;
+		debugmes "[GR_FLOAT_EVENT] Drop rates restored on script load; previous duration not recoverable.";
+	}
+	bindatcmd "floatevent",strnpcinfo(3)+"::OnAtStatus",0,100;
+	initnpctimer;
+	end;
+
+S_Apply:
+	.@kind = getarg(0);
+	.@n = (.@kind == 0) ? 2 : 10;
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
+		if (getbattleflag(.@flag$) != .Base) {
+			debugmes "[GR_FLOAT_EVENT] Conflict on " + .@flag$;
+			return 0;
+		}
+	}
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
+		setbattleflag(.@flag$,.Base * 2,(.@i == .@n - 1));
+	}
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
+		if (getbattleflag(.@flag$) != .Base * 2) {
+			callsub S_Restore,.@kind;
+			return 0;
+		}
+	}
+	return 1;
+
+S_Restore:
+	.@kind = getarg(0);
+	.@n = (.@kind == 0) ? 2 : 10;
+	.@changed = 0;
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
+		if (getbattleflag(.@flag$) == .Base * 2) {
+			setbattleflag(.@flag$,.Base);
+			.@changed = 1;
+		} else if (getbattleflag(.@flag$) != .Base) {
+			debugmes "[GR_FLOAT_EVENT] Preserve externally altered rate: " + .@flag$;
+		}
+	}
+	if (.@changed) {
+		.@last$ = (.@kind == 0) ? .ExpFlags$[1] : .DropFlags$[9];
+		setbattleflag(.@last$,getbattleflag(.@last$),true);
+	}
+	return;
+
+S_Stop:
+	.@kind = getarg(0);
+	.@isGM = getarg(1,0);
+	if (!.Active[.@kind]) return;
+	callsub S_Restore,.@kind;
+	.Active[.@kind] = 0;
+	.EndAt[.@kind] = 0;
+	.Sponsor$[.@kind] = "";
+	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
+	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
+	announce "[GrassRO] DOUBLE " + .@kindname$ + (.@isGM ? " was ended by a GM." : " has ended. Normal rates restored."),bc_all,.@color;
+	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " stopped gm=" + .@isGM;
+	return;
+
+S_Expire:
+	.@now = gettimetick(2);
+	for (.@kind = 0; .@kind < 2; .@kind++)
+		if (.Active[.@kind] && .EndAt[.@kind] <= .@now)
+			callsub S_Stop,.@kind,0;
+	return;
+}

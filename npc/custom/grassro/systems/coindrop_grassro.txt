@@ -1,0 +1,37 @@
+//===== rAthena Script =======================================
+//= Poring Coin Drop
+//===== By: ======================================================
+//= wrywndp (https://www.youtube.com/@wrywndp)
+//===== Description: =========================================
+//= Receive Poring Coins upon qualifying monster kills
+//= Drop rate chance formula: 
+//= Normal & Mini-Boss: (Monster Level*0.01)% (1 Poring Coin)
+//= MVP: 100% (1~3 Poring Coins)
+//===== Additional Comments: =====================================
+//= This script is made for Ragnarok Offline Pre-Renewal Pack
+//= https://www.youtube.com/watch?v=aN5OCJdj2qA
+//============================================================
+
+-	script	RagnarokCoinDrop	-1,{
+OnNPCKillEvent:
+	if (killedrid <= 0) end;
+	.@lv = getmonsterinfo(killedrid, MOB_LV);
+	.@mvp = getmonsterinfo(killedrid, MOB_MVPEXP);
+
+	if (.@mvp) {
+		.@amount = rand(.mvpMin, .mvpMax);
+		getitem .coinItem, .@amount;
+		dispbottom "You received " + .@amount + " Poring Coin" + (.@amount == 1 ? "" : "s") + " for defeating an MVP!";
+	} else if (rand(10000) < (.@lv*5)) {
+		getitem .coinItem, .normalAmount;
+		dispbottom "You received " + .normalAmount + " Poring Coin" + (.normalAmount == 1 ? "" : "s") + "!";
+	}
+	end;
+
+OnInit:
+	.coinItem = 7539; // Poring Coin
+	.normalAmount = 1; // Normal mob drop amount
+	.mvpMin = 1; // MVP min drop
+	.mvpMax = 3; // MVP max drop
+	end;
+}

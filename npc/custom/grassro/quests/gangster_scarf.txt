@@ -1,0 +1,116 @@
+// ============================================================================
+// GrassRO - Vex's Gangster Scarf Crafting Quest
+// Location: Morroc (125,100)
+// Display name: Vex
+// NPC sprite: 118 (2_M_THIEFMASTER)
+// Recipe: 200 Red Mufflers (7216) + 100,000 Zeny -> 1 Gangster Scarf (5361)
+// Repeatable, guaranteed success, no cooldown or quest variables.
+// ============================================================================
+
+morocc,125,100,4	script	Vex::GrassRO_VexGangster	530,{
+	mes "[Vex]";
+	mes "Psst... hey, you.";
+	mes "Ever get the feeling someone's watching you?";
+	mes "In Morroc, that's usually because they are.";
+	next;
+	mes "[Vex]";
+	mes "I make scarves for people who'd rather not be remembered.";
+	mes "Good material, careful stitching, and no questions asked.";
+	next;
+
+	switch (select("Make a Gangster Scarf:Check Requirements:Where to Find Red Mufflers:Maybe Later")) {
+	case 1:
+		mes "[Vex]";
+		mes "Two hundred Red Mufflers, and one hundred thousand Zeny.";
+		mes "That's my price for one Gangster Scarf.";
+		mes "Got everything? Let me count.";
+		next;
+		mes "[Vex]";
+		mes "^0055FFRed Mufflers^000000: " + countitem(.RedMuffler) + " / " + .MufflerAmount;
+		mes "^0055FFZeny^000000: " + Zeny + " / " + .ZenyFee;
+
+		if (countitem(.RedMuffler) < .MufflerAmount) {
+			mes "That's not enough fabric. Come back with all 200 Red Mufflers.";
+			close;
+		}
+		if (Zeny < .ZenyFee) {
+			mes "I'm a craftsman, not a charity. Bring the full 100,000 Zeny.";
+			close;
+		}
+		if (!checkweight(.Scarf, 1)) {
+			mes "You've got too much in your bag. Make some space before we do business.";
+			close;
+		}
+		next;
+
+		mes "[Vex]";
+		mes "One last time. Here's the deal:";
+		mes "^FF0000- 200 Red Mufflers^000000";
+		mes "^FF0000- 100,000 Zeny^000000";
+		mes "^008800+ 1 Gangster Scarf^000000";
+		mes "No refunds. No questions.";
+		if (select("Make the scarf:Not yet") != 1) {
+			mes "[Vex]";
+			mes "Cold feet? Happens to the best of us.";
+			close;
+		}
+
+		// Final checks: do not consume anything if the transaction cannot complete.
+		if (countitem(.RedMuffler) < .MufflerAmount) {
+			mes "[Vex]";
+			mes "Looks like you're short on Red Mufflers. Come back with 200.";
+			close;
+		}
+		if (Zeny < .ZenyFee) {
+			mes "[Vex]";
+			mes "You're short on Zeny. Bring 100,000.";
+			close;
+		}
+		if (!checkweight(.Scarf, 1)) {
+			mes "[Vex]";
+			mes "No room for the finished scarf. Clear some space first.";
+			close;
+		}
+
+		// These commands execute consecutively after all validations.
+		delitem .RedMuffler, .MufflerAmount;
+		Zeny -= .ZenyFee;
+		getitem .Scarf, 1;
+		callfunc "F_GrassRO_ItemCreationAnnounce", .Scarf, "Vex";
+
+		mes "[Vex]";
+		mes "Heh. Fits just right.";
+		mes "This scarf might hide your face, but not your bad decisions.";
+		mes "Enjoy.";
+		close;
+
+	case 2:
+		mes "[Vex]";
+		mes "For one Gangster Scarf, bring me:";
+		mes "^0055FF200 Red Mufflers^000000";
+		mes "^0055FF100,000 Zeny^000000";
+		mes "Your Red Mufflers: " + countitem(.RedMuffler);
+		mes "Your Zeny: " + Zeny;
+		mes "I'll make one scarf per deal, as often as you like.";
+		close;
+
+	case 3:
+		mes "[Vex]";
+		mes "Disguises in the fields around Niflheim carry Red Mufflers.";
+		mes "Don't ask how I know. And don't let them catch you staring.";
+		close;
+
+	default:
+		mes "[Vex]";
+		mes "Suit yourself. I'll be here.";
+		mes "Unless someone comes looking for me. Then you've never seen me.";
+		close;
+	}
+
+OnInit:
+	.RedMuffler = 7216;
+	.MufflerAmount = 200;
+	.ZenyFee = 100000;
+	.Scarf = 5361;
+	end;
+}

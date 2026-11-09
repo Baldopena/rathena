@@ -158,5 +158,13 @@ generated
 /backup/
 *.bak-*
 *.backup-*
+*.backup
 *.bak.*
-*.before-*
+*.before*
+
+# discord webhooks
+*webhook.txt
+
+# pycache
+__pycache__/
+*.pyc

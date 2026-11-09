@@ -1,0 +1,4784 @@
+{
+  "version": 1,
+  "items": {
+    "2201": {
+      "costume_id": 41001,
+      "view": 12,
+      "name": "Sunglasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vLGx27ehvboj"
+    },
+    "2202": {
+      "costume_id": 41002,
+      "view": 12,
+      "name": "Sunglasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vLGx27ehvboj"
+    },
+    "2203": {
+      "costume_id": 41003,
+      "view": 3,
+      "name": "Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sdu3ob26Iw=="
+    },
+    "2204": {
+      "costume_id": 41004,
+      "view": 3,
+      "name": "Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sdu3ob26Iw=="
+    },
+    "2205": {
+      "costume_id": 41005,
+      "view": 10,
+      "name": "Diver Goggles",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "ubC+yLDmIw=="
+    },
+    "2206": {
+      "costume_id": 41006,
+      "view": 44,
+      "name": "Wedding Veil",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uOm758b3Iw=="
+    },
+    "2207": {
+      "costume_id": 41007,
+      "view": 4,
+      "name": "Fancy Flower",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rsskj"
+    },
+    "2208": {
+      "costume_id": 41008,
+      "view": 17,
+      "name": "Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66uyM="
+    },
+    "2209": {
+      "costume_id": 41009,
+      "view": 17,
+      "name": "Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66uyM="
+    },
+    "2210": {
+      "costume_id": 41010,
+      "view": 9,
+      "name": "Hair Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrbsIw=="
+    },
+    "2211": {
+      "costume_id": 41011,
+      "view": 6,
+      "name": "Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tc6wxyM="
+    },
+    "2212": {
+      "costume_id": 41012,
+      "view": 13,
+      "name": "Eye Patch",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vsi06yM="
+    },
+    "2213": {
+      "costume_id": 41013,
+      "view": 2,
+      "name": "Kitty Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sO2+58DMuNO4rrbsIw=="
+    },
+    "2214": {
+      "costume_id": 41014,
+      "view": 15,
+      "name": "Bunny Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xeSzorjTuK627CM="
+    },
+    "2215": {
+      "costume_id": 41015,
+      "view": 5,
+      "name": "Flower Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ssm407iutuwj"
+    },
+    "2216": {
+      "costume_id": 41016,
+      "view": 11,
+      "name": "Biretta",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uvG3ucW4Iw=="
+    },
+    "2217": {
+      "costume_id": 41017,
+      "view": 11,
+      "name": "Biretta",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uvG3ucW4Iw=="
+    },
+    "2218": {
+      "costume_id": 41018,
+      "view": 8,
+      "name": "Flu Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uLa9usWpIw=="
+    },
+    "2219": {
+      "costume_id": 41019,
+      "view": 8,
+      "name": "Flu Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uLa9usWpIw=="
+    },
+    "2220": {
+      "costume_id": 41020,
+      "view": 16,
+      "name": "Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x94j"
+    },
+    "2221": {
+      "costume_id": 41021,
+      "view": 16,
+      "name": "Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x94j"
+    },
+    "2222": {
+      "costume_id": 41022,
+      "view": 7,
+      "name": "Turban",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tdWx2bjwwNoj"
+    },
+    "2223": {
+      "costume_id": 41023,
+      "view": 7,
+      "name": "Turban",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tdWx2bjwwNoj"
+    },
+    "2224": {
+      "costume_id": 41024,
+      "view": 1,
+      "name": "Goggles",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sO2x2yM="
+    },
+    "2225": {
+      "costume_id": 41025,
+      "view": 1,
+      "name": "Goggles",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sO2x2yM="
+    },
+    "2226": {
+      "costume_id": 41026,
+      "view": 14,
+      "name": "Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xLgj"
+    },
+    "2227": {
+      "costume_id": 41027,
+      "view": 14,
+      "name": "Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xLgj"
+    },
+    "2228": {
+      "costume_id": 41028,
+      "view": 40,
+      "name": "Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x++4pyM="
+    },
+    "2229": {
+      "costume_id": 41029,
+      "view": 40,
+      "name": "Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x++4pyM="
+    },
+    "2232": {
+      "costume_id": 41030,
+      "view": 18,
+      "name": "Circlet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "2233": {
+      "costume_id": 41031,
+      "view": 18,
+      "name": "Circlet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "2234": {
+      "costume_id": 41032,
+      "view": 19,
+      "name": "Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xry+xrbzIw=="
+    },
+    "2235": {
+      "costume_id": 41033,
+      "view": 45,
+      "name": "Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xam287/uIw=="
+    },
+    "2236": {
+      "costume_id": 41034,
+      "view": 20,
+      "name": "Santa Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+rFuLjwwNoj"
+    },
+    "2237": {
+      "costume_id": 41035,
+      "view": 21,
+      "name": "Bandit Beard",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "xc689r+wIw=="
+    },
+    "2239": {
+      "costume_id": 41036,
+      "view": 23,
+      "name": "Monocle",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v9y0q77IsOYj"
+    },
+    "2240": {
+      "costume_id": 41037,
+      "view": 24,
+      "name": "Beard",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vPa/sCM="
+    },
+    "2241": {
+      "costume_id": 41038,
+      "view": 25,
+      "name": "Grampa Beard",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "yPK89r+wIw=="
+    },
+    "2242": {
+      "costume_id": 41039,
+      "view": 26,
+      "name": "Purple Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sO2x3ryxsdu3ob26Iw=="
+    },
+    "2243": {
+      "costume_id": 41040,
+      "view": 27,
+      "name": "Geek Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vbrHybHbt6G9uiM="
+    },
+    "2244": {
+      "costume_id": 41041,
+      "view": 28,
+      "name": "Big Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v9W4rrq7Iw=="
+    },
+    "2245": {
+      "costume_id": 41042,
+      "view": 29,
+      "name": "Sweet Gent",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vbrAp8auwajGsiM="
+    },
+    "2246": {
+      "costume_id": 41043,
+      "view": 30,
+      "name": "Golden Gear",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sPG158fsteWx4r7uIw=="
+    },
+    "2247": {
+      "costume_id": 41044,
+      "view": 31,
+      "name": "Romantic Gent",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v8O15b26xc23zrjHvboj"
+    },
+    "2248": {
+      "costume_id": 41045,
+      "view": 32,
+      "name": "Western Grace",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v/69usXPsde3ucDMvboj"
+    },
+    "2249": {
+      "costume_id": 41046,
+      "view": 33,
+      "name": "Coronet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNq3zrPdIw=="
+    },
+    "2250": {
+      "costume_id": 41047,
+      "view": 34,
+      "name": "Cute Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrL2Iw=="
+    },
+    "2251": {
+      "costume_id": 41048,
+      "view": 35,
+      "name": "Monk Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLrB98DawMe48MDaIw=="
+    },
+    "2252": {
+      "costume_id": 41049,
+      "view": 36,
+      "name": "Wizard Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wKfA+rXlx94j"
+    },
+    "2253": {
+      "costume_id": 41050,
+      "view": 37,
+      "name": "Sunflower",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rx9i52bbzseIj"
+    },
+    "2254": {
+      "costume_id": 41051,
+      "view": 38,
+      "name": "Angel Wing",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w7W758DHuNO4rrbsIw=="
+    },
+    "2255": {
+      "costume_id": 41052,
+      "view": 39,
+      "name": "Evil Wing",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vse4tsDHuNO4rrbsIw=="
+    },
+    "2256": {
+      "costume_id": 41053,
+      "view": 41,
+      "name": "Majestic Goat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLbBpr26xr2w7b/sxq4j"
+    },
+    "2257": {
+      "costume_id": 41054,
+      "view": 42,
+      "name": "Unicorn Horn",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/XHz77hu9Qj"
+    },
+    "2258": {
+      "costume_id": 41055,
+      "view": 43,
+      "name": "Spiky Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/7HwcfsteWx4r7uIw=="
+    },
+    "2259": {
+      "costume_id": 41056,
+      "view": 46,
+      "name": "Mini Propeller",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8G3zsbntvMj"
+    },
+    "2260": {
+      "costume_id": 41057,
+      "view": 47,
+      "name": "Mini Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "ucy0z7Hbt6G9uiM="
+    },
+    "2261": {
+      "costume_id": 41058,
+      "view": 48,
+      "name": "Army Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8G30MXXtvOxurjwIw=="
+    },
+    "2262": {
+      "costume_id": 41059,
+      "view": 49,
+      "name": "Clown Nose",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "saS068TaIw=="
+    },
+    "2263": {
+      "costume_id": 41060,
+      "view": 50,
+      "name": "Zorro Masque",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "wMfA+77ItOsj"
+    },
+    "2264": {
+      "costume_id": 41061,
+      "view": 51,
+      "name": "Munak Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uauzq7jwwNoj"
+    },
+    "2265": {
+      "costume_id": 41062,
+      "view": 52,
+      "name": "Gangster Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vcPAp7/ruLa9usWpIw=="
+    },
+    "2266": {
+      "costume_id": 41063,
+      "view": 53,
+      "name": "Iron Cain",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vsbAzL7wxMnAziM="
+    },
+    "2267": {
+      "costume_id": 41064,
+      "view": 54,
+      "name": "Cigarette",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "tOO56CM="
+    },
+    "2268": {
+      "costume_id": 41065,
+      "view": 55,
+      "name": "Pipe",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "xsTAzMfBtOO56CM="
+    },
+    "2269": {
+      "costume_id": 41066,
+      "view": 56,
+      "name": "Romantic Flower",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "ssnA2SM="
+    },
+    "2270": {
+      "costume_id": 41067,
+      "view": 57,
+      "name": "Romantic Leaf",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "x67A2SM="
+    },
+    "2271": {
+      "costume_id": 41068,
+      "view": 58,
+      "name": "Jack be Dandy",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rr7IsOYj"
+    },
+    "2272": {
+      "costume_id": 41069,
+      "view": 59,
+      "name": "Stop Post",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "waTB9selwfbGxyM="
+    },
+    "2273": {
+      "costume_id": 41070,
+      "view": 60,
+      "name": "Doctor Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wMe757jTuK627CM="
+    },
+    "2274": {
+      "costume_id": 41071,
+      "view": 61,
+      "name": "Ghost Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uMHA2sDHuNO4rrbsIw=="
+    },
+    "2275": {
+      "costume_id": 41072,
+      "view": 62,
+      "name": "Red Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ud202bOqIw=="
+    },
+    "2276": {
+      "costume_id": 41073,
+      "view": 63,
+      "name": "Angled Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tbWzorSrIw=="
+    },
+    "2277": {
+      "costume_id": 41074,
+      "view": 64,
+      "name": "Nurse Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sKPIo7jwIw=="
+    },
+    "2278": {
+      "costume_id": 41075,
+      "view": 65,
+      "name": "Mr. Smile",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vbq4tsDPIw=="
+    },
+    "2279": {
+      "costume_id": 41076,
+      "view": 66,
+      "name": "Bomb Wick",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcnB9iM="
+    },
+    "2280": {
+      "costume_id": 41077,
+      "view": 67,
+      "name": "Sakkat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/GwqyM="
+    },
+    "2281": {
+      "costume_id": 41078,
+      "view": 68,
+      "name": "Opera Masque",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "v8DG5LbzsKG46SM="
+    },
+    "2282": {
+      "costume_id": 41079,
+      "view": 69,
+      "name": "Halo",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v7XIpbDtuK4j"
+    },
+    "2283": {
+      "costume_id": 41080,
+      "view": 70,
+      "name": "Ear Muffs",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sc24trCzIw=="
+    },
+    "2284": {
+      "costume_id": 41081,
+      "view": 71,
+      "name": "Antlers",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+e9v7vUIw=="
+    },
+    "2285": {
+      "costume_id": 41082,
+      "view": 72,
+      "name": "Apple of Archer",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uO2757z2wMe757D6Iw=="
+    },
+    "2286": {
+      "costume_id": 41083,
+      "view": 73,
+      "name": "Elven Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "2287": {
+      "costume_id": 41084,
+      "view": 74,
+      "name": "Pirate Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9jA+7XOsMcj"
+    },
+    "2288": {
+      "costume_id": 41085,
+      "view": 75,
+      "name": "Mr. Scream",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vbrFqbehxKG4tr26xakj"
+    },
+    "2289": {
+      "costume_id": 41086,
+      "view": 76,
+      "name": "Poo Poo Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sMW9w7HiIw=="
+    },
+    "2290": {
+      "costume_id": 41087,
+      "view": 77,
+      "name": "Funeral Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW3yrDHIw=="
+    },
+    "2291": {
+      "costume_id": 41088,
+      "view": 78,
+      "name": "Masquerade",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "s6q68bChuOkj"
+    },
+    "2292": {
+      "costume_id": 41089,
+      "view": 79,
+      "name": "Welding Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "v+vBori2vbrFqSM="
+    },
+    "2293": {
+      "costume_id": 41090,
+      "view": 80,
+      "name": "Pretend Murdered",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6yx2LzStbWxuCM="
+    },
+    "2294": {
+      "costume_id": 41091,
+      "view": 81,
+      "name": "Stellar",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vbrFuLT1vbrGriM="
+    },
+    "2295": {
+      "costume_id": 41092,
+      "view": 82,
+      "name": "Blinker",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tKuwobiusLMj"
+    },
+    "2296": {
+      "costume_id": 41093,
+      "view": 83,
+      "name": "Binoculars",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "uMG/+LDmIw=="
+    },
+    "2297": {
+      "costume_id": 41094,
+      "view": 84,
+      "name": "Goblin Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO267biwwbewobjpIw=="
+    },
+    "2298": {
+      "costume_id": 41095,
+      "view": 85,
+      "name": "Green Feeler",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w8q3z7T1tevAzCM="
+    },
+    "2299": {
+      "costume_id": 41096,
+      "view": 86,
+      "name": "Orc Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v8DFqcG3x++4pyM="
+    },
+    "5001": {
+      "costume_id": 41097,
+      "view": 87,
+      "name": "Headset",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x+y15cb5Iw=="
+    },
+    "5002": {
+      "costume_id": 41098,
+      "view": 88,
+      "name": "Jewel Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "weq+88WptvO/7iM="
+    },
+    "5003": {
+      "costume_id": 41099,
+      "view": 89,
+      "name": "Joker Jester",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "saS067jwwNoj"
+    },
+    "5004": {
+      "costume_id": 41100,
+      "view": 90,
+      "name": "Oxygen Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "u+q80ri2vbrFqSM="
+    },
+    "5005": {
+      "costume_id": 41101,
+      "view": 91,
+      "name": "Gas Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sKG9uri2vbrFqSM="
+    },
+    "5006": {
+      "costume_id": 41102,
+      "view": 92,
+      "name": "Machoman's Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "x8/GrsbEv+61pcDMvMcj"
+    },
+    "5007": {
+      "costume_id": 41103,
+      "view": 93,
+      "name": "Grand Circlet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t8615bytxay4tCM="
+    },
+    "5008": {
+      "costume_id": 41104,
+      "view": 94,
+      "name": "Puppy Love",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x7K757b7Iw=="
+    },
+    "5009": {
+      "costume_id": 41105,
+      "view": 95,
+      "name": "Safety Helmet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsjA/LjwIw=="
+    },
+    "5010": {
+      "costume_id": 41106,
+      "view": 96,
+      "name": "Indian Fillet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v/jB1rnOuNO4rrbsIw=="
+    },
+    "5011": {
+      "costume_id": 41107,
+      "view": 97,
+      "name": "Aerial",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsjF17OqIw=="
+    },
+    "5012": {
+      "costume_id": 41108,
+      "view": 98,
+      "name": "Ph.D Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9C757jwIw=="
+    },
+    "5013": {
+      "costume_id": 41109,
+      "view": 99,
+      "name": "Lord Kaho's Horn",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t8615cSryKPAx7vUIw=="
+    },
+    "5014": {
+      "costume_id": 41110,
+      "view": 100,
+      "name": "Fin Helm",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "x8nH77inIw=="
+    },
+    "5015": {
+      "costume_id": 41111,
+      "view": 101,
+      "name": "Egg Shell",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rvsuyrsH6Iw=="
+    },
+    "5016": {
+      "costume_id": 41112,
+      "view": 102,
+      "name": "Boy's Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9C7/bjwIw=="
+    },
+    "5017": {
+      "costume_id": 41113,
+      "view": 103,
+      "name": "Bone Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "urvH77inIw=="
+    },
+    "5018": {
+      "costume_id": 41114,
+      "view": 104,
+      "name": "Feather Bonnet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "serF0LjwwNoj"
+    },
+    "5019": {
+      "costume_id": 41115,
+      "view": 105,
+      "name": "Corsair",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xL+8vL7uIw=="
+    },
+    "5020": {
+      "costume_id": 41116,
+      "view": 106,
+      "name": "Kafra Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xKvHwbbzwMe407iutuwj"
+    },
+    "5021": {
+      "costume_id": 41117,
+      "view": 107,
+      "name": "Grief for Greed",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tbfA0sC6wNrAx7i2wL0j"
+    },
+    "5022": {
+      "costume_id": 41118,
+      "view": 138,
+      "name": "Hat of the Sun God",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xcK+573FwMe48MDaIw=="
+    },
+    "5023": {
+      "costume_id": 41119,
+      "view": 108,
+      "name": "Parcel Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uri1+7iuuPAj"
+    },
+    "5024": {
+      "costume_id": 41120,
+      "view": 109,
+      "name": "Cake Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xMnAzMWpuPDA2iM="
+    },
+    "5025": {
+      "costume_id": 41121,
+      "view": 110,
+      "name": "Helm of Angel",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w7W758DHxfWxuCM="
+    },
+    "5026": {
+      "costume_id": 41122,
+      "view": 111,
+      "name": "Chef Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v+S4rrvnwMe48MDaIw=="
+    },
+    "5027": {
+      "costume_id": 41123,
+      "view": 112,
+      "name": "Mage Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLa5/bvnwMe48MDaIw=="
+    },
+    "5028": {
+      "costume_id": 41124,
+      "view": 113,
+      "name": "Candle",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w9C60iM="
+    },
+    "5029": {
+      "costume_id": 41125,
+      "view": 114,
+      "name": "Spore Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vbrG977GuPDA2iM="
+    },
+    "5030": {
+      "costume_id": 41126,
+      "view": 115,
+      "name": "Panda Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xtK09bD1uPDA2iM="
+    },
+    "5031": {
+      "costume_id": 41127,
+      "view": 116,
+      "name": "Mine Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "saS76sfvuOQj"
+    },
+    "5032": {
+      "costume_id": 41128,
+      "view": 117,
+      "name": "Sunday Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s6q16cDMuPDA2iM="
+    },
+    "5033": {
+      "costume_id": 41129,
+      "view": 118,
+      "name": "Raccoon Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s8qxuLiuuPDA2iM="
+    },
+    "5034": {
+      "costume_id": 41130,
+      "view": 119,
+      "name": "Bulb Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wPyxuLjTuK627CM="
+    },
+    "5035": {
+      "costume_id": 41131,
+      "view": 120,
+      "name": "Poring Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xve4tbjwwNoj"
+    },
+    "5036": {
+      "costume_id": 41132,
+      "view": 121,
+      "name": "Cross Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcrA2rjTuK627CM="
+    },
+    "5037": {
+      "costume_id": 41133,
+      "view": 122,
+      "name": "Nut Shell",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v624xbKuwfoj"
+    },
+    "5038": {
+      "costume_id": 41134,
+      "view": 123,
+      "name": "Deviruchi Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/Wzor7HuLa48MDaIw=="
+    },
+    "5039": {
+      "costume_id": 41135,
+      "view": 124,
+      "name": "Rainbow Eggshell",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsu3z7Tet8++y7Kuwfoj"
+    },
+    "5040": {
+      "costume_id": 41136,
+      "view": 125,
+      "name": "Blush",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "ud+x17e5Iw=="
+    },
+    "5041": {
+      "costume_id": 41137,
+      "view": 126,
+      "name": "Heart Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8/GrrjTuK7HySM="
+    },
+    "5042": {
+      "costume_id": 41138,
+      "view": 127,
+      "name": "Bao Bao",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rsb3wNqx4iM="
+    },
+    "5043": {
+      "costume_id": 41139,
+      "view": 128,
+      "name": "Opera Phantom Mask",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v8DG5LbzwK+3ybChuOkj"
+    },
+    "5044": {
+      "costume_id": 41140,
+      "view": 129,
+      "name": "Evil Wing Ears",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vse4tsDHs6+wsyM="
+    },
+    "5045": {
+      "costume_id": 41141,
+      "view": 130,
+      "name": "Magician Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLa8+rvnwMe48MDaIw=="
+    },
+    "5046": {
+      "costume_id": 41142,
+      "view": 139,
+      "name": "Bongun Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uruwx7jwwNoj"
+    },
+    "5047": {
+      "costume_id": 41143,
+      "view": 131,
+      "name": "Fashionable Glasses",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xtC8x7yxsdu3ob26Iw=="
+    },
+    "5048": {
+      "costume_id": 41144,
+      "view": 132,
+      "name": "Cresent Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w8q9wrTeuNO4rsfJIw=="
+    },
+    "5049": {
+      "costume_id": 41145,
+      "view": 133,
+      "name": "Striped Hairband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wdm5q7TMuNO4rrbsIw=="
+    },
+    "5050": {
+      "costume_id": 41146,
+      "view": 134,
+      "name": "Wonder Nutshell",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcW68cfRv624xbKuwfoj"
+    },
+    "5051": {
+      "costume_id": 41147,
+      "view": 135,
+      "name": "Pussy Cat Bell",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO2+58DMuea/7yM="
+    },
+    "5052": {
+      "costume_id": 41148,
+      "view": 136,
+      "name": "Blue Hairband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w7u79rjTuK627CM="
+    },
+    "5053": {
+      "costume_id": 41149,
+      "view": 137,
+      "name": "Sphinx Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vbrHzsWpvbq48MDaIw=="
+    },
+    "5054": {
+      "costume_id": 41150,
+      "view": 180,
+      "name": "Assassin Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vu68vL3FuLa9usWpIw=="
+    },
+    "5055": {
+      "costume_id": 41151,
+      "view": 101,
+      "name": "Novice False Eggshell",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rvsuyrsH6Iw=="
+    },
+    "5056": {
+      "costume_id": 41152,
+      "view": 140,
+      "name": "Fruit of Love",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+e2+8DHv624xSM="
+    },
+    "5057": {
+      "costume_id": 41153,
+      "view": 141,
+      "name": "Black Cat Ears",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sMvAurDtvufAzLHNIw=="
+    },
+    "5058": {
+      "costume_id": 41154,
+      "view": 142,
+      "name": "Drooping Cat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4sO2+58DMIw=="
+    },
+    "5059": {
+      "costume_id": 41155,
+      "view": 143,
+      "name": "Teddybear Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sPW1ucDMuPDA2iM="
+    },
+    "5060": {
+      "costume_id": 41156,
+      "view": 144,
+      "name": "Party Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sr+x8rjwwNoj"
+    },
+    "5061": {
+      "costume_id": 41157,
+      "view": 145,
+      "name": "Flower Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ssm407iux8kj"
+    },
+    "5062": {
+      "costume_id": 41158,
+      "view": 146,
+      "name": "Straw Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "udDCpLjwwNoj"
+    },
+    "5063": {
+      "costume_id": 41159,
+      "view": 147,
+      "name": "Giant Band Aid",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ud3DorDtIw=="
+    },
+    "5064": {
+      "costume_id": 41160,
+      "view": 148,
+      "name": "Smokie Leaf",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s6q5tcDZxfWxuCM="
+    },
+    "5065": {
+      "costume_id": 41161,
+      "view": 149,
+      "name": "Blue Fish",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/28sbjwwNoj"
+    },
+    "5066": {
+      "costume_id": 41162,
+      "view": 150,
+      "name": "Succubus Horn",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3Fpbn2vbq71CM="
+    },
+    "5067": {
+      "costume_id": 41163,
+      "view": 151,
+      "name": "Sombrero",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vNi66re5t84j"
+    },
+    "5068": {
+      "costume_id": 41164,
+      "view": 152,
+      "name": "Evil Wing Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vse4trOvsLOxzSM="
+    },
+    "5069": {
+      "costume_id": 41165,
+      "view": 153,
+      "name": "Kitsune Mask",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6m/7LChuOkj"
+    },
+    "5070": {
+      "costume_id": 41166,
+      "view": 154,
+      "name": "Hot-blooded Headband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v63H97jTuK627CM="
+    },
+    "5071": {
+      "costume_id": 41167,
+      "view": 155,
+      "name": "Indian Headband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wM618L7IuNO4rrbsIw=="
+    },
+    "5072": {
+      "costume_id": 41168,
+      "view": 156,
+      "name": "Incubus Horn",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wM7Fpbn2vbq71CM="
+    },
+    "5073": {
+      "costume_id": 41169,
+      "view": 157,
+      "name": "Model Training Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wNq8vLGzwaS48MDaIw=="
+    },
+    "5074": {
+      "costume_id": 41170,
+      "view": 158,
+      "name": "Angel Wing Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "w7W757OvsLOxzSM="
+    },
+    "5075": {
+      "costume_id": 41171,
+      "view": 159,
+      "name": "Cowboy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xKu/7Lq4wMy48MDaIw=="
+    },
+    "5076": {
+      "costume_id": 41172,
+      "view": 160,
+      "name": "Beanie",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xdC48MDaIw=="
+    },
+    "5077": {
+      "costume_id": 41173,
+      "view": 161,
+      "name": "Tulip Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xqu4s7jTuK7HySM="
+    },
+    "5078": {
+      "costume_id": 41174,
+      "view": 162,
+      "name": "Sea-Otter Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9i03rjwwNoj"
+    },
+    "5079": {
+      "costume_id": 41175,
+      "view": 163,
+      "name": "X Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "WMDauNO4rsfJIw=="
+    },
+    "5080": {
+      "costume_id": 41176,
+      "view": 164,
+      "name": "Crown of Ancient Queen",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6m/1cDHxfWxuCM="
+    },
+    "5081": {
+      "costume_id": 41177,
+      "view": 165,
+      "name": "Crown of Mistress",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ucy9usaut7m9ur/VsPwj"
+    },
+    "5082": {
+      "costume_id": 41178,
+      "view": 166,
+      "name": "Decorative Mushroom",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ufa8uLjTuK627CM="
+    },
+    "5083": {
+      "costume_id": 41179,
+      "view": 167,
+      "name": "Red Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u6Gwo8XXwM+4rrq7Iw=="
+    },
+    "5084": {
+      "costume_id": 41180,
+      "view": 168,
+      "name": "Lazy Smokie",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sc3C+sC6s8qxuLiuIw=="
+    },
+    "5085": {
+      "costume_id": 41181,
+      "view": 169,
+      "name": "Small Ribbons",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vufCyrHNudi4rrq7Iw=="
+    },
+    "5086": {
+      "costume_id": 41182,
+      "view": 170,
+      "name": "Alarm Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vsu297ChuOkj"
+    },
+    "5087": {
+      "costume_id": 41183,
+      "view": 171,
+      "name": "Poker Face",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO267biwsKG46THIoyM="
+    },
+    "5088": {
+      "costume_id": 41184,
+      "view": 172,
+      "name": "Surprised Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO267biwsKG46TLIoyM="
+    },
+    "5089": {
+      "costume_id": 41185,
+      "view": 173,
+      "name": "Annoyed Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO267biwsKG46TPIoyM="
+    },
+    "5090": {
+      "costume_id": 41186,
+      "view": 174,
+      "name": "Goblin Leader Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sO267biwsKG46TTIoyM="
+    },
+    "5091": {
+      "costume_id": 41187,
+      "view": 175,
+      "name": "Decorative Golden Bell",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tOvH/LHduea/7yM="
+    },
+    "5092": {
+      "costume_id": 41188,
+      "view": 176,
+      "name": "Coif",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vPaz4LjwwNoj"
+    },
+    "5093": {
+      "costume_id": 41189,
+      "view": 177,
+      "name": "Coif",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vPaz4LjwwNoj"
+    },
+    "5094": {
+      "costume_id": 41190,
+      "view": 178,
+      "name": "Helmet of Orc Hero",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v8DFqcj3vu63zsX1sbgj"
+    },
+    "5096": {
+      "costume_id": 41191,
+      "view": 180,
+      "name": "Assassin Mask",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vu679b3FuLa9usWpIw=="
+    },
+    "5097": {
+      "costume_id": 41192,
+      "view": 144,
+      "name": "Holiday Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sr+x8rjwwNpfIw=="
+    },
+    "5099": {
+      "costume_id": 41193,
+      "view": 182,
+      "name": "Neko Mimi",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sO2+58DMuPDA2iM="
+    },
+    "5101": {
+      "costume_id": 41194,
+      "view": 184,
+      "name": "Takius's Blindfold",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xbjFsL/svbq0q7ChuK6wsyM="
+    },
+    "5102": {
+      "costume_id": 41195,
+      "view": 185,
+      "name": "Blank Eyes",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "uejGsr/CtvPAziM="
+    },
+    "5104": {
+      "costume_id": 41196,
+      "view": 187,
+      "name": "Dark Blinder",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sMvAurSrsKG4rrCzIw=="
+    },
+    "5105": {
+      "costume_id": 41197,
+      "view": 109,
+      "name": "2nd Anniversary Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xMnAzMWpuPDA2iM="
+    },
+    "5106": {
+      "costume_id": 41198,
+      "view": 144,
+      "name": "2nd Anniversary Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sr+x8rjwwNoj"
+    },
+    "5107": {
+      "costume_id": 41199,
+      "view": 188,
+      "name": "Crunch Toast",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "xeS9usauIw=="
+    },
+    "5108": {
+      "costume_id": 41200,
+      "view": 189,
+      "name": "Renown Detective's Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xb3BpLjwwNoj"
+    },
+    "5109": {
+      "costume_id": 41201,
+      "view": 190,
+      "name": "Red Bonnet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wve+57jwwNoj"
+    },
+    "5110": {
+      "costume_id": 41202,
+      "view": 191,
+      "name": "Baby Pacifier",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "waWywMH2Iw=="
+    },
+    "5111": {
+      "costume_id": 41203,
+      "view": 192,
+      "name": "Galapago Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v8C4rrjwwNoj"
+    },
+    "5112": {
+      "costume_id": 41204,
+      "view": 193,
+      "name": "Super Novice Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vbSz67jwwNoj"
+    },
+    "5113": {
+      "costume_id": 41205,
+      "view": 194,
+      "name": "Angry Snarl",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "utCz68DUIw=="
+    },
+    "5114": {
+      "costume_id": 41206,
+      "view": 195,
+      "name": "Bucket Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uqGwxcH2uPDA2iM="
+    },
+    "5115": {
+      "costume_id": 41207,
+      "view": 196,
+      "name": "Winter Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uebH0bjwwNoj"
+    },
+    "5116": {
+      "costume_id": 41208,
+      "view": 197,
+      "name": "Banana Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "udmzqrOquPDA2iM="
+    },
+    "5117": {
+      "costume_id": 41209,
+      "view": 198,
+      "name": "Mystic Rose",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ucy9usa9t87B7iM="
+    },
+    "5118": {
+      "costume_id": 41210,
+      "view": 199,
+      "name": "Puppy Headband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sK2+xsH2sc0j"
+    },
+    "5119": {
+      "costume_id": 41211,
+      "view": 193,
+      "name": "Super Novice Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vbSz67jwwNoj"
+    },
+    "5120": {
+      "costume_id": 41212,
+      "view": 195,
+      "name": "Bucket Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uqGwxcH2uPDA2iM="
+    },
+    "5121": {
+      "costume_id": 41213,
+      "view": 200,
+      "name": "Zealotus Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "wfa4o8W4vbqwobjpIw=="
+    },
+    "5122": {
+      "costume_id": 41214,
+      "view": 250,
+      "name": "Magni's Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uN6x5MS4Iw=="
+    },
+    "5123": {
+      "costume_id": 41215,
+      "view": 254,
+      "name": "Ulle's Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v+/EuCM="
+    },
+    "5124": {
+      "costume_id": 41216,
+      "view": 251,
+      "name": "Fricca's Circlet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8G4rsSrvK3FrLi0Iw=="
+    },
+    "5125": {
+      "costume_id": 41217,
+      "view": 255,
+      "name": "Angel's Kiss",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w7W758DHwNS4wsPjIw=="
+    },
+    "5126": {
+      "costume_id": 41218,
+      "view": 256,
+      "name": "Morpheus's Hood",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uPC4o8fHvMW9urXOsMcj"
+    },
+    "5127": {
+      "costume_id": 41219,
+      "view": 257,
+      "name": "Morrigane's Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uPC4rr7Gs9fH77inIw=="
+    },
+    "5128": {
+      "costume_id": 41220,
+      "view": 258,
+      "name": "Goibne's Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sNS66rPXwMzF9bG4Iw=="
+    },
+    "5129": {
+      "costume_id": 41221,
+      "view": 201,
+      "name": "Bird Nest",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/W11cH2Iw=="
+    },
+    "5130": {
+      "costume_id": 41222,
+      "view": 202,
+      "name": "Lion Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tvPAzL/CuLa9usWpIw=="
+    },
+    "5131": {
+      "costume_id": 41223,
+      "view": 203,
+      "name": "Close Helmet",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "xay3zr26x++45CM="
+    },
+    "5132": {
+      "costume_id": 41224,
+      "view": 204,
+      "name": "Angeling Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6PBqbi1uPDA2iM="
+    },
+    "5134": {
+      "costume_id": 41225,
+      "view": 206,
+      "name": "Pumpkin-Head",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yKO52rjwwNoj"
+    },
+    "5135": {
+      "costume_id": 41226,
+      "view": 207,
+      "name": "Cyclop's Eye",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "u+fAzMWst9O9ur7GwMwj"
+    },
+    "5136": {
+      "costume_id": 41227,
+      "view": 20,
+      "name": "Antonio's Santa Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+rFuLjwwNoj"
+    },
+    "5137": {
+      "costume_id": 41228,
+      "view": 208,
+      "name": "Alice Doll",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6S4rr26uPDA2iM="
+    },
+    "5138": {
+      "costume_id": 41229,
+      "view": 209,
+      "name": "Magic Eyes",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uMXB977GwMzB7iM="
+    },
+    "5139": {
+      "costume_id": 41230,
+      "view": 210,
+      "name": "Hibiscus",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "us6/6yM="
+    },
+    "5140": {
+      "costume_id": 41231,
+      "view": 211,
+      "name": "Charming Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v7m727iuursj"
+    },
+    "5141": {
+      "costume_id": 41232,
+      "view": 212,
+      "name": "Marionette Doll",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLa4rr/As9248MDaIw=="
+    },
+    "5142": {
+      "costume_id": 41233,
+      "view": 213,
+      "name": "Crescent Helm",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "w8q9wrTexfWxuCM="
+    },
+    "5143": {
+      "costume_id": 41234,
+      "view": 214,
+      "name": "Kabuki Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "sKG6zsWwsKG46SM="
+    },
+    "5144": {
+      "costume_id": 41235,
+      "view": 16,
+      "name": "Gambler Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x94j"
+    },
+    "5145": {
+      "costume_id": 41236,
+      "view": 89,
+      "name": "Carnival Joker Jester",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "saS067jwwNoj"
+    },
+    "5146": {
+      "costume_id": 41237,
+      "view": 215,
+      "name": "Elephant Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNqzoriuuPDA2iM="
+    },
+    "5147": {
+      "costume_id": 41238,
+      "view": 216,
+      "name": "Baseball Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vt+xuLjwwNoj"
+    },
+    "5148": {
+      "costume_id": 41239,
+      "view": 217,
+      "name": "Phrygian Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sbmw5sDPuPDA2iM="
+    },
+    "5149": {
+      "costume_id": 41240,
+      "view": 218,
+      "name": "Silver Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vce59sa8vsa28yM="
+    },
+    "5150": {
+      "costume_id": 41241,
+      "view": 219,
+      "name": "Joker Jester",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "saS067jwwNpfIw=="
+    },
+    "5151": {
+      "costume_id": 41242,
+      "view": 220,
+      "name": "Note Headphones",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "wL3HpcfsteXG+SM="
+    },
+    "5152": {
+      "costume_id": 41243,
+      "view": 221,
+      "name": "Chinese Crown",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "usCw/CM="
+    },
+    "5153": {
+      "costume_id": 41244,
+      "view": 222,
+      "name": "Angeling Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6PBqbi1x8kj"
+    },
+    "5157": {
+      "costume_id": 41245,
+      "view": 86,
+      "name": "Orc Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v8DFqcG3x++4pyM="
+    },
+    "5158": {
+      "costume_id": 41246,
+      "view": 35,
+      "name": "Monk Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLrB98DawMe48MDaIw=="
+    },
+    "5159": {
+      "costume_id": 41247,
+      "view": 30,
+      "name": "Golden Gear",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sPG158fsteWx4r7uIw=="
+    },
+    "5160": {
+      "costume_id": 41248,
+      "view": 41,
+      "name": "Majestic Goat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLbBpr26xr2w7b/sxq4j"
+    },
+    "5161": {
+      "costume_id": 41249,
+      "view": 43,
+      "name": "Spiky Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/7HwcfsteWx4r7uIw=="
+    },
+    "5162": {
+      "costume_id": 41250,
+      "view": 103,
+      "name": "Bone Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "urvH77inIw=="
+    },
+    "5163": {
+      "costume_id": 41251,
+      "view": 105,
+      "name": "Corsair",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xL+8vL7uIw=="
+    },
+    "5164": {
+      "costume_id": 41252,
+      "view": 19,
+      "name": "Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xry+xrbzIw=="
+    },
+    "5165": {
+      "costume_id": 41253,
+      "view": 45,
+      "name": "Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xam287/uIw=="
+    },
+    "5166": {
+      "costume_id": 41254,
+      "view": 137,
+      "name": "Sphinx Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vbrHzsWpvbq48MDaIw=="
+    },
+    "5167": {
+      "costume_id": 41255,
+      "view": 51,
+      "name": "Munak Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uauzq7jwwNoj"
+    },
+    "5168": {
+      "costume_id": 41256,
+      "view": 139,
+      "name": "Bongun Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uruwx7jwwNoj"
+    },
+    "5169": {
+      "costume_id": 41257,
+      "view": 223,
+      "name": "Bride Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sKK9w8W7Iw=="
+    },
+    "5170": {
+      "costume_id": 41258,
+      "view": 224,
+      "name": "Feather Beret",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "serF0Lqjt7m48CM="
+    },
+    "5171": {
+      "costume_id": 41259,
+      "view": 225,
+      "name": "Valkyrie Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ud/FsLiuxfWxuCM="
+    },
+    "5172": {
+      "costume_id": 41260,
+      "view": 226,
+      "name": "Beret",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uqO3ubjwIw=="
+    },
+    "5173": {
+      "costume_id": 41261,
+      "view": 227,
+      "name": "Magistrate Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+e2x7jwwNoj"
+    },
+    "5174": {
+      "costume_id": 41262,
+      "view": 228,
+      "name": "Ayam",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsa+5CM="
+    },
+    "5175": {
+      "costume_id": 41263,
+      "view": 229,
+      "name": "Censor Bar",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "wM247b/kw7sj"
+    },
+    "5176": {
+      "costume_id": 41264,
+      "view": 230,
+      "name": "Hahoe Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "x8/IuMW7Iw=="
+    },
+    "5177": {
+      "costume_id": 41265,
+      "view": 231,
+      "name": "Mythical Lion Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "u+fA2sW7Iw=="
+    },
+    "5178": {
+      "costume_id": 41266,
+      "view": 113,
+      "name": "Candle",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w9C60iM="
+    },
+    "5179": {
+      "costume_id": 41267,
+      "view": 232,
+      "name": "Golden Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sPG15ca8vsa28yM="
+    },
+    "5180": {
+      "costume_id": 41268,
+      "view": 217,
+      "name": "France Holiday Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sbmw5sDPuPDA2iM="
+    },
+    "5181": {
+      "costume_id": 41269,
+      "view": 233,
+      "name": "Helm of Darkness",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vs/I5sDHxfWxuCM="
+    },
+    "5182": {
+      "costume_id": 41270,
+      "view": 234,
+      "name": "Puppy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sK2+xsH2uPDA2iM="
+    },
+    "5183": {
+      "costume_id": 41271,
+      "view": 235,
+      "name": "Bird Nest Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/W11cH2uPDA2iM="
+    },
+    "5184": {
+      "costume_id": 41272,
+      "view": 236,
+      "name": "Captain's Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLHA5cDHuPDA2iM="
+    },
+    "5185": {
+      "costume_id": 41273,
+      "view": 237,
+      "name": "Laurel Wreath",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v/mw6Lz2sPwj"
+    },
+    "5186": {
+      "costume_id": 41274,
+      "view": 238,
+      "name": "Geographer Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rwfa/wLHXt6HG2yM="
+    },
+    "5187": {
+      "costume_id": 41275,
+      "view": 239,
+      "name": "Twin Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xq7Aqbiuursj"
+    },
+    "5188": {
+      "costume_id": 41276,
+      "view": 240,
+      "name": "Wandering Minstrel Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wL3Ar73DwM648MDaIw=="
+    },
+    "5189": {
+      "costume_id": 41277,
+      "view": 241,
+      "name": "Autumn Leaves",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s6u/sSM="
+    },
+    "5190": {
+      "costume_id": 41278,
+      "view": 216,
+      "name": "Independence Memorial Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vt+xuLjwwNpfIw=="
+    },
+    "5191": {
+      "costume_id": 41279,
+      "view": 242,
+      "name": "Black Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1+wy8GkIw=="
+    },
+    "5192": {
+      "costume_id": 41280,
+      "view": 243,
+      "name": "Yellow Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1+z67b7Iw=="
+    },
+    "5193": {
+      "costume_id": 41281,
+      "view": 244,
+      "name": "Green Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1/DyrfPIw=="
+    },
+    "5194": {
+      "costume_id": 41282,
+      "view": 245,
+      "name": "Pink Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1+60MirIw=="
+    },
+    "5195": {
+      "costume_id": 41283,
+      "view": 246,
+      "name": "Red Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1+7obCtIw=="
+    },
+    "5196": {
+      "costume_id": 41284,
+      "view": 247,
+      "name": "Orange Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1/B1sirIw=="
+    },
+    "5197": {
+      "costume_id": 41285,
+      "view": 248,
+      "name": "White Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1/Hz77nIw=="
+    },
+    "5198": {
+      "costume_id": 41286,
+      "view": 249,
+      "name": "Drooping Bunny",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4xeSzoiM="
+    },
+    "5199": {
+      "costume_id": 41287,
+      "view": 216,
+      "name": "Baseball Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vt+xuLjwwNoj"
+    },
+    "5200": {
+      "costume_id": 41288,
+      "view": 252,
+      "name": "Coppola",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNrG+rbzIw=="
+    },
+    "5202": {
+      "costume_id": 41289,
+      "view": 206,
+      "name": "Fantastic Pumpkin-Head",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yKO52rjwwNoj"
+    },
+    "5203": {
+      "costume_id": 41290,
+      "view": 253,
+      "name": "Smiling Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uN631bChuOkj"
+    },
+    "5204": {
+      "costume_id": 41291,
+      "view": 49,
+      "name": "Rudolph's Nose",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "saS068TaIw=="
+    },
+    "5205": {
+      "costume_id": 41292,
+      "view": 261,
+      "name": "Emperor's Laurel Crown",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v/mw6LD8Iw=="
+    },
+    "5207": {
+      "costume_id": 41293,
+      "view": 260,
+      "name": "Angel Blessing",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sd279rDtuK4j"
+    },
+    "5208": {
+      "costume_id": 41294,
+      "view": 262,
+      "name": "Rideword Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tvPAzLXlv/a15SM="
+    },
+    "5209": {
+      "costume_id": 41295,
+      "view": 263,
+      "name": "Love Dad Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s+u29b7fsbi48MDaIw=="
+    },
+    "5211": {
+      "costume_id": 41296,
+      "view": 265,
+      "name": "Dress Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "teW3ub26x94j"
+    },
+    "5212": {
+      "costume_id": 41297,
+      "view": 266,
+      "name": "Satellite Hairband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/XGsrbzwMzGrsfsvu656rXlIw=="
+    },
+    "5213": {
+      "costume_id": 41298,
+      "view": 267,
+      "name": "Sheila Hairnet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sMvAusXks6K407iutuwj"
+    },
+    "5214": {
+      "costume_id": 41299,
+      "view": 268,
+      "name": "Moonlight Flower Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v/m+38ituPDA2iM="
+    },
+    "5225": {
+      "costume_id": 41300,
+      "view": 269,
+      "name": "Parade Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLbEqsfeIw=="
+    },
+    "5244": {
+      "costume_id": 41301,
+      "view": 288,
+      "name": "Elven Blindfold",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "5245": {
+      "costume_id": 41302,
+      "view": 289,
+      "name": "Elven Sunglasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "5246": {
+      "costume_id": 41303,
+      "view": 290,
+      "name": "Angelic Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "w7W758DHuNO4rrbsIw=="
+    },
+    "5247": {
+      "costume_id": 41304,
+      "view": 291,
+      "name": "Satanic Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vse4tsDHuNO4rrbsIw=="
+    },
+    "5248": {
+      "costume_id": 41305,
+      "view": 292,
+      "name": "Robotic Blindfold",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tKuwobiusLMj"
+    },
+    "5249": {
+      "costume_id": 41306,
+      "view": 293,
+      "name": "Human Blindfold",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tKuwobiusLMj"
+    },
+    "5250": {
+      "costume_id": 41307,
+      "view": 294,
+      "name": "Robotic Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "5251": {
+      "costume_id": 41308,
+      "view": 295,
+      "name": "Round Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "5252": {
+      "costume_id": 41309,
+      "view": 296,
+      "name": "Drooping Ninetail",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4sbi5zMijIw=="
+    },
+    "5253": {
+      "costume_id": 41310,
+      "view": 297,
+      "name": "Lif Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK7HwcDOx/y48MDaIw=="
+    },
+    "5254": {
+      "costume_id": 41311,
+      "view": 298,
+      "name": "Deviling Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "taW69Li1uPDA2iM="
+    },
+    "5255": {
+      "costume_id": 41312,
+      "view": 299,
+      "name": "Triple Poring Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xve4tbDjuPDA2iM="
+    },
+    "5258": {
+      "costume_id": 41313,
+      "view": 302,
+      "name": "Afro Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vsbHwbfOsKG53yM="
+    },
+    "5259": {
+      "costume_id": 41314,
+      "view": 215,
+      "name": "Elephant Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNqzoriuuPDA2iM="
+    },
+    "5260": {
+      "costume_id": 41315,
+      "view": 217,
+      "name": "Cookie Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sbmw5sDPuPDA2iM="
+    },
+    "5261": {
+      "costume_id": 41316,
+      "view": 218,
+      "name": "Silver Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vce59sa8vsa28yM="
+    },
+    "5262": {
+      "costume_id": 41317,
+      "view": 232,
+      "name": "Golden Tiara",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sPG15ca8vsa28yM="
+    },
+    "5264": {
+      "costume_id": 41318,
+      "view": 304,
+      "name": "Australian Flag Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yKPB1rG5seK48MDaIw=="
+    },
+    "5269": {
+      "costume_id": 41319,
+      "view": 264,
+      "name": "Flapping Angel Wing",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uvG788fPtMLDtbvnIw=="
+    },
+    "5270": {
+      "costume_id": 41320,
+      "view": 241,
+      "name": "Autumn Leaves",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s6u/sSM="
+    },
+    "5271": {
+      "costume_id": 41321,
+      "view": 221,
+      "name": "Phoenix Crown",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "usCw/CM="
+    },
+    "5272": {
+      "costume_id": 41322,
+      "view": 253,
+      "name": "Tongue Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uN631bChuOkj"
+    },
+    "5273": {
+      "costume_id": 41323,
+      "view": 305,
+      "name": "Happy Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "x+C6ucfRsKG53yM="
+    },
+    "5274": {
+      "costume_id": 41324,
+      "view": 306,
+      "name": "Shiny Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "tKu6zr3FsKG53yM="
+    },
+    "5275": {
+      "costume_id": 41325,
+      "view": 307,
+      "name": "Marvelous Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "s+6287/usKG53yM="
+    },
+    "5276": {
+      "costume_id": 41326,
+      "view": 308,
+      "name": "Fantastic Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "yK+788D7wM6wobnfIw=="
+    },
+    "5279": {
+      "costume_id": 41327,
+      "view": 142,
+      "name": "Refined Drooping Cat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4sO2+58DMIw=="
+    },
+    "5280": {
+      "costume_id": 41328,
+      "view": 41,
+      "name": "Baphomet Horns",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLbBpr26xr2w7b/sxq4j"
+    },
+    "5281": {
+      "costume_id": 41329,
+      "view": 123,
+      "name": "Refined Deviruchi Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/Wzor7HuLa48MDaIw=="
+    },
+    "5282": {
+      "costume_id": 41330,
+      "view": 216,
+      "name": "Europe Baseball Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wK+3tL7fsbi48MDaIw=="
+    },
+    "5290": {
+      "costume_id": 41331,
+      "view": 249,
+      "name": "Drooping Bunny",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4xeSzoiM="
+    },
+    "5296": {
+      "costume_id": 41332,
+      "view": 296,
+      "name": "Drooping Nine Tail",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4sbi5zMijIw=="
+    },
+    "5297": {
+      "costume_id": 41333,
+      "view": 301,
+      "name": "Soul Wing",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vNK/77iuvbrAriM="
+    },
+    "5298": {
+      "costume_id": 41334,
+      "view": 307,
+      "name": "Dokebi's Wig",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "s+6287/usKG53yM="
+    },
+    "5299": {
+      "costume_id": 41335,
+      "view": 303,
+      "name": "Pagdayaw",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "vsbGvL7Gxry48MDaIw=="
+    },
+    "5301": {
+      "costume_id": 41336,
+      "view": 323,
+      "name": "Victory Hairband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t6+9w77GuK66uyM="
+    },
+    "5302": {
+      "costume_id": 41337,
+      "view": 324,
+      "name": "Flower Lily",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v6yyybjwwNoj"
+    },
+    "5303": {
+      "costume_id": 41338,
+      "view": 325,
+      "name": "Flower Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yK2w/CM="
+    },
+    "5309": {
+      "costume_id": 41339,
+      "view": 331,
+      "name": "Wool Mask",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "uPDI98StIw=="
+    },
+    "5316": {
+      "costume_id": 41340,
+      "view": 338,
+      "name": "Umbrella Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v+y76rjwwNoj"
+    },
+    "5317": {
+      "costume_id": 41341,
+      "view": 339,
+      "name": "Fisherman's Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vu66zsDHuPDA2iM="
+    },
+    "5319": {
+      "costume_id": 41342,
+      "view": 341,
+      "name": "Hello Mother Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xsS29b+jwam4tbjwwNoj"
+    },
+    "5321": {
+      "costume_id": 41343,
+      "view": 342,
+      "name": "Bandana Merah Putih",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wM61tbPXvcO+xsfsvu656rXlIw=="
+    },
+    "5325": {
+      "costume_id": 41344,
+      "view": 345,
+      "name": "Robo Eye",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "t866uL7GwMwj"
+    },
+    "5326": {
+      "costume_id": 41345,
+      "view": 78,
+      "name": "Masquerade C",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "s6q68bChuOkj"
+    },
+    "5327": {
+      "costume_id": 41346,
+      "view": 178,
+      "name": "Refined Helmet of Orc Hero",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v8DFqcj3vu63zsX1sbgj"
+    },
+    "5328": {
+      "costume_id": 41347,
+      "view": 152,
+      "name": "Evil Wing Ears C",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vse4trOvsLOxzSM="
+    },
+    "5329": {
+      "costume_id": 41348,
+      "view": 187,
+      "name": "Dark Blindfold C",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "sMvAurSrsKG4rrCzIw=="
+    },
+    "5330": {
+      "costume_id": 41349,
+      "view": 142,
+      "name": "kRO Drooping Kitty C",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4sO2+58DMIw=="
+    },
+    "5331": {
+      "costume_id": 41350,
+      "view": 105,
+      "name": "Corsair C",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xL+8vL7uIw=="
+    },
+    "5332": {
+      "costume_id": 41351,
+      "view": 346,
+      "name": "Loki Mask",
+      "locations": [
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "t87FsLi2vbrFqSM="
+    },
+    "5334": {
+      "costume_id": 41352,
+      "view": 348,
+      "name": "Flapping Angeling",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s6+w7b3NwLq/o8GpuLUj"
+    },
+    "5335": {
+      "costume_id": 41353,
+      "view": 349,
+      "name": "Jumping Poring",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xvrCpsDMtMLG97i1Iw=="
+    },
+    "5340": {
+      "costume_id": 41354,
+      "view": 354,
+      "name": "Defolty Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tfDG97ijxdfAzsf8uPDA2iM="
+    },
+    "5341": {
+      "costume_id": 41355,
+      "view": 355,
+      "name": "Glaris Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sdu287iuvbrAzsf8uPDA2iM="
+    },
+    "5342": {
+      "costume_id": 41356,
+      "view": 356,
+      "name": "Sorin Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vNK4sMDOx/y48MDaIw=="
+    },
+    "5343": {
+      "costume_id": 41357,
+      "view": 357,
+      "name": "Telling Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xdfAz7i1wM7H/LjwwNoj"
+    },
+    "5344": {
+      "costume_id": 41358,
+      "view": 358,
+      "name": "Bennit Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uvG01sDOx/y48MDaIw=="
+    },
+    "5345": {
+      "costume_id": 41359,
+      "view": 359,
+      "name": "W Doll Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tPW67bf5wM7H/LjwwNoj"
+    },
+    "5347": {
+      "costume_id": 41360,
+      "view": 98,
+      "name": "Ph.D Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9C757jwIw=="
+    },
+    "5348": {
+      "costume_id": 41361,
+      "view": 28,
+      "name": "Big Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v9W4rrq7Iw=="
+    },
+    "5349": {
+      "costume_id": 41362,
+      "view": 102,
+      "name": "Boy's Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9C7/bjwIw=="
+    },
+    "5350": {
+      "costume_id": 41363,
+      "view": 74,
+      "name": "Pirate Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9jA+7XOsMcj"
+    },
+    "5351": {
+      "costume_id": 41364,
+      "view": 37,
+      "name": "Sunflower",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rx9i52bbzseIj"
+    },
+    "5353": {
+      "costume_id": 41365,
+      "view": 138,
+      "name": "Hat of the Sun God",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xcK+573FwMe48MDaIw=="
+    },
+    "5354": {
+      "costume_id": 41366,
+      "view": 362,
+      "name": "Muslim Hat M",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uau9vbiys7LA2rjwIw=="
+    },
+    "5355": {
+      "costume_id": 41367,
+      "view": 363,
+      "name": "Selendang",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uau9vbiyv6nA2rjwIw=="
+    },
+    "5356": {
+      "costume_id": 41368,
+      "view": 206,
+      "name": "Festival Pumpkin Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yKO52rjwwNoj"
+    },
+    "5363": {
+      "costume_id": 41369,
+      "view": 371,
+      "name": "Helm Of Abyss",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcm/rMDHxfWxuCM="
+    },
+    "5364": {
+      "costume_id": 41370,
+      "view": 372,
+      "name": "Evil Snake Lord Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yOa757/VwMe48MDaIw=="
+    },
+    "5365": {
+      "costume_id": 41371,
+      "view": 373,
+      "name": "Magnolia Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sOi29cjEtvPAzCM="
+    },
+    "5366": {
+      "costume_id": 41372,
+      "view": 374,
+      "name": "Love Dad Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v9XAx7jwwNoj"
+    },
+    "5370": {
+      "costume_id": 41373,
+      "view": 376,
+      "name": "Orchid Hairband",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s63DyrjTuK627CM="
+    },
+    "5379": {
+      "costume_id": 41374,
+      "view": 385,
+      "name": "Tam",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ufq36cfeIw=="
+    },
+    "5384": {
+      "costume_id": 41375,
+      "view": 390,
+      "name": "Twin Pompom By JB",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vuewpbehu+rFuLjwwNoj"
+    },
+    "5386": {
+      "costume_id": 41376,
+      "view": 228,
+      "name": "Ayam",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsa+5CM="
+    },
+    "5390": {
+      "costume_id": 41377,
+      "view": 395,
+      "name": "Frozen Twin Pompom",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xsS29b7nsKW3obvqxbi48MDaIw=="
+    },
+    "5392": {
+      "costume_id": 41378,
+      "view": 396,
+      "name": "Luoyang NewYear Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t+++58DHvLOzr7jwwNoj"
+    },
+    "5393": {
+      "costume_id": 41379,
+      "view": 397,
+      "name": "Love Valentine's Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ud+3u8W4wM648MDaIw=="
+    },
+    "5396": {
+      "costume_id": 41380,
+      "view": 399,
+      "name": "Jasper Crest",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOe9usbbxam3ub26xq4j"
+    },
+    "5398": {
+      "costume_id": 41381,
+      "view": 401,
+      "name": "Bone Head",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "urvH7LXlIw=="
+    },
+    "5399": {
+      "costume_id": 41382,
+      "view": 402,
+      "name": "Mandragora Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLi15bbzsO2288S4Iw=="
+    },
+    "5400": {
+      "costume_id": 41383,
+      "view": 403,
+      "name": "Fox Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "v6m/7LjwwNoj"
+    },
+    "5408": {
+      "costume_id": 41384,
+      "view": 6,
+      "name": "Old Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tc6wxyM="
+    },
+    "5409": {
+      "costume_id": 41385,
+      "view": 411,
+      "name": "Purple Cowboy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcXEq7/surjAzLjwwNoj"
+    },
+    "5410": {
+      "costume_id": 41386,
+      "view": 412,
+      "name": "Brown Paperbag Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "u6e6wMX1MiM="
+    },
+    "5411": {
+      "costume_id": 41387,
+      "view": 413,
+      "name": "White Snake Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8++4bnsuPDA2iM="
+    },
+    "5412": {
+      "costume_id": 41388,
+      "view": 414,
+      "name": "Sweet Candy",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "tN7E3sfRu+fFwSM="
+    },
+    "5413": {
+      "costume_id": 41389,
+      "view": 415,
+      "name": "Pop Corn Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xsvE3LjwwNoj"
+    },
+    "5414": {
+      "costume_id": 41390,
+      "view": 416,
+      "name": "Camp Fire Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xLfHwcbEwMy+7rjwwNoj"
+    },
+    "5415": {
+      "costume_id": 41391,
+      "view": 417,
+      "name": "Poring Cake Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xve4tcTJwMzFqbjwwNoj"
+    },
+    "5416": {
+      "costume_id": 41392,
+      "view": 418,
+      "name": "Beer Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uMbB1rjwwNoj"
+    },
+    "5417": {
+      "costume_id": 41393,
+      "view": 419,
+      "name": "Crown Parrots",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v9Ww/L7euasj"
+    },
+    "5418": {
+      "costume_id": 41394,
+      "view": 420,
+      "name": "Legionnaire Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "urTBpLjwwNoj"
+    },
+    "5419": {
+      "costume_id": 41395,
+      "view": 57,
+      "name": "Leaves Of Grass",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "x67A2SM="
+    },
+    "5422": {
+      "costume_id": 41396,
+      "view": 423,
+      "name": "Linguistic Book Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ua7A2sOluPDA2iM="
+    },
+    "5424": {
+      "costume_id": 41397,
+      "view": 425,
+      "name": "Fanta Orange Can Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yK/FuL/At7vB9sS1Iw=="
+    },
+    "5425": {
+      "costume_id": 41398,
+      "view": 426,
+      "name": "Fanta Grape Can Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yK/FuLHXt7nAzMfBxLUj"
+    },
+    "5426": {
+      "costume_id": 41399,
+      "view": 427,
+      "name": "Karada Meguricha Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xKu287TZuN6xuLiuwve48MDaIw=="
+    },
+    "5427": {
+      "costume_id": 41400,
+      "view": 428,
+      "name": "Black Tea Kochakaden Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yKvC98itwPy48MDaIw=="
+    },
+    "5431": {
+      "costume_id": 41401,
+      "view": 432,
+      "name": "Chicken Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sr+yv7TsuPDA2iM="
+    },
+    "5432": {
+      "costume_id": 41402,
+      "view": 433,
+      "name": "bRO 4th Anniversary Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uuq288H6NMHWs+K48MDaIw=="
+    },
+    "5433": {
+      "costume_id": 41403,
+      "view": 434,
+      "name": "Golden Laurel",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yLKx3b/5sOi89iM="
+    },
+    "5435": {
+      "costume_id": 41404,
+      "view": 436,
+      "name": "Red Minstrel Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNrEq8TdtvO48MDaIw=="
+    },
+    "5436": {
+      "costume_id": 41405,
+      "view": 437,
+      "name": "Bride's Corolla",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcW6zsDHyK2w/CM="
+    },
+    "5437": {
+      "costume_id": 41406,
+      "view": 438,
+      "name": "Fairy Flower",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLGz4MDHsskj"
+    },
+    "5438": {
+      "costume_id": 41407,
+      "view": 439,
+      "name": "Cute Green Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrL2X7Psu/Yj"
+    },
+    "5439": {
+      "costume_id": 41408,
+      "view": 440,
+      "name": "Cute Red Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrL2X7uhsK0j"
+    },
+    "5440": {
+      "costume_id": 41409,
+      "view": 441,
+      "name": "Cute Blue Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrL2X8bEtvsj"
+    },
+    "5441": {
+      "costume_id": 41410,
+      "view": 442,
+      "name": "Cute White Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrL2X8fPvucj"
+    },
+    "5442": {
+      "costume_id": 41411,
+      "view": 443,
+      "name": "Necktie",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "s9jFuMDMIw=="
+    },
+    "5443": {
+      "costume_id": 41412,
+      "view": 444,
+      "name": "Statue Of Baby Angel",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsax4sO1u+e78yM="
+    },
+    "5444": {
+      "costume_id": 41413,
+      "view": 445,
+      "name": "Hair Brush",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNO4rrr4Iw=="
+    },
+    "5445": {
+      "costume_id": 41414,
+      "view": 446,
+      "name": "Candy Cane In Mouth",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "wNS/obmrtMK4t7Tru+fFwSM="
+    },
+    "5446": {
+      "costume_id": 41415,
+      "view": 447,
+      "name": "Catfoot Hairpin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sO2+58DMud+407iux8kj"
+    },
+    "5447": {
+      "costume_id": 41416,
+      "view": 448,
+      "name": "Frog Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sLOxuLiuuPDA2iM="
+    },
+    "5448": {
+      "costume_id": 41417,
+      "view": 449,
+      "name": "Soloplay Box1",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "yKXA2rPuseK788DaMSM="
+    },
+    "5449": {
+      "costume_id": 41418,
+      "view": 450,
+      "name": "Soloplay Box2",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "yKXA2rPuseK788DaMiM="
+    },
+    "5454": {
+      "costume_id": 41419,
+      "view": 234,
+      "name": "Puppy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sK2+xsH2uPDA2iM="
+    },
+    "5455": {
+      "costume_id": 41420,
+      "view": 238,
+      "name": "Decorative Geographer",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wOW9xL/rwfa/wLHXt6HG2yM="
+    },
+    "5456": {
+      "costume_id": 41421,
+      "view": 315,
+      "name": "Summer Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "udnEsr26uPDA2iM="
+    },
+    "5458": {
+      "costume_id": 41422,
+      "view": 456,
+      "name": "Pinwheel Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "udm297CzuvG48MDaIw=="
+    },
+    "5459": {
+      "costume_id": 41423,
+      "view": 249,
+      "name": "Drooping Bunny",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4xeSzoiM="
+    },
+    "5477": {
+      "costume_id": 41424,
+      "view": 474,
+      "name": "Brazilian Flag Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uuq288H6sbmx4rXOsMcj"
+    },
+    "5485": {
+      "costume_id": 41425,
+      "view": 483,
+      "name": "Tiger Face",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "yKO2+8DMvvOxvCM="
+    },
+    "5486": {
+      "costume_id": 41426,
+      "view": 395,
+      "name": "Anniversary Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xsS29b7nsKW3obvqxbi48MDaIw=="
+    },
+    "5487": {
+      "costume_id": 41427,
+      "view": 417,
+      "name": "Poring Cake Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xve4tcTJwMzFqbjwwNoj"
+    },
+    "5488": {
+      "costume_id": 41428,
+      "view": 390,
+      "name": "Twin Santa Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vuewpbehu+rFuLjwwNoj"
+    },
+    "5489": {
+      "costume_id": 41429,
+      "view": 484,
+      "name": "Love Daddy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t6+66rTrtfAj"
+    },
+    "5506": {
+      "costume_id": 41430,
+      "view": 501,
+      "name": "Blue Night Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xsS29cbEwNq4trjwwNoj"
+    },
+    "5507": {
+      "costume_id": 41431,
+      "view": 502,
+      "name": "Pink Night Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x87FqcbEwNq4trjwwNoj"
+    },
+    "5510": {
+      "costume_id": 41432,
+      "view": 507,
+      "name": "Shower Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/6/9sS4Iw=="
+    },
+    "5512": {
+      "costume_id": 41433,
+      "view": 509,
+      "name": "Aquarius Diadem",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uri6tLHDuriw/CM="
+    },
+    "5513": {
+      "costume_id": 41434,
+      "view": 510,
+      "name": "Aquarius Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uri6tLHDv9Ww/CM="
+    },
+    "5514": {
+      "costume_id": 41435,
+      "view": 511,
+      "name": "Pisces Diadem",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vda+7rHDuriw/CM="
+    },
+    "5515": {
+      "costume_id": 41436,
+      "view": 512,
+      "name": "Pisces Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vda+7rHDv9Ww/CM="
+    },
+    "5516": {
+      "costume_id": 41437,
+      "view": 23,
+      "name": "hawk Eyes",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "yKPFqb7GwMwj"
+    },
+    "5517": {
+      "costume_id": 41438,
+      "view": 23,
+      "name": "Hawk Eyes",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "yKPFqb7GwMwj"
+    },
+    "5518": {
+      "costume_id": 41439,
+      "view": 513,
+      "name": "Gigantic Majestic Goat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tOvH/Li2waa9usa9sO2/7MauIw=="
+    },
+    "5520": {
+      "costume_id": 41440,
+      "view": 515,
+      "name": "Rabbit Earplugs",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xeSzorHNuLawsyM="
+    },
+    "5522": {
+      "costume_id": 41441,
+      "view": 516,
+      "name": "Fanta Zero Lemon Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yK/FuMGmt863ubjzuPDA2iM="
+    },
+    "5523": {
+      "costume_id": 41442,
+      "view": 517,
+      "name": "Sakura Mist Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+fE7bbzucy9usauuPDA2iM="
+    },
+    "5524": {
+      "costume_id": 41443,
+      "view": 518,
+      "name": "Sakura Milk Tea Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+fE7bbzudDFqca8uPDA2iM="
+    },
+    "5525": {
+      "costume_id": 41444,
+      "view": 519,
+      "name": "Flower Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wM/C98ituPDA2iM="
+    },
+    "5531": {
+      "costume_id": 41445,
+      "view": 525,
+      "name": "Baby Dragon Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vsax4rXlt6Gw7yM="
+    },
+    "5533": {
+      "costume_id": 41446,
+      "view": 261,
+      "name": "Emperor Wreath",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v/mw6LD8Iw=="
+    },
+    "5535": {
+      "costume_id": 41447,
+      "view": 529,
+      "name": "Side Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+fAzLXlxLgj"
+    },
+    "5540": {
+      "costume_id": 41448,
+      "view": 18,
+      "name": "Freyja SCirclet7",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "5541": {
+      "costume_id": 41449,
+      "view": 18,
+      "name": "Freyja SCirclet30",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "5542": {
+      "costume_id": 41450,
+      "view": 18,
+      "name": "Freyja SCirclet60",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "5543": {
+      "costume_id": 41451,
+      "view": 18,
+      "name": "Freyja SCirclet90",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vK3FrLi0Iw=="
+    },
+    "5552": {
+      "costume_id": 41452,
+      "view": 93,
+      "name": "Festival Grand Circlet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t8615bytxay4tCM="
+    },
+    "5553": {
+      "costume_id": 41453,
+      "view": 15,
+      "name": "Festival Bunny Band",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xeSzorjTuK627CM="
+    },
+    "5556": {
+      "costume_id": 41454,
+      "view": 540,
+      "name": "Seal Hat",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "xtu+wbjwwNoj"
+    },
+    "5558": {
+      "costume_id": 41455,
+      "view": 542,
+      "name": "Luxury Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+fEocDHuPDA2iM="
+    },
+    "5559": {
+      "costume_id": 41456,
+      "view": 543,
+      "name": "Piece Of White Cloth",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uau9vbiyv6nA2rjwIw=="
+    },
+    "5560": {
+      "costume_id": 41457,
+      "view": 322,
+      "name": "Bullock Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u9TF9bG4uPDA2iM="
+    },
+    "5561": {
+      "costume_id": 41458,
+      "view": 497,
+      "name": "Magic Rabbit Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xeSzori2vPq48MDaIw=="
+    },
+    "5562": {
+      "costume_id": 41459,
+      "view": 489,
+      "name": "Luxurious Wedding Veil",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "NcHWs+Kx4rPkuOm758b3Iw=="
+    },
+    "5568": {
+      "costume_id": 41460,
+      "view": 549,
+      "name": "Rabbit Bonnet",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xeSzorq4tNYj"
+    },
+    "5572": {
+      "costume_id": 41461,
+      "view": 553,
+      "name": "Savage Babe Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLy68cH2uqO6o7jwwNoj"
+    },
+    "5573": {
+      "costume_id": 41462,
+      "view": 554,
+      "name": "Dokebi Horn",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tbWx+rrxu9Qj"
+    },
+    "5575": {
+      "costume_id": 41463,
+      "view": 556,
+      "name": "Rice Ball Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "wda41LnkuPDA2iM="
+    },
+    "5578": {
+      "costume_id": 41464,
+      "view": 236,
+      "name": "Voyage_Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vLHA5cDHuPDA2iM="
+    },
+    "5585": {
+      "costume_id": 41465,
+      "view": 564,
+      "name": "Rune Cloth Circlet",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "t+m4xbXsuNO4rrbsIw=="
+    },
+    "5586": {
+      "costume_id": 41466,
+      "view": 563,
+      "name": "Mosquito Coil",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uPCx4sfiIw=="
+    },
+    "5590": {
+      "costume_id": 41467,
+      "view": 417,
+      "name": "Poring Cake Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xve4tcTJwMzFqbjwwNoj"
+    },
+    "5592": {
+      "costume_id": 41468,
+      "view": 568,
+      "name": "Sigrun's Wings",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "u+fAzLHXt+nAx7OvsLMj"
+    },
+    "5593": {
+      "costume_id": 41469,
+      "view": 549,
+      "name": "Rabbit Bonnet",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xeSzorq4tNYj"
+    },
+    "5594": {
+      "costume_id": 41470,
+      "view": 569,
+      "name": "Donut In Mouth",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "wNS/obmutbWz0yM="
+    },
+    "5600": {
+      "costume_id": 41471,
+      "view": 575,
+      "name": "Brazil Twin Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uuq288H6xq7Aqbiuursj"
+    },
+    "5660": {
+      "costume_id": 41472,
+      "view": 591,
+      "name": "Gryphon Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sde4rsb5uPDA2iM="
+    },
+    "5664": {
+      "costume_id": 41473,
+      "view": 595,
+      "name": "Filir's Pinions",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "x8q4rrijwMezr7CzIw=="
+    },
+    "5665": {
+      "costume_id": 41474,
+      "view": 596,
+      "name": "Shaman Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uau808DOwMe48MDaIw=="
+    },
+    "5666": {
+      "costume_id": 41475,
+      "view": 597,
+      "name": "Golden Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sd2w/LjwwNoj"
+    },
+    "5671": {
+      "costume_id": 41476,
+      "view": 600,
+      "name": "Drooping Morocc Minion",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "tMO+7sH4uPC3zsWpwMfH9r3FIw=="
+    },
+    "5681": {
+      "costume_id": 41477,
+      "view": 244,
+      "name": "Green Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK66u1/DyrfPIw=="
+    },
+    "5682": {
+      "costume_id": 41478,
+      "view": 610,
+      "name": "Triangle Rune Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xq6288DMvt6x27fpxLgj"
+    },
+    "5683": {
+      "costume_id": 41479,
+      "view": 41,
+      "name": "Baphomet Horns",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLbBpr26xr2w7b/sxq4j"
+    },
+    "5684": {
+      "costume_id": 41480,
+      "view": 88,
+      "name": "Ornate Crown",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "weq+88WptvO/7iM="
+    },
+    "5685": {
+      "costume_id": 41481,
+      "view": 48,
+      "name": "Army Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8G30MXXtvOxurjwIw=="
+    },
+    "5686": {
+      "costume_id": 41482,
+      "view": 104,
+      "name": "Nice Hat Feather",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "serF0LjwwNoj"
+    },
+    "5687": {
+      "costume_id": 41483,
+      "view": 86,
+      "name": "Orc Helm",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "v8DFqcG3x++4pyM="
+    },
+    "5690": {
+      "costume_id": 41484,
+      "view": 613,
+      "name": "Red Wing Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x8G4rr26xq7Ax7jwwNoj"
+    },
+    "5691": {
+      "costume_id": 41485,
+      "view": 542,
+      "name": "Sailor's Bandana",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u+fEocDHuPDA2iM="
+    },
+    "5692": {
+      "costume_id": 41486,
+      "view": 539,
+      "name": "Sea Cat Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uK7HwcS5uPDA2iM="
+    },
+    "5742": {
+      "costume_id": 41487,
+      "view": 619,
+      "name": "Rudolph Santa Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "t+e1ucfBu+rFuLjwIw=="
+    },
+    "5771": {
+      "costume_id": 41488,
+      "view": 109,
+      "name": "Family Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xMnAzMWpuPDA2iM="
+    },
+    "5775": {
+      "costume_id": 41489,
+      "view": 653,
+      "name": "Choco Donut In Mouth",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "wNS/obmuw8rE2rW1s9Mj"
+    },
+    "5781": {
+      "costume_id": 41490,
+      "view": 659,
+      "name": "Persika",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xuS4o73DxKsj"
+    },
+    "5788": {
+      "costume_id": 41491,
+      "view": 661,
+      "name": "3D Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "M0S+yLDmIw=="
+    },
+    "5792": {
+      "costume_id": 41492,
+      "view": 669,
+      "name": "Fish Pin",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ubCw7bHix8kj"
+    },
+    "5793": {
+      "costume_id": 41493,
+      "view": 575,
+      "name": "Ribbon Of Life",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "uuq288H6xq7Aqbiuursj"
+    },
+    "5794": {
+      "costume_id": 41494,
+      "view": 661,
+      "name": "3D Glasses",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "M0S+yLDmIw=="
+    },
+    "5800": {
+      "costume_id": 41495,
+      "view": 125,
+      "name": "Blush of Groom",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "ud+x17e5Iw=="
+    },
+    "5801": {
+      "costume_id": 41496,
+      "view": 167,
+      "name": "Red Tailed Ribbon",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u6Gwo8XXwM+4rrq7Iw=="
+    },
+    "5802": {
+      "costume_id": 41497,
+      "view": 215,
+      "name": "Upgraded Elephant Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xNqzoriuuPDA2iM="
+    },
+    "5803": {
+      "costume_id": 41498,
+      "view": 5,
+      "name": "Love Flower Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ssm407iutuwj"
+    },
+    "5804": {
+      "costume_id": 41499,
+      "view": 13,
+      "name": "Pirate Eye Bandage",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "vsi06yM="
+    },
+    "5807": {
+      "costume_id": 41500,
+      "view": 104,
+      "name": "October Fest Cap",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "serF0LjwwNoj"
+    },
+    "5808": {
+      "costume_id": 41501,
+      "view": 364,
+      "name": "Dark Bacilium",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "tNnFqbnZvce4rr/yIw=="
+    },
+    "5809": {
+      "costume_id": 41502,
+      "view": 216,
+      "name": "Boom Boom Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vt+xuLjwwNoj"
+    },
+    "5810": {
+      "costume_id": 41503,
+      "view": 98,
+      "name": "Ph.D Hat V",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "x9C757jwIw=="
+    },
+    "5811": {
+      "costume_id": 41504,
+      "view": 25,
+      "name": "Santa's Beard",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "yPK89r+wIw=="
+    },
+    "5815": {
+      "costume_id": 41505,
+      "view": 475,
+      "name": "Classic Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "xay3ob3Ex94j"
+    },
+    "5816": {
+      "costume_id": 41506,
+      "view": 411,
+      "name": "Purple Cowboy Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "vcXEq7/surjAzLjwwNoj"
+    },
+    "5824": {
+      "costume_id": 41507,
+      "view": 265,
+      "name": "Fools Day Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "teW3ub26x94j"
+    },
+    "5826": {
+      "costume_id": 41508,
+      "view": 225,
+      "name": "Valkyrie Helmet",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ud/FsLiuxfWxuCM="
+    },
+    "5827": {
+      "costume_id": 41509,
+      "view": 423,
+      "name": "Book File Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "ua7A2sOluPDA2iM="
+    },
+    "5846": {
+      "costume_id": 41510,
+      "view": 572,
+      "name": "Buzzy Ball Gum",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "wNS/obmux7O8sbKtIw=="
+    },
+    "5851": {
+      "costume_id": 41511,
+      "view": 138,
+      "name": "Summer Knight",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "xcK+573FwMe48MDaIw=="
+    },
+    "18503": {
+      "costume_id": 41512,
+      "view": 562,
+      "name": "Small Devil Horns",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "uLbBpr26xr21pbr0yKUj"
+    },
+    "18505": {
+      "costume_id": 41513,
+      "view": 675,
+      "name": "Umbala Spirit",
+      "locations": [
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "v/K537bzwMfIpSM="
+    },
+    "18506": {
+      "costume_id": 41514,
+      "view": 676,
+      "name": "Hattah Black",
+      "locations": [
+        "Costume_Head_Top",
+        "Costume_Head_Mid",
+        "Costume_Head_Low"
+      ],
+      "resource_b64": "x8/FuLrtt6Ij"
+    },
+    "18507": {
+      "costume_id": 41515,
+      "view": 73,
+      "name": "Elven Ears",
+      "locations": [
+        "Costume_Head_Mid"
+      ],
+      "resource_b64": "v+TBpMDHsc0j"
+    },
+    "18595": {
+      "costume_id": 41516,
+      "view": 757,
+      "name": "Horn of Ancient",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sO2068DOwMe71CM="
+    },
+    "18596": {
+      "costume_id": 41517,
+      "view": 758,
+      "name": "Sprout Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "u/W9z7jwwNoj"
+    },
+    "18597": {
+      "costume_id": 41518,
+      "view": 759,
+      "name": "Mercury Riser",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uNPFpbiuwMfF9bG4Iw=="
+    },
+    "18600": {
+      "costume_id": 41519,
+      "view": 761,
+      "name": "Cat Ear Beret",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "sO2+58DMsc26o7e5uPAj"
+    },
+    "18612": {
+      "costume_id": 41520,
+      "view": 770,
+      "name": "White Musang Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uem5q7vzuPDA2iM="
+    },
+    "18613": {
+      "costume_id": 41521,
+      "view": 771,
+      "name": "Black Musang Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "yOa5q7vzuPDA2iM="
+    },
+    "18656": {
+      "costume_id": 41522,
+      "view": 717,
+      "name": "Witch's Pumpkin Hat",
+      "locations": [
+        "Costume_Head_Top"
+      ],
+      "resource_b64": "uLaz4MDHuPDA2iM="
+    }
+  }
+}

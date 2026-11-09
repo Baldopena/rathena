@@ -1,0 +1,27 @@
+// GrassRO — standalone in-game MVP monster kill announcement (interim)
+// Uses OnNPCKillEvent, which identifies the credited killing character.
+// This is NOT guaranteed to be the same player who received MVP rewards.
+// Does not post to Discord or to the SQL announcement outbox.
+// Unregister before enabling the later centralized/source-level MVP announcer.
+
+-	script	GR_MVP_Kill_Announcement	-1,{
+OnNPCKillEvent:
+    .@mob_id = killedrid;
+    if (.@mob_id <= 0 || getmonsterinfo(.@mob_id, MOB_MVPEXP) <= 0)
+        end;
+
+    .@player$ = strcharinfo(0);
+    .@party$ = strcharinfo(1);
+    .@map$ = strcharinfo(3);
+    .@monster$ = getmonsterinfo(.@mob_id, MOB_NAME);
+
+    if (.@party$ == "")
+        .@message$ = "[MVP Kill] " + .@player$ + " defeated " + .@monster$ + " at " + .@map$ + "!";
+    else
+        .@message$ = "[MVP Kill] " + .@player$ + " of party [" + .@party$ + "] defeated " + .@monster$ + " at " + .@map$ + "!";
+
+    announce .@message$, bc_all, 0xFFD700;
+    // Dedicated Discord World Feed event.
+    logmes "[GR_WORLD_FEED_MVP_KILL] " + .@message$;
+    end;
+}

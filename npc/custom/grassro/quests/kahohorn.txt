@@ -3,8 +3,8 @@
 //= Version: 2.0
 //= Based on rAthena Lord Kaho's Horn Quest
 //= Reward: Lord Kaho's Horn (5013)
-//= Binding: Account Bound
-//= Completion: Once per account
+//= Binding: Unbound
+//= Completion: Unlimited repeatable crafting
 //============================================================
 
 geffen,115,107,5	script	Lord Kaho's Servant	61,{
@@ -26,13 +26,6 @@ geffen,115,107,5	script	Lord Kaho's Servant	61,{
 
 	mes "[Lord Kaho's Servant]";
 
-	// Account-wide quest restriction.
-	if (#GR_KahoClaimed) {
-		mes "Ah, I remember you!";
-		mes "I have already forged Lord Kaho's Horn for your account.";
-		mes "This quest can only be completed once per account.";
-		close;
-	}
 
 	mes "Greetings, adventurer!";
 	mes "I once served the legendary Lord Kaho.";
@@ -72,10 +65,9 @@ geffen,115,107,5	script	Lord Kaho's Servant	61,{
 
 	mes "[Lord Kaho's Servant]";
 	mes "^0055FFImportant Conditions:^000000";
-	mes "The completed horns will be bound to your account.";
-	mes "They cannot be traded, dropped, sold, mailed, or auctioned.";
-	mes "You may store them in your personal Kafra storage.";
-	mes "This quest may only be completed once per account.";
+	mes "The completed horns are not account-bound.";
+	mes "You may craft them as often as you wish.";
+	mes "Every creation requires the full materials and Zeny fee.";
 	next;
 
 	mes "[Lord Kaho's Servant]";
@@ -88,12 +80,6 @@ geffen,115,107,5	script	Lord Kaho's Servant	61,{
 		close;
 	}
 
-	// Recheck account completion.
-	if (#GR_KahoClaimed) {
-		mes "[Lord Kaho's Servant]";
-		mes "Your account has already completed this quest.";
-		close;
-	}
 
 	// Verify Zeny.
 	if (Zeny < .@fee) {
@@ -134,22 +120,21 @@ geffen,115,107,5	script	Lord Kaho's Servant	61,{
 	// Deduct Zeny.
 	Zeny = Zeny - .@fee;
 
-	// Grant account-bound reward.
-	getitembound .@reward,1,Bound_Account;
-
-	// Record account-wide completion.
-	#GR_KahoClaimed = 1;
+	// Grant an ordinary, unbound reward.
+	getitem .@reward,1;
 
 	// Record transaction.
 	logmes "[Grass Ro] Kaho Quest Completed | Account: " +
 		getcharid(3) + " | Character: " +
 		strcharinfo(0) + " | Reward: 5013 | Fee: 15000000";
 
+		callfunc "F_GrassRO_ItemCreationAnnounce", .@reward, "Lord Kaho's Servant";
+
 	// Success dialogue.
 	mes "[Lord Kaho's Servant]";
 	mes "Magnificent!";
 	mes "You have successfully obtained Lord Kaho's Horn!";
-	mes "The horns are now bound to your account.";
+	mes "Your horns are ready. You may return to craft another pair.";
 	mes "May their legendary power serve you well!";
 	close;
 }
