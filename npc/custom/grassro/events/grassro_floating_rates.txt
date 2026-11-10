@@ -201,6 +201,7 @@ L_GM:
 		mes "Matching paid sponsorship time will pause, without refunds or stacking.";
 		next;
 		if (select("Start manual event:Cancel") != 1) close;
+		debugmes "[GR_FLOAT_DIAG] gm_menu_confirm mask=" + .@manualMask;
 		if (callsub(S_StartManual,.@manualMask))
 			mes "Manual GM event started. It expires at the next server midnight.";
 		else
@@ -326,6 +327,7 @@ S_Apply:
 	for (.@i = 0; .@i < .@n; .@i++) {
 		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
 		if (getbattleflag(.@flag$) != .Base * 2) {
+			debugmes "[GR_FLOAT_DIAG] rate_apply_verify_failed kind=" + .@kind + " flag=" + .@flag$ + " actual=" + getbattleflag(.@flag$);
 			callsub S_Restore,.@kind;
 			return 0;
 		}
@@ -376,9 +378,15 @@ S_BeginOverride:
 	.@until = getarg(1);
 	callsub S_Expire;
 	.@now = gettimetick(2);
-	if (.@until <= .@now || .OverrideUntil[.@kind] > .@now) return 0;
+	if (.@until <= .@now || .OverrideUntil[.@kind] > .@now) {
+		debugmes "[GR_FLOAT_DIAG] override_begin_reject kind=" + .@kind + " now=" + .@now + " until=" + .@until + " existing=" + .OverrideUntil[.@kind];
+		return 0;
+	}
 	if (!.Active[.@kind]) {
-		if (!callsub(S_Apply,.@kind)) return 0;
+		if (!callsub(S_Apply,.@kind)) {
+			debugmes "[GR_FLOAT_DIAG] override_apply_reject kind=" + .@kind;
+			return 0;
+		}
 	} else {
 		callsub S_PausePaid,.@kind;
 	}
@@ -415,25 +423,48 @@ S_CheckManualRates:
 // mask: 1=EXP/Job, 2=Drops, 3=both. All-or-nothing activation.
 S_StartManual:
 	.@manualMask = getarg(0);
-	if (.@manualMask < 1 || .@manualMask > 3) return 0;
+	debugmes "[GR_FLOAT_DIAG] manual_enter mask=" + .@manualMask + " active=" + .ManualActive + " exp_override=" + .OverrideUntil[0] + " drop_override=" + .OverrideUntil[1] + " exp_paid=" + .Active[0] + " drop_paid=" + .Active[1];
+	if (.@manualMask < 1 || .@manualMask > 3) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject invalid_mask";
+		return 0;
+	}
 	callsub S_Expire;
-	if (.ManualActive) return 0;
+	if (.ManualActive) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject already_active";
+		return 0;
+	}
 	.@manualNow = gettimetick(2);
 	// Phase 4 will replace this guard with the scheduled-event override.
 	// Phase 3 must never take ownership of an unknown free override.
-	if (.OverrideUntil[0] > .@manualNow || .OverrideUntil[1] > .@manualNow) return 0;
+	if (.OverrideUntil[0] > .@manualNow || .OverrideUntil[1] > .@manualNow) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject override_active now=" + .@manualNow + " exp=" + .OverrideUntil[0] + " drop=" + .OverrideUntil[1];
+		return 0;
+	}
 	.@wantsExp = (.@manualMask == 1 || .@manualMask == 3);
 	.@wantsDrop = (.@manualMask == 2 || .@manualMask == 3);
 	// Preflight both categories before changing either one.
-	if (.@wantsExp && !callsub(S_CheckManualRates,0)) return 0;
-	if (.@wantsDrop && !callsub(S_CheckManualRates,1)) return 0;
+	if (.@wantsExp && !callsub(S_CheckManualRates,0)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject exp_preflight";
+		return 0;
+	}
+	if (.@wantsDrop && !callsub(S_CheckManualRates,1)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject drop_preflight";
+		return 0;
+	}
 	// Server-local midnight. Recompute on actual activation,
 	// not at the beginning of a GM dialog that can remain open for minutes.
 	.@secondsToMidnight = 86400 - (gettime(3) * 3600 + gettime(2) * 60 + gettime(1));
 	.@manualDeadline = gettimetick(2) + .@secondsToMidnight;
-	if (.@manualDeadline <= gettimetick(2)) return 0;
-	if (.@wantsExp && !callsub(S_BeginOverride,0,.@manualDeadline)) return 0;
+	if (.@manualDeadline <= gettimetick(2)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject deadline_invalid seconds=" + .@secondsToMidnight + " deadline=" + .@manualDeadline;
+		return 0;
+	}
+	if (.@wantsExp && !callsub(S_BeginOverride,0,.@manualDeadline)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject exp_override_begin";
+		return 0;
+	}
 	if (.@wantsDrop && !callsub(S_BeginOverride,1,.@manualDeadline)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject drop_override_begin";
 		// Roll back EXP activation before returning a failed transaction.
 		if (.@wantsExp) callsub S_EndOverride,0;
 		return 0;
