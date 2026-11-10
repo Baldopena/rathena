@@ -1,6 +1,7 @@
 //===== GrassRO ======================================================
-//= Player-Sponsored Floating Rates - NPC-only pilot v1
-//= No custom SQL, no persistence, no direct Discord webhook.
+//= Player-Sponsored Floating Rates - Phase 1 timer foundation
+//= Phase 1: paid running/held state and internal override hooks.
+//= No scheduler, manual event controls or Discord changes yet.
 //= DEPLOYMENT: Sponsorship payments DISABLED after load/reload.
 //= GM Group ID 99 may enable payments for supervised testing.
 //= @reloadscript or map-server restart ENDS events and loses remaining time.
@@ -37,12 +38,20 @@ L_Status:
 		mes "^FF9900EXP 2x: ACTIVE^000000";
 		mes "Sponsor: " + .Sponsor$[0];
 		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+	} else if (.Active[0] && .HeldSeconds[0] > 0) {
+		mes "EXP paid time: QUEUED/PAUSED";
+		mes "Sponsor: " + .Sponsor$[0];
+		mes "Saved: " + (.HeldSeconds[0] / 3600) + "h " + ((.HeldSeconds[0] % 3600) / 60) + "m " + (.HeldSeconds[0] % 60) + "s";
 	} else mes "EXP 2x: Not Active";
 	if (.Active[1] && .EndAt[1] > .@now) {
 		.@left = .EndAt[1] - .@now;
 		mes "^EE82EEDROP 2x: ACTIVE^000000";
 		mes "Sponsor: " + .Sponsor$[1];
 		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+	} else if (.Active[1] && .HeldSeconds[1] > 0) {
+		mes "DROP paid time: QUEUED/PAUSED";
+		mes "Sponsor: " + .Sponsor$[1];
+		mes "Saved: " + (.HeldSeconds[1] / 3600) + "h " + ((.HeldSeconds[1] % 3600) / 60) + "m " + (.HeldSeconds[1] % 60) + "s";
 	} else mes "DROP 2x: Not Active";
 	close;
 
@@ -105,16 +114,21 @@ L_Sponsor:
 		close;
 	}
 	.@now = gettimetick(2);
-	.@started = (.Active[.@kind] && .EndAt[.@kind] > .@now);
-	.@baseend = .@started ? .EndAt[.@kind] : .@now;
-	.@newend = .@baseend + .@seconds;
-	if (.CapHours > 0 && .@newend - .@now > .CapHours * 3600) {
+	// Paid time has only one location: running deadline OR held seconds.
+	// This balance is independent of any free override's expiration.
+	.@running = (.Active[.@kind] && .EndAt[.@kind] > .@now);
+	.@paused = (.OverrideUntil[.@kind] > .@now);
+	.@started = (.@running || (.Active[.@kind] && .HeldSeconds[.@kind] > 0));
+	.@paidleft = .@running ? .EndAt[.@kind] - .@now : .HeldSeconds[.@kind];
+	.@newpaid = .@paidleft + .@seconds;
+	if (.CapHours > 0 && .@newpaid > .CapHours * 3600) {
 		mes "The GM-configured remaining-duration limit would be exceeded.";
 		mes "No Zeny was deducted.";
 		close;
 	}
-	if (!.@started) {
-		// Refuse to overwrite unexpected external rate changes.
+	if (!.@started && !.@paused) {
+		// Do not re-apply an already running free boost. A new paid
+		// event still requires baseline validation before payment.
 		if (!callsub(S_Apply, .@kind)) {
 			mes "Rate configuration conflict. No payment was made.";
 			mes "Please notify a GM.";
@@ -123,17 +137,26 @@ L_Sponsor:
 	}
 	Zeny -= .@cost;
 	.Active[.@kind] = 1;
-	.EndAt[.@kind] = .@newend;
+	if (.@paused) {
+		// Never consume purchased time while a free event controls rates.
+		.HeldSeconds[.@kind] = .@newpaid;
+		.EndAt[.@kind] = 0;
+	} else {
+		.EndAt[.@kind] = .@now + .@newpaid;
+		.HeldSeconds[.@kind] = 0;
+	}
 	.Sponsor$[.@kind] = strcharinfo(0); // latest contributing character
 	.@name$ = .Sponsor$[.@kind];
 	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
 	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
-	if (.@started)
+	if (.@paused)
+		announce "[GrassRO] " + .@name$ + " queued " + (.@seconds / 60) + " minute(s) of DOUBLE " + .@kindname$ + "! @floatevent",bc_all,.@color;
+	else if (.@started)
 		announce "[GrassRO] " + .@name$ + " extended DOUBLE " + .@kindname$ + " by " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
 	else
 		announce "[GrassRO] " + .@name$ + " sponsored DOUBLE " + .@kindname$ + " for " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
 	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " sponsor=" + .@name$ + " zeny=" + .@cost + " seconds=" + .@seconds + " extended=" + .@started;
-	mes "Thank you! Your contribution is now active.";
+	mes (.@paused ? "Thank you! Your sponsored time is queued." : "Thank you! Your contribution is now active.");
 	close;
 
 L_GM:
@@ -178,10 +201,16 @@ OnAtStatus:
 	if (.Active[0] && .EndAt[0] > .@now) {
 		.@left = .EndAt[0] - .@now;
 		dispbottom "EXP 2x: ACTIVE | Sponsor: " + .Sponsor$[0] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xFF9900;
+	} else if (.Active[0] && .HeldSeconds[0] > 0) {
+		.@left = .HeldSeconds[0];
+		dispbottom "EXP 2x: PAID TIME PAUSED | Sponsor: " + .Sponsor$[0] + " | Saved: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xFF9900;
 	} else dispbottom "EXP 2x: Not Active",0xFF9900;
 	if (.Active[1] && .EndAt[1] > .@now) {
 		.@left = .EndAt[1] - .@now;
 		dispbottom "DROP 2x: ACTIVE | Sponsor: " + .Sponsor$[1] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xEE82EE;
+	} else if (.Active[1] && .HeldSeconds[1] > 0) {
+		.@left = .HeldSeconds[1];
+		dispbottom "DROP 2x: PAID TIME PAUSED | Sponsor: " + .Sponsor$[1] + " | Saved: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xEE82EE;
 	} else dispbottom "DROP 2x: Not Active",0xEE82EE;
 	end;
 
@@ -198,6 +227,8 @@ OnInit:
 	.CapHours = 0; // unlimited by default
 	setarray .Active[0],0,0;
 	setarray .EndAt[0],0,0;
+	setarray .HeldSeconds[0],0,0; // paid time frozen during GM-controlled rates
+	setarray .OverrideUntil[0],0,0; // free event deadlines; no UI in phase 1
 	setarray .Sponsor$[0],"","";
 	setarray .ExpFlags$[0],"base_exp_rate","job_exp_rate";
 	setarray .DropFlags$[0],
@@ -268,24 +299,82 @@ S_Restore:
 	}
 	return;
 
+// Phase 1 internal timer primitives. These are not player-accessible.
+// Phase 3/4 will attach GM/scheduler event controls to the override hooks.
+S_PausePaid:
+	.@kind = getarg(0);
+	.@now = gettimetick(2);
+	if (!.Active[.@kind] || .EndAt[.@kind] <= 0) return;
+	.@left = .EndAt[.@kind] - .@now;
+	if (.@left <= 0) return; // caller must first process expirations
+	.HeldSeconds[.@kind] = .@left;
+	.EndAt[.@kind] = 0;
+	return;
+
+S_ResumePaid:
+	.@kind = getarg(0);
+	if (!.Active[.@kind] || .HeldSeconds[.@kind] <= 0) return;
+	.EndAt[.@kind] = gettimetick(2) + .HeldSeconds[.@kind];
+	.HeldSeconds[.@kind] = 0;
+	return;
+
+// Start a free category boost until a fixed Unix timestamp.
+// Return 0 on a precondition/rate conflict; otherwise return 1.
+S_BeginOverride:
+	.@kind = getarg(0);
+	.@until = getarg(1);
+	callsub S_Expire;
+	.@now = gettimetick(2);
+	if (.@until <= .@now || .OverrideUntil[.@kind] > .@now) return 0;
+	if (!.Active[.@kind]) {
+		if (!callsub(S_Apply,.@kind)) return 0;
+	} else {
+		callsub S_PausePaid,.@kind;
+	}
+	.OverrideUntil[.@kind] = .@until;
+	return 1;
+
+// End a free category boost; paid seconds resume if available.
+S_EndOverride:
+	.@kind = getarg(0);
+	if (.OverrideUntil[.@kind] <= 0) return;
+	.OverrideUntil[.@kind] = 0;
+	if (.Active[.@kind] && .HeldSeconds[.@kind] > 0) {
+		callsub S_ResumePaid,.@kind;
+	} else {
+		callsub S_Restore,.@kind;
+	}
+	return;
+
 S_Stop:
 	.@kind = getarg(0);
 	.@isGM = getarg(1,0);
 	if (!.Active[.@kind]) return;
-	callsub S_Restore,.@kind;
+	// Keep 20x if a free scheduled/manual boost is still running.
+	.@boostcontinues = (.OverrideUntil[.@kind] > gettimetick(2));
+	if (!.@boostcontinues) callsub S_Restore,.@kind;
 	.Active[.@kind] = 0;
 	.EndAt[.@kind] = 0;
+	.HeldSeconds[.@kind] = 0;
 	.Sponsor$[.@kind] = "";
 	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
 	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
-	announce "[GrassRO] DOUBLE " + .@kindname$ + (.@isGM ? " was ended by a GM." : " has ended. Normal rates restored."),bc_all,.@color;
+	if (.@boostcontinues)
+		announce "[GrassRO] Paid " + .@kindname$ + " sponsorship ended. GM boost continues.",bc_all,.@color;
+	else
+		announce "[GrassRO] DOUBLE " + .@kindname$ + (.@isGM ? " was ended by a GM." : " has ended. Normal rates restored."),bc_all,.@color;
 	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " stopped gm=" + .@isGM;
 	return;
 
 S_Expire:
 	.@now = gettimetick(2);
-	for (.@kind = 0; .@kind < 2; .@kind++)
-		if (.Active[.@kind] && .EndAt[.@kind] <= .@now)
+	for (.@kind = 0; .@kind < 2; .@kind++) {
+		// Free boost expiration must be processed BEFORE paid expiration.
+		if (.OverrideUntil[.@kind] > 0 && .OverrideUntil[.@kind] <= .@now)
+			callsub S_EndOverride,.@kind;
+		// EndAt=0 means paid time is held, not expired.
+		if (.Active[.@kind] && .EndAt[.@kind] > 0 && .EndAt[.@kind] <= .@now)
 			callsub S_Stop,.@kind,0;
+	}
 	return;
 }
