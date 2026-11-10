@@ -1,0 +1,425 @@
+[1mdiff --git a/npc/custom/grassro/events/mvp_tracker_logger.txt b/npc/custom/grassro/events/mvp_tracker_logger.txt[m
+[1mnew file mode 100644[m
+[1mindex 000000000..b34f2bba4[m
+[1m--- /dev/null[m
+[1m+++ b/npc/custom/grassro/events/mvp_tracker_logger.txt[m
+[36m@@ -0,0 +1,52 @@[m
+[32m+[m[32m//==================================================[m
+[32m+[m[32m// GrassRO - MVP Hunting Tracker v1.0[m
+[32m+[m[32m// Global MVP Kill Recorder[m
+[32m+[m[32m//[m
+[32m+[m[32m// Database: rathena[m
+[32m+[m[32m// Table: grassro_mvp_kills[m
+[32m+[m[32m//[m
+[32m+[m[32m// Records credited MVP kills.[m
+[32m+[m[32m// Does not award items or send announcements.[m
+[32m+[m[32m//==================================================[m
+[32m+[m
+[32m+[m[32m-	script	GR_MVP_Tracker_Logger	-1,{[m
+[32m+[m
+[32m+[m[32mOnNPCKillEvent:[m
+[32m+[m	[32m.@mob_id = killedrid;[m
+[32m+[m
+[32m+[m	[32m// Ignore invalid monster IDs and non-MVP monsters.[m
+[32m+[m	[32mif (.@mob_id <= 0)[m
+[32m+[m		[32mend;[m
+[32m+[m
+[32m+[m	[32mif (getmonsterinfo(.@mob_id, MOB_MVPEXP) <= 0)[m
+[32m+[m		[32mend;[m
+[32m+[m
+[32m+[m	[32m// Identify credited character.[m
+[32m+[m	[32m.@char_id = getcharid(0);[m
+[32m+[m	[32m.@account_id = getcharid(3);[m
+[32m+[m
+[32m+[m	[32mif (.@char_id <= 0 || .@account_id <= 0)[m
+[32m+[m		[32mend;[m
+[32m+[m
+[32m+[m	[32m// Collect kill information.[m
+[32m+[m	[32m.@char_name$ = escape_sql(strcharinfo(0));[m
+[32m+[m	[32m.@mob_name$ = escape_sql(getmonsterinfo(.@mob_id, MOB_NAME));[m
+[32m+[m	[32m.@map_name$ = escape_sql(strcharinfo(3));[m
+[32m+[m
+[32m+[m	[32m// Record kill to permanent database.[m
+[32m+[m	[32mquery_sql([m
+[32m+[m		[32m"INSERT INTO `grassro_mvp_kills` " +[m
+[32m+[m		[32m"(`account_id`, `char_id`, `char_name`, " +[m
+[32m+[m		[32m"`mob_id`, `mob_name`, `map_name`, " +[m
+[32m+[m		[32m"`kill_source`, `killed_at`) VALUES (" +[m
+[32m+[m		[32m.@account_id + "," +[m
+[32m+[m		[32m.@char_id + ",'" +[m
+[32m+[m		[32m.@char_name$ + "'," +[m
+[32m+[m		[32m.@mob_id + ",'" +[m
+[32m+[m		[32m.@mob_name$ + "','" +[m
+[32m+[m		[32m.@map_name$ + "'," +[m
+[32m+[m		[32m"'unknown', UTC_TIMESTAMP())"[m
+[32m+[m	[32m);[m
+[32m+[m
+[32m+[m	[32mend;[m
+[32m+[m[32m}[m
+[1mdiff --git a/npc/custom/grassro/events/mvp_voucher.txt b/npc/custom/grassro/events/mvp_voucher.txt[m
+[1mnew file mode 100644[m
+[1mindex 000000000..35380757d[m
+[1m--- /dev/null[m
+[1m+++ b/npc/custom/grassro/events/mvp_voucher.txt[m
+[36m@@ -0,0 +1,25 @@[m
+[32m+[m[32m//==================================================[m
+[32m+[m[32m// GrassRO - Global MVP Voucher Reward[m
+[32m+[m[32m// Item: MVP Voucher (7615)[m
+[32m+[m[32m// Applies to monsters granting MVP EXP[m
+[32m+[m[32m//==================================================[m
+[32m+[m
+[32m+[m[32m-	script	GR_MVPVoucher	-1,{[m
+[32m+[m
+[32m+[m[32mOnNPCKillEvent:[m
+[32m+[m	[32mif (getmonsterinfo(killedrid, MOB_MVPEXP) <= 0)[m
+[32m+[m		[32mend;[m
+[32m+[m
+[32m+[m	[32mif (rand(10000) >= .DropRate)[m
+[32m+[m		[32mend;[m
+[32m+[m
+[32m+[m	[32mgetitem .VoucherID, 1;[m
+[32m+[m
+[32m+[m	[32mdispbottom "[GrassRO] You received an MVP Voucher!";[m
+[32m+[m	[32mend;[m
+[32m+[m
+[32m+[m[32mOnInit:[m
+[32m+[m	[32m.VoucherID = 7615;[m
+[32m+[m	[32m.DropRate = 10000; // 100% chance[m
+[32m+[m	[32mend;[m
+[32m+[m[32m}[m
+[1mdiff --git a/npc/custom/grassro/scripts.conf b/npc/custom/grassro/scripts.conf[m
+[1mindex 90c0986a0..0890618ad 100644[m
+[1m--- a/npc/custom/grassro/scripts.conf[m
+[1m+++ b/npc/custom/grassro/scripts.conf[m
+[36m@@ -19,6 +19,7 @@[m [mnpc: npc/custom/grassro/services/healer.txt[m
+ npc: npc/custom/grassro/services/breeder.txt[m
+ npc: npc/custom/grassro/services/resetnpc.txt[m
+ npc: npc/custom/grassro/services/grassro_welcome_guide.txt[m
+[32m+[m[32mnpc: npc/custom/grassro/services/mvp_hunting_board.txt[m
+ [m
+ // QUESTS[m
+ npc: npc/custom/grassro/quests/kahohorn.txt[m
+[36m@@ -34,6 +35,8 @@[m [mnpc: npc/custom/grassro/events/blackjack.txt[m
+ npc: npc/custom/grassro/events/disguise.txt[m
+ npc: npc/custom/grassro/events/woe_controller.txt[m
+ npc: npc/custom/grassro/events/grassro_floating_rates.txt[m
+[32m+[m[32mnpc: npc/custom/grassro/events/mvp_voucher.txt[m
+[32m+[m[32mnpc: npc/custom/grassro/events/mvp_tracker_logger.txt[m
+ [m
+ // Grass Ro - Sir Reseton / Castle Administration[m
+ npc: npc/custom/grassro/admin/kriemhild_reset_once.txt[m
+[1mdiff --git a/npc/custom/grassro/services/mvp_hunting_board.txt b/npc/custom/grassro/services/mvp_hunting_board.txt[m
+[1mnew file mode 100644[m
+[1mindex 000000000..22abd933b[m
+[1m--- /dev/null[m
+[1m+++ b/npc/custom/grassro/services/mvp_hunting_board.txt[m
+[36m@@ -0,0 +1,194 @@[m
+[32m+[m[32m//==================================================[m
+[32m+[m[32m// GrassRO - MVP Hunting Board v1.0[m
+[32m+[m[32m//[m
+[32m+[m[32m// Features:[m
+[32m+[m[32m// - Top 20 MVP Rankings[m
+[32m+[m[32m// - My Kill Statistics[m
+[32m+[m[32m// - Personal MVP kill breakdown[m
+[32m+[m[32m// - Most recent MVP kill[m
+[32m+[m[32m//[m
+[32m+[m[32m// Database: rathena[m
+[32m+[m[32m// View: grassro_mvp_active_kills[m
+[32m+[m[32m//[m
+[32m+[m[32m// MVP Status Board and GM controls will be added[m
+[32m+[m[32m// in subsequent versions.[m
+[32m+[m[32m//==================================================[m
+[32m+[m
+[32m+[m[32mprontera,172,184,4	script	MVP Hunting Board	56,{[m
+[32m+[m
+[32m+[m	[32mmes "[MVP Hunting Board]";[m
+[32m+[m	[32mmes "Welcome to the GrassRO MVP Hunting Board!";[m
+[32m+[m	[32mmes "View the server's greatest MVP hunters or check your personal hunting records.";[m
+[32m+[m	[32mnext;[m
+[32m+[m
+[32m+[m	[32mswitch(select("Top 20 Rankings:My Kill Stats:Exit")) {[m
+[32m+[m
+[32m+[m	[32mcase 1:[m
+[32m+[m		[32m//==========================================[m
+[32m+[m		[32m// TOP 20 MVP RANKINGS[m
+[32m+[m		[32m//==========================================[m
+[32m+[m
+[32m+[m		[32m.@rows = query_sql([m
+[32m+[m			[32m"SELECT COALESCE(c.name, MAX(k.char_name)), COUNT(*) " +[m
+[32m+[m			[32m"FROM grassro_mvp_active_kills AS k " +[m
+[32m+[m			[32m"LEFT JOIN `char` AS c ON c.char_id = k.char_id " +[m
+[32m+[m			[32m"LEFT JOIN grassro_mvp_exclusions AS e ON e.char_id = k.char_id " +[m
+[32m+[m			[32m"WHERE e.char_id IS NULL " +[m
+[32m+[m			[32m"GROUP BY k.char_id, c.name " +[m
+[32m+[m			[32m"ORDER BY COUNT(*) DESC, k.char_id ASC LIMIT 20",[m
+[32m+[m			[32m.@names$, .@kills[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mmes "[Top 20 MVP Rankings]";[m
+[32m+[m
+[32m+[m		[32mif (.@rows < 0) {[m
+[32m+[m			[32mmes "The ranking database is currently unavailable.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mif (.@rows == 0) {[m
+[32m+[m			[32mmes "No MVP kills have been recorded yet.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mfor (.@i = 0; .@i < .@rows; .@i++) {[m
+[32m+[m
+[32m+[m			[32mif (.@i == 10) {[m
+[32m+[m				[32mnext;[m
+[32m+[m				[32mmes "[Top 20 MVP Rankings]";[m
+[32m+[m			[32m}[m
+[32m+[m
+[32m+[m			[32mmes (.@i + 1) + ". " + .@names$[.@i] +[m
+[32m+[m				[32m" - " + .@kills[.@i] + " kills";[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mclose;[m
+[32m+[m
+[32m+[m	[32mcase 2:[m
+[32m+[m		[32m//==========================================[m
+[32m+[m		[32m// MY KILL STATISTICS[m
+[32m+[m		[32m//==========================================[m
+[32m+[m
+[32m+[m		[32m.@cid = getcharid(0);[m
+[32m+[m
+[32m+[m		[32m.@rows = query_sql([m
+[32m+[m			[32m"SELECT COUNT(*) " +[m
+[32m+[m			[32m"FROM grassro_mvp_active_kills " +[m
+[32m+[m			[32m"WHERE char_id = " + .@cid,[m
+[32m+[m			[32m.@total[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mif (.@rows < 0) {[m
+[32m+[m			[32mmes "Unable to retrieve your statistics.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32m.@excluded = query_sql([m
+[32m+[m			[32m"SELECT 1 FROM grassro_mvp_exclusions " +[m
+[32m+[m			[32m"WHERE char_id = " + .@cid + " LIMIT 1",[m
+[32m+[m			[32m.@excluded_flag[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mif (.@excluded < 0) {[m
+[32m+[m			[32mmes "Unable to check leaderboard eligibility.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mmes "[My Kill Statistics]";[m
+[32m+[m		[32mmes "Character: ^0000FF" + strcharinfo(0) + "^000000";[m
+[32m+[m		[32mmes "Total MVP Kills: ^008800" + .@total + "^000000";[m
+[32m+[m
+[32m+[m		[32mif (.@excluded > 0) {[m
+[32m+[m			[32mmes "Server Rank: Excluded";[m
+[32m+[m		[32m}[m
+[32m+[m		[32melse if (.@total > 0) {[m
+[32m+[m
+[32m+[m			[32m.@rank_rows = query_sql([m
+[32m+[m				[32m"SELECT q.rank_no FROM (" +[m
+[32m+[m				[32m"SELECT t.char_id, ROW_NUMBER() OVER (" +[m
+[32m+[m				[32m"ORDER BY t.total DESC, t.char_id ASC" +[m
+[32m+[m				[32m") AS rank_no FROM (" +[m
+[32m+[m				[32m"SELECT k.char_id, COUNT(*) AS total " +[m
+[32m+[m				[32m"FROM grassro_mvp_active_kills AS k " +[m
+[32m+[m				[32m"LEFT JOIN grassro_mvp_exclusions AS e " +[m
+[32m+[m				[32m"ON e.char_id = k.char_id " +[m
+[32m+[m				[32m"WHERE e.char_id IS NULL " +[m
+[32m+[m				[32m"GROUP BY k.char_id" +[m
+[32m+[m				[32m") AS t" +[m
+[32m+[m				[32m") AS q WHERE q.char_id = " + .@cid,[m
+[32m+[m				[32m.@rank[m
+[32m+[m			[32m);[m
+[32m+[m
+[32m+[m			[32mif (.@rank_rows > 0)[m
+[32m+[m				[32mmes "Server Rank: ^0000FF#" + .@rank[0] + "^000000";[m
+[32m+[m			[32melse[m
+[32m+[m				[32mmes "Server Rank: Unavailable";[m
+[32m+[m		[32m}[m
+[32m+[m		[32melse {[m
+[32m+[m			[32mmes "Server Rank: Unranked";[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mif (.@total <= 0) {[m
+[32m+[m			[32mmes "You have not defeated any tracked MVPs yet.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mnext;[m
+[32m+[m
+[32m+[m		[32m//==========================================[m
+[32m+[m		[32m// PERSONAL MVP KILL BREAKDOWN[m
+[32m+[m		[32m//==========================================[m
+[32m+[m
+[32m+[m		[32mmes "[My MVP Kills]";[m
+[32m+[m
+[32m+[m		[32m.@mob_rows = query_sql([m
+[32m+[m			[32m"SELECT MAX(mob_name), COUNT(*) " +[m
+[32m+[m			[32m"FROM grassro_mvp_active_kills " +[m
+[32m+[m			[32m"WHERE char_id = " + .@cid + " " +[m
+[32m+[m			[32m"GROUP BY mob_id " +[m
+[32m+[m			[32m"ORDER BY COUNT(*) DESC, mob_id ASC LIMIT 10",[m
+[32m+[m			[32m.@mob_names$, .@mob_kills[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mif (.@mob_rows < 0) {[m
+[32m+[m			[32mmes "Unable to retrieve your MVP breakdown.";[m
+[32m+[m			[32mclose;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mfor (.@i = 0; .@i < .@mob_rows; .@i++) {[m
+[32m+[m			[32mmes .@mob_names$[.@i] + ": ^008800" +[m
+[32m+[m				[32m.@mob_kills[.@i] + "^000000";[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mnext;[m
+[32m+[m
+[32m+[m		[32m//==========================================[m
+[32m+[m		[32m// MOST RECENT MVP KILL[m
+[32m+[m		[32m//==========================================[m
+[32m+[m
+[32m+[m		[32mmes "[Most Recent MVP Kill]";[m
+[32m+[m
+[32m+[m		[32m.@recent = query_sql([m
+[32m+[m			[32m"SELECT mob_name, map_name, " +[m
+[32m+[m			[32m"DATE_FORMAT(killed_at, '%Y-%m-%d %H:%i:%s') " +[m
+[32m+[m			[32m"FROM grassro_mvp_active_kills " +[m
+[32m+[m			[32m"WHERE char_id = " + .@cid + " " +[m
+[32m+[m			[32m"ORDER BY id DESC LIMIT 1",[m
+[32m+[m			[32m.@last_mob$, .@last_map$, .@last_time$[m
+[32m+[m		[32m);[m
+[32m+[m
+[32m+[m		[32mif (.@recent > 0) {[m
+[32m+[m			[32mmes "MVP: " + .@last_mob$[0];[m
+[32m+[m			[32mmes "Map: " + .@last_map$[0];[m
+[32m+[m			[32mmes "Killed: " + .@last_time$[0] + " UTC";[m
+[32m+[m		[32m}[m
+[32m+[m		[32melse {[m
+[32m+[m			[32mmes "No recent kill information available.";[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mclose;[m
+[32m+[m
+[32m+[m	[32mdefault:[m
+[32m+[m		[32mclose;[m
+[32m+[m	[32m}[m
+[32m+[m[32m}[m
+[1mdiff --git a/sql-files/grassro_mvp_active_kills.sql b/sql-files/grassro_mvp_active_kills.sql[m
+[1mnew file mode 100644[m
+[1mindex 000000000..6621877bb[m
+[1m--- /dev/null[m
+[1m+++ b/sql-files/grassro_mvp_active_kills.sql[m
+[36m@@ -0,0 +1,20 @@[m
+[32m+[m[32m-- GrassRO MVP Tracker[m
+[32m+[m[32m-- Active kill records, respecting ranking resets.[m
+[32m+[m
+[32m+[m[32mCREATE OR REPLACE[m
+[32m+[m[32mSQL SECURITY INVOKER[m
+[32m+[m[32mVIEW grassro_mvp_active_kills AS[m
+[32m+[m[32mSELECT k.*[m
+[32m+[m[32mFROM grassro_mvp_kills AS k[m
+[32m+[m[32mWHERE[m
+[32m+[m	[32mk.id > COALESCE(([m
+[32m+[m		[32mSELECT MAX(r.through_kill_id)[m
+[32m+[m		[32mFROM grassro_mvp_resets AS r[m
+[32m+[m		[32mWHERE r.reset_scope = 'all'[m
+[32m+[m	[32m), 0)[m
+[32m+[m	[32mAND k.id > COALESCE(([m
+[32m+[m		[32mSELECT MAX(r.through_kill_id)[m
+[32m+[m		[32mFROM grassro_mvp_resets AS r[m
+[32m+[m		[32mWHERE r.reset_scope = 'character'[m
+[32m+[m			[32mAND r.target_char_id = k.char_id[m
+[32m+[m	[32m), 0);[m
+[1mdiff --git a/sql-files/grassro_mvp_tracker.sql b/sql-files/grassro_mvp_tracker.sql[m
+[1mnew file mode 100644[m
+[1mindex 000000000..336cd866f[m
+[1m--- /dev/null[m
+[1m+++ b/sql-files/grassro_mvp_tracker.sql[m
+[36m@@ -0,0 +1,83 @@[m
+[32m+[m[32m-- GrassRO MVP Hunting Tracker[m
+[32m+[m[32m-- Database: rathena[m
+[32m+[m[32m-- Compatible with MySQL 8.0[m
+[32m+[m
+[32m+[m[32m-- 1. Permanent MVP kill history[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS grassro_mvp_kills ([m
+[32m+[m	[32mid BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,[m
+[32m+[m	[32maccount_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mchar_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mchar_name VARCHAR(32) NOT NULL,[m
+[32m+[m	[32mmob_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mmob_name VARCHAR(64) NOT NULL,[m
+[32m+[m	[32mmap_name VARCHAR(32) NOT NULL,[m
+[32m+[m	[32mspawn_id INT UNSIGNED DEFAULT NULL,[m
+[32m+[m	[32mkill_source ENUM([m
+[32m+[m		[32m'unknown',[m
+[32m+[m		[32m'natural',[m
+[32m+[m		[32m'summoned',[m
+[32m+[m		[32m'event'[m
+[32m+[m	[32m) NOT NULL DEFAULT 'unknown',[m
+[32m+[m	[32mkilled_at DATETIME NOT NULL,[m
+[32m+[m	[32mPRIMARY KEY (id),[m
+[32m+[m	[32mKEY idx_character (char_id, id),[m
+[32m+[m	[32mKEY idx_ranking (char_id, killed_at),[m
+[32m+[m	[32mKEY idx_recent (killed_at, id),[m
+[32m+[m	[32mKEY idx_spawn (map_name, mob_id, killed_at)[m
+[32m+[m[32m) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;[m
+[32m+[m
+[32m+[m[32m-- 2. Natural MVP spawn registry[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS grassro_mvp_spawns ([m
+[32m+[m	[32mid INT UNSIGNED NOT NULL AUTO_INCREMENT,[m
+[32m+[m	[32mmob_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mmob_name VARCHAR(64) NOT NULL,[m
+[32m+[m	[32mmap_name VARCHAR(32) NOT NULL,[m
+[32m+[m	[32mspawn_x SMALLINT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32mspawn_y SMALLINT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32marea_x SMALLINT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32marea_y SMALLINT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32mspawn_count SMALLINT UNSIGNED NOT NULL DEFAULT 1,[m
+[32m+[m	[32mbase_delay_ms INT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32mrandom_delay_ms INT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32msource_file VARCHAR(255) NOT NULL,[m
+[32m+[m	[32msource_line INT UNSIGNED NOT NULL,[m
+[32m+[m	[32menabled TINYINT(1) NOT NULL DEFAULT 1,[m
+[32m+[m	[32mPRIMARY KEY (id),[m
+[32m+[m	[32mUNIQUE KEY uq_source (source_file, source_line),[m
+[32m+[m	[32mKEY idx_location (map_name, mob_id)[m
+[32m+[m[32m) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;[m
+[32m+[m
+[32m+[m[32m-- 3. Leaderboard exclusions[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS grassro_mvp_exclusions ([m
+[32m+[m	[32mchar_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mchar_name VARCHAR(32) NOT NULL,[m
+[32m+[m	[32mexcluded_by INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mexcluded_at DATETIME NOT NULL,[m
+[32m+[m	[32mreason VARCHAR(255) DEFAULT NULL,[m
+[32m+[m	[32mPRIMARY KEY (char_id)[m
+[32m+[m[32m) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;[m
+[32m+[m
+[32m+[m[32m-- 4. Ranking reset history[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS grassro_mvp_resets ([m
+[32m+[m	[32mid BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,[m
+[32m+[m	[32mreset_scope ENUM('all', 'character') NOT NULL,[m
+[32m+[m	[32mtarget_char_id INT UNSIGNED DEFAULT NULL,[m
+[32m+[m	[32mthrough_kill_id BIGINT UNSIGNED NOT NULL DEFAULT 0,[m
+[32m+[m	[32mreset_by INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mreset_at DATETIME NOT NULL,[m
+[32m+[m	[32mPRIMARY KEY (id),[m
+[32m+[m	[32mKEY idx_reset (reset_scope, target_char_id, through_kill_id)[m
+[32m+[m[32m) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;[m
+[32m+[m
+[32m+[m[32m-- 5. GM administrative audit log[m
+[32m+[m[32mCREATE TABLE IF NOT EXISTS grassro_mvp_gm_audit ([m
+[32m+[m	[32mid BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,[m
+[32m+[m	[32mgm_account_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32mgm_char_id INT UNSIGNED NOT NULL,[m
+[32m+[m	[32maction VARCHAR(40) NOT NULL,[m
+[32m+[m	[32mtarget_char_id INT UNSIGNED DEFAULT NULL,[m
+[32m+[m	[32mdetails VARCHAR(255) DEFAULT NULL,[m
+[32m+[m	[32mcreated_at DATETIME NOT NULL,[m
+[32m+[m	[32mPRIMARY KEY (id),[m
+[32m+[m	[32mKEY idx_audit_time (created_at)[m
+[32m+[m[32m) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;[m

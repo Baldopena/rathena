@@ -1,0 +1,449 @@
+//==================================================
+// GrassRO - MVP Hunting Tracker v1.0
+// Global MVP Kill Recorder
+//
+// Database: rathena
+// Table: grassro_mvp_kills
+//
+// Records credited MVP kills.
+// Does not award items or send announcements.
+//==================================================
+
+-	script	GR_MVP_Tracker_Logger	-1,{
+
+OnNPCKillEvent:
+	.@origin$ = "unknown";
+	.@spawn_id = 0;
+	goto OnRecordKill;
+
+OnPayonEddga:
+	// Only accept the expected MVP on its natural map.
+	if (killedrid != 1115 || strcharinfo(3) != "pay_fild11")
+		end;
+
+	// Preserve the existing rewards and announcements.
+	// doevent keeps the triggering player attached.
+	doevent "RagnarokCoinDrop::OnNPCKillEvent";
+	doevent "GR_MVPVoucher::OnNPCKillEvent";
+	callfunc "F_GR_MVP_Announce", killedrid;
+
+	// Match the natural spawn to the SQL registry.
+	.@origin$ = "unknown";
+	.@spawn_id = 0;
+
+	.@matches = query_sql(
+		"SELECT id FROM grassro_mvp_spawns " +
+		"WHERE enabled = 1 AND mob_id = 1115 " +
+		"AND map_name = 'pay_fild11' " +
+		"AND source_file = 'npc/pre-re/mobs/fields/payon.txt' " +
+		"LIMIT 2",
+		.@spawn_ids
+	);
+
+	if (.@matches == 1) {
+		.@spawn_id = .@spawn_ids[0];
+		.@origin$ = "natural";
+	} else {
+		logmes "[GR_MVP_TRACKER] Eddga natural spawn mapping missing or ambiguous.";
+	}
+
+	goto OnRecordKill;
+
+OnNatural1:
+	.@nat_mob = 1871;
+	.@nat_map$ = "abbey02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/abbey.txt";
+	.@nat_id = 1;
+	goto OnNaturalMVP;
+
+OnNatural2:
+	.@nat_mob = 1873;
+	.@nat_map$ = "abbey03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/abbey.txt";
+	.@nat_id = 2;
+	goto OnNaturalMVP;
+
+OnNatural3:
+	.@nat_mob = 1719;
+	.@nat_map$ = "abyss_03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/abyss.txt";
+	.@nat_id = 3;
+	goto OnNaturalMVP;
+
+OnNatural4:
+	.@nat_mob = 1492;
+	.@nat_map$ = "ama_dun03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/ama_dun.txt";
+	.@nat_id = 4;
+	goto OnNaturalMVP;
+
+OnNatural5:
+	.@nat_mob = 1147;
+	.@nat_map$ = "anthell02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/anthell.txt";
+	.@nat_id = 5;
+	goto OnNaturalMVP;
+
+OnNatural6:
+	.@nat_mob = 1688;
+	.@nat_map$ = "ayo_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/ayo_dun.txt";
+	.@nat_id = 6;
+	goto OnNaturalMVP;
+
+OnNatural7:
+	.@nat_mob = 1583;
+	.@nat_map$ = "beach_dun";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/beach_dun.txt";
+	.@nat_id = 7;
+	goto OnNaturalMVP;
+
+OnNatural8:
+	.@nat_mob = 2068;
+	.@nat_map$ = "bra_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/bra_dun.txt";
+	.@nat_id = 8;
+	goto OnNaturalMVP;
+
+OnNatural9:
+	.@nat_mob = 1623;
+	.@nat_map$ = "ein_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/ein_dun.txt";
+	.@nat_id = 9;
+	goto OnNaturalMVP;
+
+OnNatural10:
+	.@nat_mob = 1389;
+	.@nat_map$ = "gef_dun01";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gef_dun.txt";
+	.@nat_id = 10;
+	goto OnNaturalMVP;
+
+OnNatural11:
+	.@nat_mob = 1046;
+	.@nat_map$ = "gef_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gef_dun.txt";
+	.@nat_id = 11;
+	goto OnNaturalMVP;
+
+OnNatural12:
+	.@nat_mob = 1272;
+	.@nat_map$ = "gl_chyard";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/glastheim.txt";
+	.@nat_id = 12;
+	goto OnNaturalMVP;
+
+OnNatural13:
+	.@nat_mob = 1115;
+	.@nat_map$ = "gld_dun01";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gld_dun.txt";
+	.@nat_id = 13;
+	goto OnNaturalMVP;
+
+OnNatural14:
+	.@nat_mob = 1046;
+	.@nat_map$ = "gld_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gld_dun.txt";
+	.@nat_id = 14;
+	goto OnNaturalMVP;
+
+OnNatural15:
+	.@nat_mob = 1147;
+	.@nat_map$ = "gld_dun03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gld_dun.txt";
+	.@nat_id = 15;
+	goto OnNaturalMVP;
+
+OnNatural16:
+	.@nat_mob = 1272;
+	.@nat_map$ = "gld_dun04";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gld_dun.txt";
+	.@nat_id = 16;
+	goto OnNaturalMVP;
+
+OnNatural17:
+	.@nat_mob = 1418;
+	.@nat_map$ = "gon_dun03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/gon_dun.txt";
+	.@nat_id = 17;
+	goto OnNaturalMVP;
+
+OnNatural18:
+	.@nat_mob = 1157;
+	.@nat_map$ = "in_sphinx5";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/in_sphinx.txt";
+	.@nat_id = 18;
+	goto OnNaturalMVP;
+
+OnNatural19:
+	.@nat_mob = 1685;
+	.@nat_map$ = "jupe_core";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/juperos.txt";
+	.@nat_id = 19;
+	goto OnNaturalMVP;
+
+OnNatural20:
+	.@nat_mob = 1734;
+	.@nat_map$ = "kh_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/kh_dun.txt";
+	.@nat_id = 20;
+	goto OnNaturalMVP;
+
+OnNatural21:
+	.@nat_mob = 1658;
+	.@nat_map$ = "lhz_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/lhz_dun.txt";
+	.@nat_id = 21;
+	goto OnNaturalMVP;
+
+OnNatural22:
+	.@nat_mob = 1630;
+	.@nat_map$ = "lou_dun03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/lou_dun.txt";
+	.@nat_id = 22;
+	goto OnNaturalMVP;
+
+OnNatural23:
+	.@nat_mob = 1038;
+	.@nat_map$ = "moc_pryd04";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/moc_pryd.txt";
+	.@nat_id = 23;
+	goto OnNaturalMVP;
+
+OnNatural24:
+	.@nat_mob = 1511;
+	.@nat_map$ = "moc_pryd06";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/moc_pryd.txt";
+	.@nat_id = 24;
+	goto OnNaturalMVP;
+
+OnNatural25:
+	.@nat_mob = 1885;
+	.@nat_map$ = "mosk_dun03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/mosk_dun.txt";
+	.@nat_id = 25;
+	goto OnNaturalMVP;
+
+OnNatural26:
+	.@nat_mob = 1751;
+	.@nat_map$ = "odin_tem03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/odin.txt";
+	.@nat_id = 26;
+	goto OnNaturalMVP;
+
+OnNatural27:
+	.@nat_mob = 1150;
+	.@nat_map$ = "pay_dun04";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/pay_dun.txt";
+	.@nat_id = 27;
+	goto OnNaturalMVP;
+
+OnNatural28:
+	.@nat_mob = 1039;
+	.@nat_map$ = "prt_maze03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/prt_maze.txt";
+	.@nat_id = 28;
+	goto OnNaturalMVP;
+
+OnNatural29:
+	.@nat_mob = 1086;
+	.@nat_map$ = "prt_sewb4";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/prt_sew.txt";
+	.@nat_id = 29;
+	goto OnNaturalMVP;
+
+OnNatural30:
+	.@nat_mob = 1768;
+	.@nat_map$ = "ra_san05";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/ra_san.txt";
+	.@nat_id = 30;
+	goto OnNaturalMVP;
+
+OnNatural31:
+	.@nat_mob = 1832;
+	.@nat_map$ = "thor_v03";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/thor_v.txt";
+	.@nat_id = 31;
+	goto OnNaturalMVP;
+
+OnNatural32:
+	.@nat_mob = 1112;
+	.@nat_map$ = "treasure02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/treasure.txt";
+	.@nat_id = 32;
+	goto OnNaturalMVP;
+
+OnNatural33:
+	.@nat_mob = 1312;
+	.@nat_map$ = "tur_dun04";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/tur_dun.txt";
+	.@nat_id = 33;
+	goto OnNaturalMVP;
+
+OnNatural34:
+	.@nat_mob = 1251;
+	.@nat_map$ = "xmas_dun02";
+	.@nat_file$ = "npc/pre-re/mobs/dungeons/xmas_dun.txt";
+	.@nat_id = 34;
+	goto OnNaturalMVP;
+
+OnNatural35:
+	.@nat_mob = 1087;
+	.@nat_map$ = "gef_fild02";
+	.@nat_file$ = "npc/pre-re/mobs/fields/geffen.txt";
+	.@nat_id = 35;
+	goto OnNaturalMVP;
+
+OnNatural36:
+	.@nat_mob = 1190;
+	.@nat_map$ = "gef_fild10";
+	.@nat_file$ = "npc/pre-re/mobs/fields/geffen.txt";
+	.@nat_id = 36;
+	goto OnNaturalMVP;
+
+OnNatural37:
+	.@nat_mob = 1087;
+	.@nat_map$ = "gef_fild14";
+	.@nat_file$ = "npc/pre-re/mobs/fields/geffen.txt";
+	.@nat_id = 37;
+	goto OnNaturalMVP;
+
+OnNatural38:
+	.@nat_mob = 1252;
+	.@nat_map$ = "xmas_fild01";
+	.@nat_file$ = "npc/pre-re/mobs/fields/lutie.txt";
+	.@nat_id = 38;
+	goto OnNaturalMVP;
+
+OnNatural39:
+	.@nat_mob = 1059;
+	.@nat_map$ = "mjolnir_04";
+	.@nat_file$ = "npc/pre-re/mobs/fields/mjolnir.txt";
+	.@nat_id = 39;
+	goto OnNaturalMVP;
+
+OnNatural40:
+	.@nat_mob = 1159;
+	.@nat_map$ = "moc_fild17";
+	.@nat_file$ = "npc/pre-re/mobs/fields/morocc.txt";
+	.@nat_id = 40;
+	goto OnNaturalMVP;
+
+OnNatural41:
+	.@nat_mob = 1917;
+	.@nat_map$ = "moc_fild22";
+	.@nat_file$ = "npc/pre-re/mobs/fields/morocc.txt";
+	.@nat_id = 41;
+	goto OnNaturalMVP;
+
+OnNatural43:
+	.@nat_mob = 1785;
+	.@nat_map$ = "ra_fild02";
+	.@nat_file$ = "npc/pre-re/mobs/fields/rachel.txt";
+	.@nat_id = 43;
+	goto OnNaturalMVP;
+
+OnNatural44:
+	.@nat_mob = 1785;
+	.@nat_map$ = "ra_fild03";
+	.@nat_file$ = "npc/pre-re/mobs/fields/rachel.txt";
+	.@nat_id = 44;
+	goto OnNaturalMVP;
+
+OnNatural45:
+	.@nat_mob = 1785;
+	.@nat_map$ = "ra_fild04";
+	.@nat_file$ = "npc/pre-re/mobs/fields/rachel.txt";
+	.@nat_id = 45;
+	goto OnNaturalMVP;
+
+OnNatural46:
+	.@nat_mob = 1785;
+	.@nat_map$ = "ve_fild01";
+	.@nat_file$ = "npc/pre-re/mobs/fields/veins.txt";
+	.@nat_id = 46;
+	goto OnNaturalMVP;
+
+OnNatural47:
+	.@nat_mob = 1785;
+	.@nat_map$ = "ve_fild02";
+	.@nat_file$ = "npc/pre-re/mobs/fields/veins.txt";
+	.@nat_id = 47;
+	goto OnNaturalMVP;
+
+OnNaturalMVP:
+	if (killedrid != .@nat_mob || strcharinfo(3) != .@nat_map$)
+		end;
+
+	// Preserve the existing MVP rewards and announcements.
+	doevent "RagnarokCoinDrop::OnNPCKillEvent";
+	doevent "GR_MVPVoucher::OnNPCKillEvent";
+	callfunc "F_GR_MVP_Announce", .@nat_mob;
+
+	// Verify the natural spawn against the registry.
+	.@origin$ = "unknown";
+	.@spawn_id = 0;
+
+	.@match = query_sql(
+		"SELECT `id` FROM `grassro_mvp_spawns` " +
+		"WHERE `id`=" + .@nat_id +
+		" AND `mob_id`=" + .@nat_mob +
+		" AND `map_name`='" + escape_sql(.@nat_map$) + "'" +
+		" AND `source_file`='" + escape_sql(.@nat_file$) + "'" +
+		" AND `enabled`=1 LIMIT 1",
+		.@found_id
+	);
+
+	if (.@match == 1) {
+		.@spawn_id = .@found_id;
+		.@origin$ = "natural";
+	} else {
+		logmes "[GR_MVP_TRACKER] Natural spawn registry mismatch: " + .@nat_id;
+	}
+
+	goto OnRecordKill;
+
+OnRecordKill:
+	.@mob_id = killedrid;
+
+	// Ignore invalid monster IDs and non-MVP monsters.
+	if (.@mob_id <= 0)
+		end;
+
+	if (getmonsterinfo(.@mob_id, MOB_MVPEXP) <= 0)
+		end;
+
+	// Identify credited character.
+	.@char_id = getcharid(0);
+	.@account_id = getcharid(3);
+
+	if (.@char_id <= 0 || .@account_id <= 0)
+		end;
+
+	// Collect kill information.
+	.@char_name$ = escape_sql(strcharinfo(0));
+	.@mob_name$ = escape_sql(getmonsterinfo(.@mob_id, MOB_NAME));
+	.@map_name$ = escape_sql(strcharinfo(3));
+
+	.@spawn_sql$ = "NULL";
+	if (.@spawn_id > 0)
+		.@spawn_sql$ = "" + .@spawn_id;
+
+	// Record kill to permanent database.
+	query_sql(
+		"INSERT INTO `grassro_mvp_kills` " +
+		"(`account_id`, `char_id`, `char_name`, " +
+		"`mob_id`, `mob_name`, `map_name`, " +
+		"`spawn_id`, `kill_source`, `killed_at`) VALUES (" +
+		.@account_id + "," +
+		.@char_id + ",'" +
+		.@char_name$ + "'," +
+		.@mob_id + ",'" +
+		.@mob_name$ + "','" +
+		.@map_name$ + "'," +
+		.@spawn_sql$ + ",'" +
+		.@origin$ + "', UTC_TIMESTAMP())"
+	);
+
+	end;
+}

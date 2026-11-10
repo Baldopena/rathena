@@ -1,16 +1,22 @@
 //============================================================
-//= Grass Ro | Wakim | GM-only production Sell All SQL-ledger PILOT
+//= Grass Ro | Wakim | SQL-ledger GM pilot + opt-in public rollout
 //= Native Buy / Sell + Identify All (quantity-based billing)
-//= GM pilot: real sale with pre-delete SQL evidence + persistent review lock.
+//= Successful sales unlock only after post-reconnect inventory/zeny reconciliation.
 //= Requires Hunting Arrow Item ID 1774 in the effective item DB.
 //= NEVER register this alongside another Wakim NPC at the same map position.
 //============================================================
 
 prontera,146,172,4	script	Wakim#GrassRo	582,{
+	// Reconcile only characters that have a persisted Wakim incident flag.
+	// This also works when public Sell All is OFF after a script reload.
+	if (WakimSellIncident) callsub S_ReconcileSavedSale;
 	mes "[Wakim]";
 	mes "Welcome to Wakim's services.";
 	if (getgmlevel() >= 99) {
 		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Administration:Cancel");
+	} else if ($GR_WakimPublicSaleEnabled) {
+		.@choice = select("Buy Items:Sell Items:Sell All Inventory:Identify All Items:Cancel");
+		if (.@choice == 5) close;
 	} else {
 		.@choice = select("Buy Items:Sell Items:Identify All Items:Cancel");
 		if (.@choice == 3) goto L_Identify;
@@ -39,9 +45,9 @@ prontera,146,172,4	script	Wakim#GrassRo	582,{
 	}
 
 L_SellAll:
-	// GM-only operational test. No exposure to ordinary players in this version.
-	// Native NoSell list MUST be generated against the effective PRE-RE item DB.
-	if (getgmlevel() < 99 || getcharid(3) != 2000000) close;
+	// GM account 2000000 is permitted while public mode is OFF.
+	// Public mode is separate, GM-controlled and defaults OFF on every script reload.
+	if (!$GR_WakimPublicSaleEnabled && (getgmlevel() < 99 || getcharid(3) != 2000000)) close;
 	if (!$GR_WakimSaleEnabled || !.NoSellReady || !$GR_WakimExcludeReady) {
 		mes "[Wakim]";
 		mes "^FF0000Protected Sell All is not enabled.^000000";
@@ -167,16 +173,16 @@ L_SellAll:
 	if (.@total > 50000000 || .@total < 0 || .@oldZeny > 1000000000 - .@total) {
 		mes "[Wakim]"; mes "^FF0000Payout or character Zeny cap exceeded.^000000"; close;
 	}
-	// The first live production test must not delete high-value/special items.
-	// This restriction is PILOT ONLY; the original eligibility logic remains intact.
-	if (.@n > 10 || .@total > 10000 || .@special) {
+	// Preserve the successful GM pilot's strict limits when PUBLIC mode is OFF.
+	// Public mode uses the original NoSell/favorite/gear/card eligibility rules.
+	if (!$GR_WakimPublicSaleEnabled && (.@n > 10 || .@total > 10000 || .@special)) {
 		mes "[Wakim]";
 		mes "GM PILOT: max 10 eligible slots, 10,000z payout, ordinary positive-price items only.";
 		mes "Favorite or store gear, cards, refined and zero-price items before retrying.";
 		close;
 	}
 	mes "[Wakim - Sell All Receipt]";
-	mes "^FF0000TEST TRANSACTION: ITEM DELETION IS REAL.^000000";
+	mes "^FF0000LIVE TRANSACTION: ITEM DELETION IS PERMANENT.^000000";
 	mes "^FF0000Favorite any equipment you want to keep.^000000";
 	mes "^FF0000Unequipped Gear Switch presets are NOT protected.^000000";
 	mes "--------------------------------";
@@ -201,7 +207,7 @@ L_SellAll:
 	if (.@special) mes "^FF0000Double-check your equipment and cards.^000000";
 	if (select("CONFIRM DELETE AND SELL:Cancel") != 1) close;
 	// No yield commands past this point until completion.
-	if (@WakimOperationBusy || $GR_WakimEditBusy || !$GR_WakimSaleEnabled || !.NoSellReady || !$GR_WakimExcludeReady || $GR_WakimExcludeRev != .@revision || getgmlevel() < 99 || getskilllv("MC_OVERCHARGE") != .@oldOC || Zeny != .@oldZeny) {
+	if (@WakimOperationBusy || $GR_WakimEditBusy || !$GR_WakimSaleEnabled || !.NoSellReady || !$GR_WakimExcludeReady || $GR_WakimExcludeRev != .@revision || (!$GR_WakimPublicSaleEnabled && (getgmlevel() < 99 || getcharid(3) != 2000000)) || getskilllv("MC_OVERCHARGE") != .@oldOC || Zeny != .@oldZeny) {
 		mes "[Wakim]"; mes "Transaction parameters changed; canceled."; close;
 	}
 	@WakimOperationBusy = 1;
@@ -242,10 +248,15 @@ L_SellAll:
 	for (.@i=0; .@i<.@count; ++.@i) {
 		if (!.@eligible[.@i]) continue;
 		.@lineNo++;
-		.@json$ = "JSON_OBJECT('equip'," + .@sEquip[.@i] + ",'favorite'," + .@sFav[.@i] + ",'identify'," + .@sIdent[.@i] + ",'bound'," + .@sBound[.@i] + ",'expire'," + .@sExpire[.@i] + ",'refine'," + .@sRefine[.@i] + ",'attribute'," + .@sAttr[.@i] + ",'enchantgrade'," + .@sEnchant[.@i] + ",'card1'," + .@sCard1[.@i] + ",'card2'," + .@sCard2[.@i] + ",'card3'," + .@sCard3[.@i] + ",'card4'," + .@sCard4[.@i] + ",'tradable'," + .@sTradable[.@i] + ",'opt1_id'," + .@sOptId1[.@i] + ",'opt1_val'," + .@sOptVal1[.@i] + ",'opt1_param'," + .@sOptParam1[.@i] + ",'opt2_id'," + .@sOptId2[.@i] + ",'opt2_val'," + .@sOptVal2[.@i] + ",'opt2_param'," + .@sOptParam2[.@i] + ",'opt3_id'," + .@sOptId3[.@i] + ",'opt3_val'," + .@sOptVal3[.@i] + ",'opt3_param'," + .@sOptParam3[.@i] + ",'opt4_id'," + .@sOptId4[.@i] + ",'opt4_val'," + .@sOptVal4[.@i] + ",'opt4_param'," + .@sOptParam4[.@i] + ",'opt5_id'," + .@sOptId5[.@i] + ",'opt5_val'," + .@sOptVal5[.@i] + ",'opt5_param'," + .@sOptParam5[.@i] + ")";
+		// Total held quantity for this item ID before deletion, including excluded
+		// stacks. This permits conservative post-relogin reconciliation.
+		.@beforeIdTotal = 0;
+		for (.@j=0; .@j<.@count; ++.@j)
+			if (.@sId[.@j] == .@sId[.@i]) .@beforeIdTotal += .@sAmt[.@j];
+		.@json$ = "JSON_OBJECT('inventory_id_total_before'," + .@beforeIdTotal + ",'equip'," + .@sEquip[.@i] + ",'favorite'," + .@sFav[.@i] + ",'identify'," + .@sIdent[.@i] + ",'bound'," + .@sBound[.@i] + ",'expire'," + .@sExpire[.@i] + ",'refine'," + .@sRefine[.@i] + ",'attribute'," + .@sAttr[.@i] + ",'enchantgrade'," + .@sEnchant[.@i] + ",'card1'," + .@sCard1[.@i] + ",'card2'," + .@sCard2[.@i] + ",'card3'," + .@sCard3[.@i] + ",'card4'," + .@sCard4[.@i] + ",'tradable'," + .@sTradable[.@i] + ",'opt1_id'," + .@sOptId1[.@i] + ",'opt1_val'," + .@sOptVal1[.@i] + ",'opt1_param'," + .@sOptParam1[.@i] + ",'opt2_id'," + .@sOptId2[.@i] + ",'opt2_val'," + .@sOptVal2[.@i] + ",'opt2_param'," + .@sOptParam2[.@i] + ",'opt3_id'," + .@sOptId3[.@i] + ",'opt3_val'," + .@sOptVal3[.@i] + ",'opt3_param'," + .@sOptParam3[.@i] + ",'opt4_id'," + .@sOptId4[.@i] + ",'opt4_val'," + .@sOptVal4[.@i] + ",'opt4_param'," + .@sOptParam4[.@i] + ",'opt5_id'," + .@sOptId5[.@i] + ",'opt5_val'," + .@sOptVal5[.@i] + ",'opt5_param'," + .@sOptParam5[.@i] + ")";
 		query_sql("INSERT INTO rathena.wakim_sale_item(txn_id,line_no,inventory_idx_at_snapshot,item_id,quantity,unit_zeny,line_zeny,attributes_json) VALUES (" + .@txid + "," + .@lineNo + "," + .@sIdx[.@i] + "," + .@sId[.@i] + "," + .@sAmt[.@i] + "," + .@sUnit[.@i] + "," + .@sLine[.@i] + "," + .@json$ + ")");
 		.@matches = 0;
-		.@sqlRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_item WHERE txn_id=" + .@txid + " AND line_no=" + .@lineNo + " AND inventory_idx_at_snapshot=" + .@sIdx[.@i] + " AND item_id=" + .@sId[.@i] + " AND quantity=" + .@sAmt[.@i] + " AND unit_zeny=" + .@sUnit[.@i] + " AND line_zeny=" + .@sLine[.@i] + " AND JSON_CONTAINS(attributes_json," + .@json$ + ") AND JSON_LENGTH(attributes_json)=28", .@matches);
+		.@sqlRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_item WHERE txn_id=" + .@txid + " AND line_no=" + .@lineNo + " AND inventory_idx_at_snapshot=" + .@sIdx[.@i] + " AND item_id=" + .@sId[.@i] + " AND quantity=" + .@sAmt[.@i] + " AND unit_zeny=" + .@sUnit[.@i] + " AND line_zeny=" + .@sLine[.@i] + " AND JSON_CONTAINS(attributes_json," + .@json$ + ") AND JSON_LENGTH(attributes_json)=29", .@matches);
 		if (.@sqlRows != 1 || .@matches != 1) {
 			@WakimOperationBusy = 0;
 			mes "[Wakim]"; mes "SQL snapshot mismatch. Nothing sold. Transaction locked for review."; close;
@@ -289,8 +300,8 @@ L_SellAll:
 		@WakimOperationBusy = 0;
 		mes "[Wakim]"; mes "Inventory changed during SQL preparation. No sale; ledger locked."; close;
 	}
-	// We intentionally do NOT release the SQL guard on any error OR on success.
-	// The sale's saved-character persistence must be checked separately.
+	// Never release this SQL guard until a later login has verified persisted state.
+	// An interrupted sale, failed save, or ambiguous inventory remains blocked.
 	query_sql("UPDATE rathena.wakim_sale_txn SET status='DELETING' WHERE txn_id=" + .@txid + " AND status='PREPARED'");
 	.@dbStatus$ = "";
 	.@sqlRows = query_sql("SELECT status FROM rathena.wakim_sale_txn WHERE txn_id=" + .@txid + " AND active_char_guard=" + .@cid, .@dbStatus$);
@@ -347,21 +358,89 @@ L_SellAll:
 	.@sqlRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_event WHERE txn_id=" + .@txid + " AND event_seq=" + (.@seq+1) + " AND kind='PAYMENT_OBSERVED'", .@check);
 	if (.@sqlRows != 1 || .@check != 1) { @WakimOperationBusy = 0; mes "[Wakim]"; mes "Sale observed, payment audit incomplete. SQL incident locked."; close; }
 	query_sql("UPDATE rathena.wakim_sale_txn SET status='NEEDS_REVIEW',observed_zeny_after=" + Zeny + " WHERE txn_id=" + .@txid + " AND status='PAYMENT_PENDING'");
+	.@dbStatus$ = ""; .@dbAfter = -1;
+	.@sqlRows = query_sql("SELECT status,observed_zeny_after FROM rathena.wakim_sale_txn WHERE txn_id=" + .@txid, .@dbStatus$,.@dbAfter);
+	if (.@sqlRows != 1 || .@dbStatus$ != "NEEDS_REVIEW" || .@dbAfter != Zeny) {
+		@WakimOperationBusy = 0;
+		mes "[Wakim]"; mes "Items and payout observed, but ledger finalization is uncertain.";
+		mes "Transaction #" + .@txid + " is locked. Contact a GM. Do not retry."; close;
+	}
 	// Do not mark COMPLETED and release lock before persisted character state is reconciled.
 	@WakimOperationBusy = 0;
 	mes "[Wakim]";
-	mes "GM PILOT: sold " + .@units + " units; observed " + .@total + "z payout.";
-	mes "Transaction #" + .@txid + " remains locked until verified against saved character data.";
+	mes "Sold " + .@units + " units; observed " + .@total + "z payout.";
+	mes "Transaction #" + .@txid + " is pending a post-relogin save check.";
+	mes "Log out normally, reconnect, then use Wakim Sell All again to reconcile.";
 	close;
+
+
+// Only this successful-path reconciliation can release the active SQL guard.
+// Called BEFORE the Sell All unresolved-lock check, never during the sale.
+// Requires a login after the SQL sale record and identical persisted Zeny and
+// item-ID totals. Unknown or partial states remain locked for GM inspection.
+S_ReconcileSavedSale:
+	.@rcCid = getcharid(0);
+	.@rcTid = 0; .@rcSlots = 0; .@rcDeleted = 0;
+	.@rcInitial = 0; .@rcAfter = 0; .@rcPayout = 0; .@rcSaved = 0;
+	.@rcUpdated = 0; .@rcStatus$ = "";
+	.@rcRows = query_sql("SELECT txn_id,status,expected_slots,observed_deleted_slots,initial_zeny,observed_zeny_after,payout_zeny,item_rows_recorded,UNIX_TIMESTAMP(updated_at) FROM rathena.wakim_sale_txn WHERE active_char_guard=" + .@rcCid, .@rcTid,.@rcStatus$,.@rcSlots,.@rcDeleted,.@rcInitial,.@rcAfter,.@rcPayout,.@rcSaved,.@rcUpdated);
+	if (.@rcRows != 1 || .@rcStatus$ != "NEEDS_REVIEW" || .@rcTid <= 0) { return; }
+	if (@WakimSaleLoginTick <= .@rcUpdated || .@rcSlots < 1 || .@rcSlots > 100 || .@rcDeleted != .@rcSlots || .@rcSaved != .@rcSlots || .@rcInitial + .@rcPayout != .@rcAfter || Zeny != .@rcAfter) { return; }
+	if (WakimSellIncident != 1 || WakimSellExpected != .@rcSlots || WakimSellDeleted != .@rcSlots) { return; }
+	.@rcIntents = 0; .@rcObserved = 0; .@rcPayIntents = 0; .@rcPayObserved = 0;
+	.@rcRows = query_sql("SELECT COALESCE(SUM(kind='DELETE_INTENT'),0),COALESCE(SUM(kind='DELETE_OBSERVED'),0),COALESCE(SUM(kind='PAYMENT_INTENT'),0),COALESCE(SUM(kind='PAYMENT_OBSERVED'),0) FROM rathena.wakim_sale_event WHERE txn_id=" + .@rcTid, .@rcIntents,.@rcObserved,.@rcPayIntents,.@rcPayObserved);
+	if (.@rcRows != 1 || .@rcIntents != .@rcSlots || .@rcObserved != .@rcSlots || .@rcPayIntents != 1 || .@rcPayObserved != 1) { return; }
+	.@rcRows = query_sql("SELECT item_id,quantity,COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(attributes_json,'$.inventory_id_total_before')) AS UNSIGNED),0) FROM rathena.wakim_sale_item WHERE txn_id=" + .@rcTid + " ORDER BY line_no", .@rcItemId,.@rcQuantity,.@rcBefore);
+	if (.@rcRows != .@rcSlots) { return; }
+	getinventorylist;
+	for (.@rcI=0; .@rcI<.@rcSlots; ++.@rcI) {
+		.@rcSeen = 0;
+		for (.@rcK=0; .@rcK<.@rcI; ++.@rcK)
+			if (.@rcItemId[.@rcK] == .@rcItemId[.@rcI]) .@rcSeen = 1;
+		if (.@rcSeen) continue;
+		.@rcSold = 0;
+		for (.@rcK=0; .@rcK<.@rcSlots; ++.@rcK)
+			if (.@rcItemId[.@rcK] == .@rcItemId[.@rcI]) .@rcSold += .@rcQuantity[.@rcK];
+		.@rcBeforeTotal = .@rcBefore[.@rcI];
+		// Legacy GM pilot row had 28 fields, so require ZERO remaining
+		// copies of its sold ID instead of guessing the earlier count.
+		if (.@rcBeforeTotal == 0) .@rcBeforeTotal = .@rcSold;
+		if (.@rcBeforeTotal < .@rcSold) { return; }
+		.@rcNow = 0;
+		for (.@rcJ=0; .@rcJ<@inventorylist_count; ++.@rcJ)
+			if (@inventorylist_id[.@rcJ] == .@rcItemId[.@rcI]) .@rcNow += @inventorylist_amount[.@rcJ];
+		if (.@rcNow != .@rcBeforeTotal - .@rcSold) { return; }
+	}
+	// Record proof BEFORE releasing SQL guard; retry safely on interrupted write.
+	.@rcSeq = .@rcSlots * 2 + 4;
+	.@rcCheck = 0;
+	.@rcRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_event WHERE txn_id=" + .@rcTid + " AND event_seq=" + .@rcSeq + " AND kind='SAVE_RECONCILED'", .@rcCheck);
+	if (.@rcRows != 1) { return; }
+	if (.@rcCheck == 0)
+		query_sql("INSERT INTO rathena.wakim_sale_event(txn_id,event_seq,kind,actor_account_id,actor_char_id,detail_json) VALUES (" + .@rcTid + "," + .@rcSeq + ",'SAVE_RECONCILED'," + getcharid(3) + "," + .@rcCid + ",JSON_OBJECT('saved_zeny'," + Zeny + ",'login_tick'," + @WakimSaleLoginTick + "))");
+	.@rcCheck = 0;
+	.@rcRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_event WHERE txn_id=" + .@rcTid + " AND event_seq=" + .@rcSeq + " AND kind='SAVE_RECONCILED'", .@rcCheck);
+	if (.@rcRows != 1 || .@rcCheck != 1) { return; }
+	query_sql("UPDATE rathena.wakim_sale_txn SET status='COMPLETED',completed_at=NOW(6) WHERE txn_id=" + .@rcTid + " AND status='NEEDS_REVIEW' AND char_id=" + .@rcCid + " AND observed_deleted_slots=expected_slots AND item_rows_recorded=expected_slots AND observed_zeny_after=" + Zeny);
+	.@rcStatus$ = "";
+	.@rcRows = query_sql("SELECT status FROM rathena.wakim_sale_txn WHERE txn_id=" + .@rcTid + " AND char_id=" + .@rcCid, .@rcStatus$);
+	if (.@rcRows != 1 || .@rcStatus$ != "COMPLETED") { return; }
+	WakimSellIncident = 0;
+	WakimSellExpected = 0;
+	WakimSellDeleted = 0;
+	WakimSellEpoch = 0;
+	logmes "WAKIM SAVE_RECONCILED txid=" + .@rcTid + " cid=" + .@rcCid;
+	return;
 
 L_Admin:
 	if (getgmlevel() < 99) close;
 	mes "[Wakim - Administration]";
 	mes "GM only. Exclusion changes affect ALL players.";
 	mes "Native NoSell IDs in this build: " + .NoSellCount;
-	mes "Sell All GM test: " + ($GR_WakimSaleEnabled ? "ENABLED" : "DISABLED");
-	.@action = select("View excluded IDs:Add excluded Item ID:Remove excluded Item ID:Initialize empty exclusions:Toggle GM selling:View my incident:Cancel");
-	if (.@action == 7) close;
+	mes "Sell All: " + ($GR_WakimSaleEnabled ? "ENABLED" : "DISABLED");
+	mes "PUBLIC rollout: " + ($GR_WakimPublicSaleEnabled ? "ENABLED" : "DISABLED");
+	.@action = select("View excluded IDs:Add excluded Item ID:Remove excluded Item ID:Initialize empty exclusions:Toggle GM selling:View my incident:Toggle PUBLIC Sell All:Cancel");
+	if (.@action == 8) close;
 	clear;
 	if (.@action == 1) {
 		mes "[Wakim - Exclusions]";
@@ -388,7 +467,33 @@ L_Admin:
 		logmes "WAKIM ADMIN initialized exclusions gm=" + getcharid(0);
 		mes "[Wakim]"; mes "Exclusions initialized."; close;
 	}
+	if (.@action == 7) {
+		mes "[Wakim - Public Rollout]";
+		mes "^FF0000WARNING: this allows ALL players to permanently sell eligible equipment, cards and items.^000000";
+		mes "A crash between deletion and payment still requires human recovery.";
+		mes "Every successful sale stays locked until the next login/save reconciliation.";
+		if (select("Confirm PUBLIC mode toggle:Cancel") != 1) close;
+		if (getgmlevel() < 99 || getcharid(3) != 2000000 || !.NoSellReady || !$GR_WakimExcludeReady) close;
+		if ($GR_WakimPublicSaleEnabled) {
+			$GR_WakimPublicSaleEnabled = 0;
+			$GR_WakimSaleEnabled = 0;
+			logmes "WAKIM PUBLIC disabled gm=" + getcharid(0);
+			mes "[Wakim]"; mes "Public Sell All disabled."; close;
+		}
+		.@schemaCount = 0; .@openCount = -1;
+		.@sqlRows = query_sql("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA='rathena' AND TABLE_NAME IN ('wakim_sale_txn','wakim_sale_item','wakim_sale_event')", .@schemaCount);
+		if (.@sqlRows != 1 || .@schemaCount != 3) { mes "Missing SQL schema. Remains OFF."; close; }
+		// Completed-but-awaiting-relogin sales remain isolated by per-char guard.
+		// Block rollout only when a transaction's deletion or payment is uncertain.
+		.@sqlRows = query_sql("SELECT COUNT(*) FROM rathena.wakim_sale_txn t WHERE t.active_char_guard IS NOT NULL AND (t.status<>'NEEDS_REVIEW' OR t.observed_deleted_slots<>t.expected_slots OR t.observed_zeny_after IS NULL OR NOT EXISTS (SELECT 1 FROM rathena.wakim_sale_event e WHERE e.txn_id=t.txn_id AND e.kind='PAYMENT_OBSERVED'))", .@openCount);
+		if (.@sqlRows != 1 || .@openCount != 0) { mes "Uncertain SQL sales need GM review. Public mode remains OFF."; close; }
+		$GR_WakimSaleEnabled = 1;
+		$GR_WakimPublicSaleEnabled = 1;
+		logmes "WAKIM PUBLIC enabled gm=" + getcharid(0);
+		mes "[Wakim]"; mes "Public Sell All enabled until next script reload."; close;
+	}
 	if (.@action == 5) {
+		if ($GR_WakimPublicSaleEnabled) { mes "Disable PUBLIC mode before toggling GM mode."; close; }
 		mes "[Wakim]";
 		mes "^FF0000Real item deletion will be enabled for GMs.^000000";
 		mes "Verify the registry, test case, and server backup first.";
@@ -570,6 +675,7 @@ L_Identify:
 OnInit:
 	// Fail closed on every NPC reload or map-server restart.
 	$GR_WakimSaleEnabled = 0;
+	$GR_WakimPublicSaleEnabled = 0;
 	// OnInit registry populated from PRE-RE effective item DB by generator.
 	// PHASE3_NATIVE_NOSELL_BEGIN
 	.NoSellReady = 1;
@@ -634,6 +740,12 @@ OnInit:
 OnPCLoginEvent:
 	// Temporary session state only. Do not erase persistent incidents.
 	@WakimOperationBusy = 0;
+	@WakimSaleLoginTick = gettimetick(2);
+	if (WakimSellIncident) {
+		// Reconcile at login before later gameplay changes invalidate wallet/inventory comparisons.
+		// Existing S_ReconcileSavedSale performs full SQL, save and item checks; it fails closed.
+		callsub S_ReconcileSavedSale;
+	}
 	end;
 }
 
