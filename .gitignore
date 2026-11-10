@@ -159,7 +159,7 @@ generated
 *.bak-*
 *.backup-*
 *.backup
-*.bak.*
+*.bak*
 *.before*
 
 # discord webhooks
@@ -168,3 +168,6 @@ generated
 # pycache
 __pycache__/
 *.pyc
+
+# logs
+log/

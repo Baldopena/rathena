@@ -1,6 +1,9 @@
 //===== GrassRO ======================================================
-//= Player-Sponsored Floating Rates - NPC-only pilot v1
-//= No custom SQL, no persistence, no direct Discord webhook.
+//= Floating Rates v2 - Phase 3 manual GM events and master terminate.
+//= Phase 1: paid running/held state and internal override hooks.
+//= Phase 2: fixed 3-hour packages with proportional partial contributions.
+//= Phase 3: manual GM until next server midnight; all-event termination.
+//= Weekly scheduler and new Discord relay handling are NOT yet implemented.
 //= DEPLOYMENT: Sponsorship payments DISABLED after load/reload.
 //= GM Group ID 99 may enable payments for supervised testing.
 //= @reloadscript or map-server restart ENDS events and loses remaining time.
@@ -11,8 +14,8 @@
 prontera,141,227,5	script	Sponsorship#GRFR	506,{
 	mes "[GrassRO Float Rates]";
 	mes "Sponsor a server-wide rate event.";
-	mes "EXP/Job: 10,000,000 Zeny per hour.";
-	mes "Eligible Drops: 20,000,000 Zeny per hour.";
+	mes "EXP/Job: 10,000,000 Zeny for 3 hours.";
+	mes "Eligible Drops: 20,000,000 Zeny for 3 hours.";
 	mes "Minimum contribution: 15 minutes.";
 	if (!.Enabled) mes "^FF0000Sponsorships are currently disabled.^000000";
 	next;
@@ -32,18 +35,26 @@ L_Status:
 	callsub S_Expire;
 	.@now = gettimetick(2);
 	mes "[GrassRO Float Rates]";
-	if (.Active[0] && .EndAt[0] > .@now) {
-		.@left = .EndAt[0] - .@now;
-		mes "^FF9900EXP 2x: ACTIVE^000000";
-		mes "Sponsor: " + .Sponsor$[0];
-		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
-	} else mes "EXP 2x: Not Active";
-	if (.Active[1] && .EndAt[1] > .@now) {
-		.@left = .EndAt[1] - .@now;
-		mes "^EE82EEDROP 2x: ACTIVE^000000";
-		mes "Sponsor: " + .Sponsor$[1];
-		mes "Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
-	} else mes "DROP 2x: Not Active";
+	for (.@statusKind = 0; .@statusKind < 2; .@statusKind++) {
+		.@title$ = (.@statusKind == 0) ? "EXP/Job" : "Drops";
+		.@color$ = (.@statusKind == 0) ? "^FF9900" : "^EE82EE";
+		if (.ManualActive && .ManualKind[.@statusKind]) {
+			.@left = .ManualUntil - .@now;
+			mes .@color$ + .@title$ + " DOUBLE: GM ACTIVE^000000";
+			mes "GM time left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+			if (.Active[.@statusKind] && .HeldSeconds[.@statusKind] > 0)
+				mes "Paid time queued: " + (.HeldSeconds[.@statusKind] / 3600) + "h " + ((.HeldSeconds[.@statusKind] % 3600) / 60) + "m " + (.HeldSeconds[.@statusKind] % 60) + "s";
+		} else if (.Active[.@statusKind] && .EndAt[.@statusKind] > .@now) {
+			.@left = .EndAt[.@statusKind] - .@now;
+			mes .@color$ + .@title$ + " DOUBLE: SPONSORED^000000";
+			mes "Sponsor: " + .Sponsor$[.@statusKind];
+			mes "Paid time left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s";
+		} else if (.Active[.@statusKind] && .HeldSeconds[.@statusKind] > 0) {
+			mes .@title$ + " paid time: QUEUED/PAUSED";
+			mes "Sponsor: " + .Sponsor$[.@statusKind];
+			mes "Saved: " + (.HeldSeconds[.@statusKind] / 3600) + "h " + ((.HeldSeconds[.@statusKind] % 3600) / 60) + "m " + (.HeldSeconds[.@statusKind] % 60) + "s";
+		} else mes .@title$ + " DOUBLE: Not Active";
+	}
 	close;
 
 L_Sponsor:
@@ -52,13 +63,15 @@ L_Sponsor:
 		close;
 	}
 	.@price = (.@kind == 0) ? .ExpPrice : .DropPrice;
-	.@minimum = .@price / 4;
+	// Three hours contains twelve 15-minute periods. Round up to the next
+	// 1,000 Zeny so the smallest accepted payment yields at least 900 seconds.
+	.@minimum = ((.@price + 11999) / 12000) * 1000;
 	mes "[GrassRO Float Rates]";
 	mes (.@kind == 0 ? "EXP/Job 2x" : "Eligible Drops 2x") + " sponsorship";
-	mes "One hour costs " + .@price + " Zeny.";
+	mes "Full 3-hour package: " + .@price + " Zeny.";
 	mes "Minimum: " + .@minimum + " Zeny (15 minutes).";
 	next;
-	switch(select("Sponsor 1 hour:Use my Zeny (up to 1 hour):Enter a Zeny amount:Cancel")) {
+	switch(select("Sponsor 3 hours:Use my Zeny (up to 3 hours):Enter a Zeny amount:Cancel")) {
 	case 1:
 		.@cost = .@price;
 		break;
@@ -79,9 +92,9 @@ L_Sponsor:
 		mes "Contribution must be between " + .@minimum + " and " + .@price + " Zeny, in 1,000-Zeny increments.";
 		close;
 	}
-	// Multiplying the amount by 3600 directly may exceed 32-bit bounds.
-	// Dividing both monetary values by 1000 first avoids that risk.
-	.@seconds = ((.@cost / 1000) * 3600) / (.@price / 1000);
+	// Multiplying Zeny by 10800 directly may exceed 32-bit bounds.
+	// Dividing monetary values by 1000 first caps the product at 216,000,000.
+	.@seconds = ((.@cost / 1000) * 10800) / (.@price / 1000);
 	if (.@seconds < 900) {
 		mes "Minimum sponsored duration is 15 minutes.";
 		close;
@@ -89,7 +102,7 @@ L_Sponsor:
 	mes "[Confirm Sponsorship]";
 	mes "Cost: " + .@cost + " Zeny.";
 	mes "Time added: " + (.@seconds / 3600) + "h " + ((.@seconds % 3600) / 60) + "m " + (.@seconds % 60) + "s.";
-	mes "This extends an active event. It does not stack above 2x.";
+	mes "Paid time queues during a matching GM boost. Rates never exceed 2x.";
 	next;
 	if (select("Confirm payment:Cancel") != 1) close;
 
@@ -105,16 +118,21 @@ L_Sponsor:
 		close;
 	}
 	.@now = gettimetick(2);
-	.@started = (.Active[.@kind] && .EndAt[.@kind] > .@now);
-	.@baseend = .@started ? .EndAt[.@kind] : .@now;
-	.@newend = .@baseend + .@seconds;
-	if (.CapHours > 0 && .@newend - .@now > .CapHours * 3600) {
+	// Paid time has only one location: running deadline OR held seconds.
+	// This balance is independent of any free override's expiration.
+	.@running = (.Active[.@kind] && .EndAt[.@kind] > .@now);
+	.@paused = (.OverrideUntil[.@kind] > .@now);
+	.@started = (.@running || (.Active[.@kind] && .HeldSeconds[.@kind] > 0));
+	.@paidleft = .@running ? .EndAt[.@kind] - .@now : .HeldSeconds[.@kind];
+	.@newpaid = .@paidleft + .@seconds;
+	if (.CapHours > 0 && .@newpaid > .CapHours * 3600) {
 		mes "The GM-configured remaining-duration limit would be exceeded.";
 		mes "No Zeny was deducted.";
 		close;
 	}
-	if (!.@started) {
-		// Refuse to overwrite unexpected external rate changes.
+	if (!.@started && !.@paused) {
+		// Do not re-apply an already running free boost. A new paid
+		// event still requires baseline validation before payment.
 		if (!callsub(S_Apply, .@kind)) {
 			mes "Rate configuration conflict. No payment was made.";
 			mes "Please notify a GM.";
@@ -123,26 +141,37 @@ L_Sponsor:
 	}
 	Zeny -= .@cost;
 	.Active[.@kind] = 1;
-	.EndAt[.@kind] = .@newend;
+	if (.@paused) {
+		// Never consume purchased time while a free event controls rates.
+		.HeldSeconds[.@kind] = .@newpaid;
+		.EndAt[.@kind] = 0;
+	} else {
+		.EndAt[.@kind] = .@now + .@newpaid;
+		.HeldSeconds[.@kind] = 0;
+	}
 	.Sponsor$[.@kind] = strcharinfo(0); // latest contributing character
 	.@name$ = .Sponsor$[.@kind];
 	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
 	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
-	if (.@started)
+	if (.@paused)
+		announce "[GrassRO] " + .@name$ + " queued " + (.@seconds / 60) + " minute(s) of DOUBLE " + .@kindname$ + "! @floatevent",bc_all,.@color;
+	else if (.@started)
 		announce "[GrassRO] " + .@name$ + " extended DOUBLE " + .@kindname$ + " by " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
 	else
 		announce "[GrassRO] " + .@name$ + " sponsored DOUBLE " + .@kindname$ + " for " + (.@seconds / 60) + " minute(s)! @floatevent",bc_all,.@color;
 	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " sponsor=" + .@name$ + " zeny=" + .@cost + " seconds=" + .@seconds + " extended=" + .@started;
-	mes "Thank you! Your contribution is now active.";
+	mes (.@paused ? "Thank you! Your sponsored time is queued." : "Thank you! Your contribution is now active.");
 	close;
 
 L_GM:
 	if (getgroupid() != 99) close;
+	callsub S_Expire;
 	mes "[Float Rates - GM]";
 	mes "Payments: " + (.Enabled ? "ENABLED" : "DISABLED");
 	mes "Maximum remaining time: " + (.CapHours ? .CapHours + " hours" : "Unlimited");
+	mes "Manual GM event: " + (.ManualActive ? "ACTIVE until midnight" : "Inactive");
 	next;
-	switch(select("Toggle sponsorship payments:Configure time limit:End EXP now:End Drops now:Cancel")) {
+	switch(select("Toggle sponsorship payments:Configure time limit:Start manual GM event:End manual GM event:MASTER TERMINATE:Cancel")) {
 	case 1:
 		.Enabled = !.Enabled;
 		mes "Sponsorship payments are now " + (.Enabled ? "ENABLED" : "DISABLED") + ".";
@@ -155,12 +184,51 @@ L_GM:
 		mes "Limit updated.";
 		break;
 	case 3:
-		mes "End EXP immediately? This does not refund contributions.";
-		if (select("Yes:No") == 1) callsub S_Stop,0,1;
+		callsub S_Expire;
+		if (.ManualActive) {
+			mes "A manual event is already active. End it before starting another.";
+			break;
+		}
+		mes "Choose the categories to boost until next server midnight.";
+		next;
+		switch(select("EXP/Job only:Drops only:Both EXP/Job and Drops:Cancel")) {
+		case 1: .@manualMask = 1; break;
+		case 2: .@manualMask = 2; break;
+		case 3: .@manualMask = 3; break;
+		default: close;
+		}
+		mes "Manual DOUBLE rates will begin immediately and end at server midnight.";
+		mes "Matching paid sponsorship time will pause, without refunds or stacking.";
+		next;
+		if (select("Start manual event:Cancel") != 1) close;
+		debugmes "[GR_FLOAT_DIAG] gm_menu_confirm mask=" + .@manualMask;
+		if (callsub(S_StartManual,.@manualMask))
+			mes "Manual GM event started. It expires at the next server midnight.";
+		else
+			mes "Manual activation rejected. Existing event or rate conflict; see map-server log.";
 		break;
 	case 4:
-		mes "End Drops immediately? This does not refund contributions.";
-		if (select("Yes:No") == 1) callsub S_Stop,1,1;
+		callsub S_Expire;
+		if (!.ManualActive) {
+			mes "No manual GM event is currently active.";
+			break;
+		}
+		mes "End the current manual event? Paused sponsorship time will resume.";
+		next;
+		if (select("End manual event:Cancel") == 1) {
+			callsub S_EndManual,1;
+			mes "Manual GM event ended. Applicable paid time has resumed.";
+		}
+		break;
+	case 5:
+		mes "MASTER TERMINATE stops ALL Floating Rates boosts and discards ALL paid time.";
+		mes "It also disables the weekly scheduler (configuration retained when implemented).";
+		mes "No paid sponsorships will be refunded. Payments setting stays unchanged.";
+		next;
+		if (select("CONFIRM MASTER TERMINATE:Cancel") == 1) {
+			callsub S_MasterStop;
+			mes "All Floating Rates events and balances have been cleared.";
+		}
 		break;
 	default:
 		close;
@@ -175,14 +243,24 @@ OnAtStatus:
 	}
 	callsub S_Expire;
 	.@now = gettimetick(2);
-	if (.Active[0] && .EndAt[0] > .@now) {
-		.@left = .EndAt[0] - .@now;
-		dispbottom "EXP 2x: ACTIVE | Sponsor: " + .Sponsor$[0] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xFF9900;
-	} else dispbottom "EXP 2x: Not Active",0xFF9900;
-	if (.Active[1] && .EndAt[1] > .@now) {
-		.@left = .EndAt[1] - .@now;
-		dispbottom "DROP 2x: ACTIVE | Sponsor: " + .Sponsor$[1] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",0xEE82EE;
-	} else dispbottom "DROP 2x: Not Active",0xEE82EE;
+	for (.@atKind = 0; .@atKind < 2; .@atKind++) {
+		.@title$ = (.@atKind == 0) ? "EXP/Job" : "Drops";
+		.@color = (.@atKind == 0) ? 0xFF9900 : 0xEE82EE;
+		if (.ManualActive && .ManualKind[.@atKind]) {
+			.@left = .ManualUntil - .@now;
+			dispbottom .@title$ + " DOUBLE: MANUAL GM | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",.@color;
+			if (.Active[.@atKind] && .HeldSeconds[.@atKind] > 0) {
+				.@left = .HeldSeconds[.@atKind];
+				dispbottom .@title$ + " paid time PAUSED | Saved: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",.@color;
+			}
+		} else if (.Active[.@atKind] && .EndAt[.@atKind] > .@now) {
+			.@left = .EndAt[.@atKind] - .@now;
+			dispbottom .@title$ + " DOUBLE: SPONSORED | Sponsor: " + .Sponsor$[.@atKind] + " | Left: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",.@color;
+		} else if (.Active[.@atKind] && .HeldSeconds[.@atKind] > 0) {
+			.@left = .HeldSeconds[.@atKind];
+			dispbottom .@title$ + " paid time PAUSED | Saved: " + (.@left / 3600) + "h " + ((.@left % 3600) / 60) + "m " + (.@left % 60) + "s",.@color;
+		} else dispbottom .@title$ + " DOUBLE: Not Active",.@color;
+	}
 	end;
 
 // No player RID is needed for NPC-timer events.
@@ -198,7 +276,13 @@ OnInit:
 	.CapHours = 0; // unlimited by default
 	setarray .Active[0],0,0;
 	setarray .EndAt[0],0,0;
+	setarray .HeldSeconds[0],0,0; // paid time frozen during GM-controlled rates
+	setarray .OverrideUntil[0],0,0; // shared free category deadline primitive
 	setarray .Sponsor$[0],"","";
+	.ManualActive = 0;
+	.ManualUntil = 0;
+	setarray .ManualKind[0],0,0;
+	.ScheduleEnabled = 0; // reserved for phase 4; Master Terminate forces off
 	setarray .ExpFlags$[0],"base_exp_rate","job_exp_rate";
 	setarray .DropFlags$[0],
 		"item_rate_common","item_rate_heal","item_rate_use","item_rate_equip","item_rate_card",
@@ -243,6 +327,7 @@ S_Apply:
 	for (.@i = 0; .@i < .@n; .@i++) {
 		.@flag$ = (.@kind == 0) ? .ExpFlags$[.@i] : .DropFlags$[.@i];
 		if (getbattleflag(.@flag$) != .Base * 2) {
+			debugmes "[GR_FLOAT_DIAG] rate_apply_verify_failed kind=" + .@kind + " flag=" + .@flag$ + " actual=" + getbattleflag(.@flag$);
 			callsub S_Restore,.@kind;
 			return 0;
 		}
@@ -268,24 +353,211 @@ S_Restore:
 	}
 	return;
 
+// Internal timer primitives shared by manual GM boosts (and future scheduler).
+S_PausePaid:
+	.@kind = getarg(0);
+	.@now = gettimetick(2);
+	if (!.Active[.@kind] || .EndAt[.@kind] <= 0) return;
+	.@left = .EndAt[.@kind] - .@now;
+	if (.@left <= 0) return; // caller must first process expirations
+	.HeldSeconds[.@kind] = .@left;
+	.EndAt[.@kind] = 0;
+	return;
+
+S_ResumePaid:
+	.@kind = getarg(0);
+	if (!.Active[.@kind] || .HeldSeconds[.@kind] <= 0) return;
+	.EndAt[.@kind] = gettimetick(2) + .HeldSeconds[.@kind];
+	.HeldSeconds[.@kind] = 0;
+	return;
+
+// Start a free category boost until a fixed Unix timestamp.
+// Return 0 on a precondition/rate conflict; otherwise return 1.
+S_BeginOverride:
+	.@kind = getarg(0);
+	.@until = getarg(1);
+	callsub S_Expire;
+	.@now = gettimetick(2);
+	if (.@until <= .@now || .OverrideUntil[.@kind] > .@now) {
+		debugmes "[GR_FLOAT_DIAG] override_begin_reject kind=" + .@kind + " now=" + .@now + " until=" + .@until + " existing=" + .OverrideUntil[.@kind];
+		return 0;
+	}
+	if (!.Active[.@kind]) {
+		if (!callsub(S_Apply,.@kind)) {
+			debugmes "[GR_FLOAT_DIAG] override_apply_reject kind=" + .@kind;
+			return 0;
+		}
+	} else {
+		callsub S_PausePaid,.@kind;
+	}
+	.OverrideUntil[.@kind] = .@until;
+	return 1;
+
+// End a free category boost; paid seconds resume if available.
+S_EndOverride:
+	.@kind = getarg(0);
+	if (.OverrideUntil[.@kind] <= 0) return;
+	.OverrideUntil[.@kind] = 0;
+	if (.Active[.@kind] && .HeldSeconds[.@kind] > 0) {
+		callsub S_ResumePaid,.@kind;
+	} else {
+		callsub S_Restore,.@kind;
+	}
+	return;
+
+// Verify all managed flags in one category before beginning an override.
+// An existing paid event must already own 20x; an inactive category needs 10x.
+S_CheckManualRates:
+	.@rateKind = getarg(0);
+	.@expectedRate = .Active[.@rateKind] ? .Base * 2 : .Base;
+	.@rateCount = (.@rateKind == 0) ? 2 : 10;
+	for (.@rateIndex = 0; .@rateIndex < .@rateCount; .@rateIndex++) {
+		.@rateFlag$ = (.@rateKind == 0) ? .ExpFlags$[.@rateIndex] : .DropFlags$[.@rateIndex];
+		if (getbattleflag(.@rateFlag$) != .@expectedRate) {
+			debugmes "[GR_FLOAT_EVENT] manual rate conflict flag=" + .@rateFlag$;
+			return 0;
+		}
+	}
+	return 1;
+
+// mask: 1=EXP/Job, 2=Drops, 3=both. All-or-nothing activation.
+S_StartManual:
+	.@manualMask = getarg(0);
+	debugmes "[GR_FLOAT_DIAG] manual_enter mask=" + .@manualMask + " active=" + .ManualActive + " exp_override=" + .OverrideUntil[0] + " drop_override=" + .OverrideUntil[1] + " exp_paid=" + .Active[0] + " drop_paid=" + .Active[1];
+	if (.@manualMask < 1 || .@manualMask > 3) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject invalid_mask";
+		return 0;
+	}
+	callsub S_Expire;
+	if (.ManualActive) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject already_active";
+		return 0;
+	}
+	.@manualNow = gettimetick(2);
+	// Phase 4 will replace this guard with the scheduled-event override.
+	// Phase 3 must never take ownership of an unknown free override.
+	if (.OverrideUntil[0] > .@manualNow || .OverrideUntil[1] > .@manualNow) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject override_active now=" + .@manualNow + " exp=" + .OverrideUntil[0] + " drop=" + .OverrideUntil[1];
+		return 0;
+	}
+	.@wantsExp = (.@manualMask == 1 || .@manualMask == 3);
+	.@wantsDrop = (.@manualMask == 2 || .@manualMask == 3);
+	// rAthena evaluates both operands of &&: never put callsub() on the
+	// right side of a category guard, or an unselected category is activated.
+	// Separate conditionals keep EXP-only and Drops-only truly independent.
+	if (.@wantsExp) {
+		if (!callsub(S_CheckManualRates,0)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject exp_preflight";
+			return 0;
+		}
+	}
+	if (.@wantsDrop) {
+		if (!callsub(S_CheckManualRates,1)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject drop_preflight";
+			return 0;
+		}
+	}
+	// Server-local midnight. Recompute on actual activation,
+	// not at the beginning of a GM dialog that can remain open for minutes.
+	.@secondsToMidnight = 86400 - (gettime(3) * 3600 + gettime(2) * 60 + gettime(1));
+	.@manualDeadline = gettimetick(2) + .@secondsToMidnight;
+	if (.@manualDeadline <= gettimetick(2)) {
+		debugmes "[GR_FLOAT_DIAG] manual_reject deadline_invalid seconds=" + .@secondsToMidnight + " deadline=" + .@manualDeadline;
+		return 0;
+	}
+	if (.@wantsExp) {
+		if (!callsub(S_BeginOverride,0,.@manualDeadline)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject exp_override_begin";
+			return 0;
+		}
+	}
+	if (.@wantsDrop) {
+		if (!callsub(S_BeginOverride,1,.@manualDeadline)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject drop_override_begin";
+			// Roll back EXP activation before returning a failed transaction.
+			if (.@wantsExp) callsub S_EndOverride,0;
+			return 0;
+		}
+	}
+	.ManualActive = 1;
+	.ManualUntil = .@manualDeadline;
+	.ManualKind[0] = .@wantsExp;
+	.ManualKind[1] = .@wantsDrop;
+	.@manualName$ = (.@manualMask == 3) ? "EXP/Job and Drops" : (.@manualMask == 1 ? "EXP/Job" : "Drops");
+	.@manualColor = (.@manualMask == 1) ? 0xFF9900 : (.@manualMask == 2 ? 0xEE82EE : 0x86D6CB);
+	announce "[GrassRO] GM DOUBLE " + .@manualName$ + " is live until midnight! @floatevent",bc_all,.@manualColor;
+	debugmes "[GR_FLOAT_EVENT] type=manual_start mask=" + .@manualMask + " until=" + .ManualUntil;
+	return 1;
+
+// End the whole manual event, with one announcement and no paid-time loss.
+// reasonGM: 1=GM termination, 0=natural server midnight.
+S_EndManual:
+	.@reasonGM = getarg(0,0);
+	if (!.ManualActive) return;
+	.@wasExp = .ManualKind[0];
+	.@wasDrop = .ManualKind[1];
+	.@endedMask = (.@wasExp ? 1 : 0) + (.@wasDrop ? 2 : 0);
+	.ManualActive = 0;
+	.ManualUntil = 0;
+	setarray .ManualKind[0],0,0;
+	if (.@wasExp) callsub S_EndOverride,0;
+	if (.@wasDrop) callsub S_EndOverride,1;
+	.@endedName$ = (.@endedMask == 3) ? "EXP/Job and Drops" : (.@endedMask == 1 ? "EXP/Job" : "Drops");
+	.@endedColor = (.@endedMask == 1) ? 0xFF9900 : (.@endedMask == 2 ? 0xEE82EE : 0x86D6CB);
+	announce "[GrassRO] Manual DOUBLE " + .@endedName$ + (.@reasonGM ? " ended by GM." : " ended at midnight.") + " @floatevent",bc_all,.@endedColor;
+	debugmes "[GR_FLOAT_EVENT] type=manual_end mask=" + .@endedMask + " reason=" + (.@reasonGM ? "gm" : "midnight");
+	return;
+
+// Master Terminate does not call S_EndManual: only ONE public notice is sent.
+// Current scheduler implementation is phase 4; leave its config intact then.
+S_MasterStop:
+	.ManualActive = 0;
+	.ManualUntil = 0;
+	setarray .ManualKind[0],0,0;
+	.ScheduleEnabled = 0;
+	for (.@masterKind = 0; .@masterKind < 2; .@masterKind++) {
+		.OverrideUntil[.@masterKind] = 0;
+		.Active[.@masterKind] = 0;
+		.EndAt[.@masterKind] = 0;
+		.HeldSeconds[.@masterKind] = 0;
+		.Sponsor$[.@masterKind] = "";
+		callsub S_Restore,.@masterKind;
+	}
+	announce "[GrassRO] All Floating Rates boosts terminated by GM. @floatevent",bc_all,0xFF5555;
+	debugmes "[GR_FLOAT_EVENT] type=master_terminate";
+	return;
+
 S_Stop:
 	.@kind = getarg(0);
 	.@isGM = getarg(1,0);
 	if (!.Active[.@kind]) return;
-	callsub S_Restore,.@kind;
+	// Keep 20x if a free scheduled/manual boost is still running.
+	.@boostcontinues = (.OverrideUntil[.@kind] > gettimetick(2));
+	if (!.@boostcontinues) callsub S_Restore,.@kind;
 	.Active[.@kind] = 0;
 	.EndAt[.@kind] = 0;
+	.HeldSeconds[.@kind] = 0;
 	.Sponsor$[.@kind] = "";
 	.@kindname$ = (.@kind == 0) ? "EXP/Job" : "Drops";
 	.@color = (.@kind == 0) ? 0xFF9900 : 0xEE82EE;
-	announce "[GrassRO] DOUBLE " + .@kindname$ + (.@isGM ? " was ended by a GM." : " has ended. Normal rates restored."),bc_all,.@color;
+	if (.@boostcontinues)
+		announce "[GrassRO] Paid " + .@kindname$ + " sponsorship ended. GM boost continues.",bc_all,.@color;
+	else
+		announce "[GrassRO] DOUBLE " + .@kindname$ + (.@isGM ? " was ended by a GM." : " has ended. Normal rates restored."),bc_all,.@color;
 	debugmes "[GR_FLOAT_EVENT] " + .@kindname$ + " stopped gm=" + .@isGM;
 	return;
 
 S_Expire:
 	.@now = gettimetick(2);
-	for (.@kind = 0; .@kind < 2; .@kind++)
-		if (.Active[.@kind] && .EndAt[.@kind] <= .@now)
-			callsub S_Stop,.@kind,0;
+	// A manual event owns both selected categories and expires as ONE event.
+	if (.ManualActive && .ManualUntil <= .@now) callsub S_EndManual,0;
+	for (.@expireKind = 0; .@expireKind < 2; .@expireKind++) {
+		// Failsafe for future non-manual overrides; phase 4 will own those.
+		if (.OverrideUntil[.@expireKind] > 0 && .OverrideUntil[.@expireKind] <= .@now)
+			callsub S_EndOverride,.@expireKind;
+		// EndAt=0 means paid time is held, not expired.
+		if (.Active[.@expireKind] && .EndAt[.@expireKind] > 0 && .EndAt[.@expireKind] <= .@now)
+			callsub S_Stop,.@expireKind,0;
+	}
 	return;
 }

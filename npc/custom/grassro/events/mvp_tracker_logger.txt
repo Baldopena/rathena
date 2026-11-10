@@ -25,7 +25,7 @@ OnPayonEddga:
 	// doevent keeps the triggering player attached.
 	doevent "RagnarokCoinDrop::OnNPCKillEvent";
 	doevent "GR_MVPVoucher::OnNPCKillEvent";
-	doevent "GR_MVP_Kill_Announcement::OnNPCKillEvent";
+	callfunc "F_GR_MVP_Announce", killedrid;
 
 	// Match the natural spawn to the SQL registry.
 	.@origin$ = "unknown";
@@ -378,7 +378,7 @@ OnNaturalMVP:
 	// Preserve the existing MVP rewards and announcements.
 	doevent "RagnarokCoinDrop::OnNPCKillEvent";
 	doevent "GR_MVPVoucher::OnNPCKillEvent";
-	doevent "GR_MVP_Kill_Announcement::OnNPCKillEvent";
+	callfunc "F_GR_MVP_Announce", .@nat_mob;
 
 	// Verify the natural spawn against the registry.
 	.@origin$ = "unknown";
