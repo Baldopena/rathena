@@ -1,6 +1,7 @@
 //===== GrassRO ======================================================
-//= Player-Sponsored Floating Rates - Phase 1 timer foundation
+//= Player-Sponsored Floating Rates - Phase 2 sponsorship pricing
 //= Phase 1: paid running/held state and internal override hooks.
+//= Phase 2: fixed 3-hour packages with proportional partial contributions.
 //= No scheduler, manual event controls or Discord changes yet.
 //= DEPLOYMENT: Sponsorship payments DISABLED after load/reload.
 //= GM Group ID 99 may enable payments for supervised testing.
@@ -12,8 +13,8 @@
 prontera,141,227,5	script	Sponsorship#GRFR	506,{
 	mes "[GrassRO Float Rates]";
 	mes "Sponsor a server-wide rate event.";
-	mes "EXP/Job: 10,000,000 Zeny per hour.";
-	mes "Eligible Drops: 20,000,000 Zeny per hour.";
+	mes "EXP/Job: 10,000,000 Zeny for 3 hours.";
+	mes "Eligible Drops: 20,000,000 Zeny for 3 hours.";
 	mes "Minimum contribution: 15 minutes.";
 	if (!.Enabled) mes "^FF0000Sponsorships are currently disabled.^000000";
 	next;
@@ -61,13 +62,15 @@ L_Sponsor:
 		close;
 	}
 	.@price = (.@kind == 0) ? .ExpPrice : .DropPrice;
-	.@minimum = .@price / 4;
+	// Three hours contains twelve 15-minute periods. Round up to the next
+	// 1,000 Zeny so the smallest accepted payment yields at least 900 seconds.
+	.@minimum = ((.@price + 11999) / 12000) * 1000;
 	mes "[GrassRO Float Rates]";
 	mes (.@kind == 0 ? "EXP/Job 2x" : "Eligible Drops 2x") + " sponsorship";
-	mes "One hour costs " + .@price + " Zeny.";
+	mes "Full 3-hour package: " + .@price + " Zeny.";
 	mes "Minimum: " + .@minimum + " Zeny (15 minutes).";
 	next;
-	switch(select("Sponsor 1 hour:Use my Zeny (up to 1 hour):Enter a Zeny amount:Cancel")) {
+	switch(select("Sponsor 3 hours:Use my Zeny (up to 3 hours):Enter a Zeny amount:Cancel")) {
 	case 1:
 		.@cost = .@price;
 		break;
@@ -88,9 +91,9 @@ L_Sponsor:
 		mes "Contribution must be between " + .@minimum + " and " + .@price + " Zeny, in 1,000-Zeny increments.";
 		close;
 	}
-	// Multiplying the amount by 3600 directly may exceed 32-bit bounds.
-	// Dividing both monetary values by 1000 first avoids that risk.
-	.@seconds = ((.@cost / 1000) * 3600) / (.@price / 1000);
+	// Multiplying Zeny by 10800 directly may exceed 32-bit bounds.
+	// Dividing monetary values by 1000 first caps the product at 216,000,000.
+	.@seconds = ((.@cost / 1000) * 10800) / (.@price / 1000);
 	if (.@seconds < 900) {
 		mes "Minimum sponsored duration is 15 minutes.";
 		close;
