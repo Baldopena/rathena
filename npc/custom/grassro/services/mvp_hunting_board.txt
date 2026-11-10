@@ -21,7 +21,7 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 	mes "View the server's greatest MVP hunters or check your personal hunting records.";
 	next;
 
-	switch(select("Top 20 Rankings:My Kill Stats:MVP Status Board:Exit")) {
+	switch(select("Top 20 Rankings:My Kill Stats:MVP Status Board:Natural MVP Respawns:Exit")) {
 
 	case 1:
 		//==========================================
@@ -245,6 +245,199 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 				mes "Origin: Unverified";
 			else
 				mes "Origin: " + .@source$[.@i];
+		}
+
+		close;
+
+
+	case 4:
+		//==========================================
+		// NATURAL MVP RESPAWN ESTIMATES
+		//==========================================
+
+		mes "[Natural MVP Respawns]";
+		mes "Browse registered natural MVP spawn points.";
+		mes "Estimates use the latest natural kill.";
+		mes "All times are UTC.";
+		mes "This does not detect whether an MVP is alive.";
+		next;
+
+		.@rows = query_sql(
+			"SELECT spawn_id, mob_id, mob_name, map_name, " +
+			"COALESCE(DATE_FORMAT(last_killed_at, '%Y-%m-%d %H:%i:%s'), 'Never'), " +
+			"COALESCE(DATE_FORMAT(earliest_respawn_at, '%Y-%m-%d %H:%i:%s'), 'N/A'), " +
+			"COALESCE(DATE_FORMAT(latest_respawn_at, '%Y-%m-%d %H:%i:%s'), 'N/A'), " +
+			"estimated_status, " +
+			"FLOOR(base_delay_ms / 60000), " +
+			"FLOOR((base_delay_ms + random_delay_ms) / 60000) " +
+			"FROM grassro_mvp_respawn_status " +
+			"ORDER BY FIELD(mob_id, " +
+			"1086,1159,1115,1038,1150,1087,1059,1147," +
+			"1112,1190,1046,1389,1252,1583,1157,1511," +
+			"1312,1251,1418,1492,1688,1885,1623,1785," +
+			"1630,1039,1272,1658,1719,1685,2068,1734," +
+			"1768,1871,1832,1751,1917,1873), map_name, spawn_id",
+			.@spawn_ids, .@mob_ids, .@mobs$, .@maps$,
+			.@killed$, .@earliest$, .@latest$,
+			.@status$, .@min_minutes, .@max_minutes
+		);
+
+		if (.@rows < 0) {
+			mes "Unable to retrieve respawn estimates.";
+			close;
+		}
+
+		if (.@rows == 0) {
+			mes "No natural MVP spawns are registered.";
+			close;
+		}
+
+		.@tier_names$[1] = "Low MVP";
+		.@tier_names$[2] = "Mid MVP";
+		.@tier_names$[3] = "High MVP";
+
+		while (1) {
+			mes "[Natural MVP Respawns]";
+			mes "Choose an MVP category.";
+			mes "Grouped by hunting difficulty.";
+			mes "Low: Accessible MVPs";
+			mes "Mid: Intermediate encounters";
+			mes "High: Advanced encounters";
+
+			.@tier = select("Low MVP:Mid MVP:High MVP:Exit");
+
+			if (.@tier == 4)
+				close;
+
+			next;
+
+			.@menu$ = "";
+			.@count = 0;
+
+			for (.@i = 0; .@i < .@rows; .@i++) {
+				// GrassRO manual hunting difficulty.
+				.@current_tier = 0;
+				switch (.@mob_ids[.@i]) {
+				case 1086:
+				case 1159:
+				case 1115:
+				case 1038:
+				case 1150:
+				case 1087:
+				case 1059:
+				case 1147:
+				case 1112:
+				case 1190:
+				case 1046:
+				case 1389:
+				case 1252:
+				case 1583:
+					.@current_tier = 1;
+					break;
+				case 1157:
+				case 1511:
+				case 1312:
+				case 1251:
+				case 1418:
+				case 1492:
+				case 1688:
+				case 1885:
+				case 1623:
+				case 1785:
+				case 1630:
+				case 1039:
+				case 1272:
+				case 1658:
+				case 1719:
+					.@current_tier = 2;
+					break;
+				case 1685:
+				case 2068:
+				case 1734:
+				case 1768:
+				case 1871:
+				case 1832:
+				case 1751:
+				case 1917:
+				case 1873:
+					.@current_tier = 3;
+					break;
+				default:
+					.@current_tier = 0;
+					break;
+				}
+
+				if (.@current_tier == .@tier) {
+					.@indices[.@count] = .@i;
+					.@count++;
+
+					.@state$ = "No history";
+					if (.@status$[.@i] == "WAITING")
+						.@state$ = "Waiting";
+					else if (.@status$[.@i] == "RESPAWN_WINDOW")
+						.@state$ = "In window";
+					else if (.@status$[.@i] == "WINDOW_PASSED")
+						.@state$ = "Window passed";
+
+					.@menu$ += .@mobs$[.@i] +
+						" [" + .@maps$[.@i] + "] - " +
+						.@state$ + ":";
+				}
+			}
+
+			if (.@count == 0) {
+				mes "No MVPs registered in this category.";
+				next;
+			}
+			else {
+				.@menu$ += "Back to categories:Exit";
+
+				while (1) {
+					mes "[" + .@tier_names$[.@tier] + "]";
+					mes .@count + " registered natural spawn points.";
+					mes "Select an MVP.";
+
+					.@choice = select(.@menu$);
+
+					if (.@choice == .@count + 2)
+						close;
+
+					if (.@choice == .@count + 1) {
+						next;
+						break;
+					}
+
+					.@selected = .@indices[.@choice - 1];
+					next;
+
+					mes "[MVP Respawn Estimate]";
+					mes "^0000FF" + .@mobs$[.@selected] + "^000000";
+					mes "Map: " + .@maps$[.@selected];
+					mes "Spawn ID: " + .@spawn_ids[.@selected];
+					mes "Respawn: " + .@min_minutes[.@selected] +
+						"-" + .@max_minutes[.@selected] + " minutes";
+
+					if (.@status$[.@selected] == "NO_KILL_RECORDED") {
+						mes "Last natural kill: Not recorded";
+						mes "Status: Unknown";
+					}
+					else {
+						mes "Last kill: " + .@killed$[.@selected] + " UTC";
+						mes "Earliest: " + .@earliest$[.@selected] + " UTC";
+						mes "Latest: " + .@latest$[.@selected] + " UTC";
+
+						if (.@status$[.@selected] == "WAITING")
+							mes "Status: Waiting";
+						else if (.@status$[.@selected] == "RESPAWN_WINDOW")
+							mes "Status: Respawn window";
+						else
+							mes "Status: Window passed";
+					}
+
+					mes "^777777Estimate only; actual spawn state unknown.^000000";
+					next;
+				}
+			}
 		}
 
 		close;
