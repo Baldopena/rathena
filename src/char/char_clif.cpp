@@ -701,23 +701,47 @@ bool chclif_parse_char_delete2_accept( int32 fd, char_session_data& sd ){
 
 	ShowInfo( CL_RED "Request Char Deletion: " CL_GREEN "%d (%d)" CL_RESET "\n", sd.account_id, char_id );
 
-	// construct "YY-MM-DD"
-	char birthdate[8 + 1];
 
-	birthdate[0] = p->birthdate[0];
-	birthdate[1] = p->birthdate[1];
-	birthdate[2] = '-';
-	birthdate[3] = p->birthdate[2];
-	birthdate[4] = p->birthdate[3];
-	birthdate[5] = '-';
-	birthdate[6] = p->birthdate[4];
-	birthdate[7] = p->birthdate[5];
-	birthdate[8] = '\0';
-
-	// Only check for birthdate
-	if( !chclif_delchar_check( &sd, birthdate, CHAR_DEL_BIRTHDATE ) ){
+	// GrassRO: require an exact character-name match.
+	if( p->name[0] == '\0' || p->name[NAME_LENGTH - 1] != '\0' ){
 		chclif_char_delete2_accept_ack( fd, char_id, 5 );
+		return true;
+	}
 
+	size_t slot;
+	ARR_FIND( 0, MAX_CHARS, slot, sd.found_char[slot] == char_id );
+
+	if( slot == MAX_CHARS ){
+		chclif_char_delete2_accept_ack( fd, char_id, 3 );
+		return true;
+	}
+
+	if( SQL_SUCCESS != Sql_Query(
+		sql_handle,
+		"SELECT `name` FROM `%s` WHERE `char_id`='%u' AND `account_id`='%u' LIMIT 1",
+		schema_config.char_db, char_id, sd.account_id
+	) ){
+		Sql_ShowDebug( sql_handle );
+		chclif_char_delete2_accept_ack( fd, char_id, 3 );
+		return true;
+	}
+
+	if( SQL_SUCCESS != Sql_NextRow( sql_handle ) ){
+		Sql_FreeResult( sql_handle );
+		chclif_char_delete2_accept_ack( fd, char_id, 3 );
+		return true;
+	}
+
+	char* stored_name = nullptr;
+	Sql_GetData( sql_handle, 0, &stored_name, nullptr );
+
+	const bool name_matches =
+		stored_name != nullptr && strcmp( stored_name, p->name ) == 0;
+
+	Sql_FreeResult( sql_handle );
+
+	if( !name_matches ){
+		chclif_char_delete2_accept_ack( fd, char_id, 5 );
 		return true;
 	}
 
@@ -1353,40 +1377,9 @@ void chclif_delchar( int32 fd ){
 	socket_send( fd, p );
 }
 
-bool chclif_parse_delchar( int fd, struct char_session_data& sd ){
-	const PACKET_CH_DELETE_CHAR* p = reinterpret_cast<PACKET_CH_DELETE_CHAR*>( RFIFOP( fd, 0 ) );
-
-	char email[40];
-	uint32 cid = p->CID;
-
-	ShowInfo(CL_RED "Request Char Deletion: " CL_GREEN "%u (%u)" CL_RESET "\n", sd.account_id, cid);
-	safestrncpy( email, p->key, sizeof( email ) );
-
-	if (!chclif_delchar_check(&sd, email, charserv_config.char_config.char_del_option)) {
-		chclif_refuse_delchar(fd,0); // 00 = Incorrect Email address
-		return true;
-	}
-
-	/* Delete character */
-	switch( char_delete(&sd,cid) ){
-		case CHAR_DELETE_OK:
-			// Char successfully deleted.
-			chclif_delchar( fd );
-			break;
-		case CHAR_DELETE_DATABASE:
-		case CHAR_DELETE_BASELEVEL:
-		case CHAR_DELETE_TIME:
-			chclif_refuse_delchar(fd, 0);
-			break;
-		case CHAR_DELETE_NOTFOUND:
-			chclif_refuse_delchar(fd, 1);
-			break;
-		case CHAR_DELETE_GUILD:
-		case CHAR_DELETE_PARTY:
-			chclif_refuse_delchar(fd, 2);
-			break;
-	}
-
+bool chclif_parse_delchar( int fd, struct char_session_data& ){
+	// GrassRO: legacy deletion confirmation is disabled.
+	chclif_refuse_delchar( fd, 0 );
 	return true;
 }
 

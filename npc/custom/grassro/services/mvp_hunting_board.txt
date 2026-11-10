@@ -21,7 +21,14 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 	mes "View the server's greatest MVP hunters or check your personal hunting records.";
 	next;
 
-	switch(select("Top 20 Rankings:My Kill Stats:Exit")) {
+	.@board_menu$ = "Top 20 Rankings:My Kill Stats:MVP Status Board:Natural MVP Respawns:";
+
+	if (getgroupid() == 99)
+		.@board_menu$ += "GM Administration:";
+
+	.@board_menu$ += "Exit";
+
+	switch(select(.@board_menu$)) {
 
 	case 1:
 		//==========================================
@@ -184,6 +191,604 @@ prontera,172,184,4	script	MVP Hunting Board	56,{
 		}
 		else {
 			mes "No recent kill information available.";
+		}
+
+		close;
+
+
+	case 3:
+		// GrassRO - MVP Status Board
+		// Latest recorded kill per MVP and map.
+
+		mes "[MVP Status Board]";
+		mes "Most recent recorded MVP kills.";
+		mes "Sorted newest to oldest.";
+		mes "Times are displayed in UTC.";
+		next;
+
+		.@rows = query_sql(
+			"SELECT mob_name, map_name, char_name, " +
+			"DATE_FORMAT(killed_at, '%Y-%m-%d %H:%i:%s'), kill_source " +
+			"FROM (" +
+			"SELECT mob_id, mob_name, map_name, char_name, " +
+			"killed_at, kill_source, id, " +
+			"ROW_NUMBER() OVER (" +
+			"PARTITION BY mob_id, map_name " +
+			"ORDER BY killed_at DESC, id DESC" +
+			") AS rn " +
+			"FROM grassro_mvp_kills" +
+			") AS t " +
+			"WHERE rn = 1 " +
+			"ORDER BY killed_at DESC, id DESC LIMIT 20",
+			.@mob$, .@map$, .@killer$, .@time$, .@source$
+		);
+
+		if (.@rows < 0) {
+			mes "[MVP Status Board]";
+			mes "Unable to retrieve MVP records.";
+			close;
+		}
+
+		if (.@rows == 0) {
+			mes "[MVP Status Board]";
+			mes "No MVP kills recorded yet.";
+			close;
+		}
+
+		mes "[MVP Status Board]";
+
+		for (.@i = 0; .@i < .@rows; .@i++) {
+			if (.@i > 0 && .@i % 3 == 0) {
+				next;
+				mes "[MVP Status Board]";
+			}
+
+			mes "^0000FF" + (.@i + 1) + ". " + .@mob$[.@i] + "^000000";
+			mes "Map: " + .@map$[.@i];
+			mes "Killed: " + .@time$[.@i] + " UTC";
+			mes "Killer: " + .@killer$[.@i];
+
+			if (.@source$[.@i] == "unknown")
+				mes "Origin: Unverified";
+			else
+				mes "Origin: " + .@source$[.@i];
+		}
+
+		close;
+
+
+	case 4:
+		//==========================================
+		// NATURAL MVP RESPAWN ESTIMATES
+		//==========================================
+
+		mes "[Natural MVP Respawns]";
+		mes "Browse registered natural MVP spawn points.";
+		mes "Estimates use the latest natural kill.";
+		mes "All times are UTC.";
+		mes "This does not detect whether an MVP is alive.";
+		next;
+
+		.@rows = query_sql(
+			"SELECT spawn_id, mob_id, mob_name, map_name, " +
+			"COALESCE(DATE_FORMAT(last_killed_at, '%Y-%m-%d %H:%i:%s'), 'Never'), " +
+			"COALESCE(DATE_FORMAT(earliest_respawn_at, '%Y-%m-%d %H:%i:%s'), 'N/A'), " +
+			"COALESCE(DATE_FORMAT(latest_respawn_at, '%Y-%m-%d %H:%i:%s'), 'N/A'), " +
+			"estimated_status, " +
+			"FLOOR(base_delay_ms / 60000), " +
+			"FLOOR((base_delay_ms + random_delay_ms) / 60000) " +
+			"FROM grassro_mvp_respawn_status " +
+			"ORDER BY FIELD(mob_id, " +
+			"1086,1159,1115,1038,1150,1087,1059,1147," +
+			"1112,1190,1046,1389,1252,1583,1157,1511," +
+			"1312,1251,1418,1492,1688,1885,1623,1785," +
+			"1630,1039,1272,1658,1719,1685,2068,1734," +
+			"1768,1871,1832,1751,1917,1873), map_name, spawn_id",
+			.@spawn_ids, .@mob_ids, .@mobs$, .@maps$,
+			.@killed$, .@earliest$, .@latest$,
+			.@status$, .@min_minutes, .@max_minutes
+		);
+
+		if (.@rows < 0) {
+			mes "Unable to retrieve respawn estimates.";
+			close;
+		}
+
+		if (.@rows == 0) {
+			mes "No natural MVP spawns are registered.";
+			close;
+		}
+
+		.@tier_names$[1] = "Low MVP";
+		.@tier_names$[2] = "Mid MVP";
+		.@tier_names$[3] = "High MVP";
+
+		while (1) {
+			mes "[Natural MVP Respawns]";
+			mes "Choose an MVP category.";
+			mes "Grouped by hunting difficulty.";
+			mes "Low: Accessible MVPs";
+			mes "Mid: Intermediate encounters";
+			mes "High: Advanced encounters";
+
+			.@tier = select("Low MVP:Mid MVP:High MVP:Exit");
+
+			if (.@tier == 4)
+				close;
+
+			next;
+
+			.@menu$ = "";
+			.@count = 0;
+
+			for (.@i = 0; .@i < .@rows; .@i++) {
+				// GrassRO manual hunting difficulty.
+				.@current_tier = 0;
+				switch (.@mob_ids[.@i]) {
+				case 1086:
+				case 1159:
+				case 1115:
+				case 1038:
+				case 1150:
+				case 1087:
+				case 1059:
+				case 1147:
+				case 1112:
+				case 1190:
+				case 1046:
+				case 1389:
+				case 1252:
+				case 1583:
+					.@current_tier = 1;
+					break;
+				case 1157:
+				case 1511:
+				case 1312:
+				case 1251:
+				case 1418:
+				case 1492:
+				case 1688:
+				case 1885:
+				case 1623:
+				case 1785:
+				case 1630:
+				case 1039:
+				case 1272:
+				case 1658:
+				case 1719:
+					.@current_tier = 2;
+					break;
+				case 1685:
+				case 2068:
+				case 1734:
+				case 1768:
+				case 1871:
+				case 1832:
+				case 1751:
+				case 1917:
+				case 1873:
+					.@current_tier = 3;
+					break;
+				default:
+					.@current_tier = 0;
+					break;
+				}
+
+				if (.@current_tier == .@tier) {
+					.@indices[.@count] = .@i;
+					.@count++;
+
+					.@state$ = "No history";
+					if (.@status$[.@i] == "WAITING")
+						.@state$ = "Waiting";
+					else if (.@status$[.@i] == "RESPAWN_WINDOW")
+						.@state$ = "In window";
+					else if (.@status$[.@i] == "WINDOW_PASSED")
+						.@state$ = "Window passed";
+
+					.@menu$ += .@mobs$[.@i] +
+						" [" + .@maps$[.@i] + "] - " +
+						.@state$ + ":";
+				}
+			}
+
+			if (.@count == 0) {
+				mes "No MVPs registered in this category.";
+				next;
+			}
+			else {
+				.@menu$ += "Back to categories:Exit";
+
+				while (1) {
+					mes "[" + .@tier_names$[.@tier] + "]";
+					mes .@count + " registered natural spawn points.";
+					mes "Select an MVP.";
+
+					.@choice = select(.@menu$);
+
+					if (.@choice == .@count + 2)
+						close;
+
+					if (.@choice == .@count + 1) {
+						next;
+						break;
+					}
+
+					.@selected = .@indices[.@choice - 1];
+					next;
+
+					mes "[MVP Respawn Estimate]";
+					mes "^0000FF" + .@mobs$[.@selected] + "^000000";
+					mes "Map: " + .@maps$[.@selected];
+					mes "Spawn ID: " + .@spawn_ids[.@selected];
+					mes "Respawn: " + .@min_minutes[.@selected] +
+						"-" + .@max_minutes[.@selected] + " minutes";
+
+					if (.@status$[.@selected] == "NO_KILL_RECORDED") {
+						mes "Last natural kill: Not recorded";
+						mes "Status: Unknown";
+					}
+					else {
+						mes "Last kill: " + .@killed$[.@selected] + " UTC";
+						mes "Earliest: " + .@earliest$[.@selected] + " UTC";
+						mes "Latest: " + .@latest$[.@selected] + " UTC";
+
+						if (.@status$[.@selected] == "WAITING")
+							mes "Status: Waiting";
+						else if (.@status$[.@selected] == "RESPAWN_WINDOW")
+							mes "Status: Respawn window";
+						else
+							mes "Status: Window passed";
+					}
+
+					mes "^777777Estimate only; actual spawn state unknown.^000000";
+					next;
+				}
+			}
+		}
+
+		close;
+
+
+	case 5:
+		//==========================================
+		// GM ADMINISTRATION - GROUP 99 ONLY
+		//==========================================
+
+		if (getgroupid() != 99)
+			close;
+
+		while (1) {
+			mes "[MVP GM Administration]";
+			mes "Restricted to GM Group 99.";
+
+			.@gm_action = select(
+				"Reset All Rankings:" +
+				"Reset Character Ranking:" +
+				"Exclude Character:" +
+				"Restore Character:" +
+				"GM Audit History:" +
+				"Exit"
+			);
+
+			if (.@gm_action == 6)
+				close;
+
+			next;
+
+			.@changed = 0;
+			.@target_id = 0;
+			.@target_sql$ = "NULL";
+			.@action$ = "";
+			.@details$ = "";
+
+			// Resolve the target character for individual actions.
+			if (.@gm_action >= 2 && .@gm_action <= 4) {
+				mes "[Character Lookup]";
+				mes "Enter the exact character name.";
+				input .@lookup_name$;
+
+				.@found = query_sql(
+					"SELECT char_id, name FROM `char` " +
+					"WHERE name = '" + escape_sql(.@lookup_name$) + "' LIMIT 1",
+					.@found_ids, .@found_names$
+				);
+
+				if (.@found != 1) {
+					mes "Character not found or database unavailable.";
+					next;
+					continue;
+				}
+
+				.@target_id = .@found_ids[0];
+				.@target_name$ = .@found_names$[0];
+				.@target_sql$ = "" + .@target_id;
+				next;
+			}
+
+			// Reset the entire leaderboard.
+			if (.@gm_action == 1) {
+				.@rows = query_sql(
+					"SELECT COUNT(*) FROM grassro_mvp_active_kills",
+					.@active_count
+				);
+
+				if (.@rows != 1) {
+					mes "Unable to read ranking totals.";
+					next;
+					continue;
+				}
+
+				mes "[Reset All Rankings]";
+				mes "Active ranking kills: " + .@active_count[0];
+				mes "^FF0000This resets everyone's ranking progress.^000000";
+				mes "Historical kills and respawn data remain intact.";
+
+				if (select("Cancel:Continue") != 2) {
+					mes "Cancelled.";
+					next;
+					continue;
+				}
+
+				next;
+				mes "Type RESET ALL to confirm.";
+				input .@confirm$;
+
+				if (.@confirm$ != "RESET ALL") {
+					mes "Confirmation did not match. Cancelled.";
+					next;
+					continue;
+				}
+
+				.@rows = query_sql(
+					"SELECT COALESCE(MAX(id), 0) FROM grassro_mvp_kills",
+					.@cutoff
+				);
+
+				if (.@rows != 1) {
+					mes "Unable to calculate the reset cutoff.";
+					next;
+					continue;
+				}
+
+				.@write = query_sql(
+					"INSERT INTO grassro_mvp_resets " +
+					"(reset_scope, target_char_id, through_kill_id, reset_by, reset_at) " +
+					"VALUES ('all', NULL, " + .@cutoff[0] + ", " +
+					getcharid(3) + ", UTC_TIMESTAMP())"
+				);
+
+				if (.@write < 0) {
+					mes "Database error. Reset not completed.";
+					next;
+					continue;
+				}
+
+				.@action$ = "reset_all";
+				.@details$ = "through_kill_id=" + .@cutoff[0];
+				.@changed = 1;
+			}
+
+			// Reset an individual character's ranking.
+			else if (.@gm_action == 2) {
+				.@rows = query_sql(
+					"SELECT COUNT(*) FROM grassro_mvp_active_kills " +
+					"WHERE char_id = " + .@target_id,
+					.@active_count
+				);
+
+				if (.@rows != 1) {
+					mes "Unable to read character ranking.";
+					next;
+					continue;
+				}
+
+				mes "[Reset Character Ranking]";
+				mes "Character: " + .@target_name$;
+				mes "Active kills: " + .@active_count[0];
+
+				if (select("Cancel:Confirm Reset") != 2) {
+					mes "Cancelled.";
+					next;
+					continue;
+				}
+
+				.@rows = query_sql(
+					"SELECT COALESCE(MAX(id), 0) FROM grassro_mvp_kills " +
+					"WHERE char_id = " + .@target_id,
+					.@cutoff
+				);
+
+				if (.@rows != 1) {
+					mes "Unable to calculate character cutoff.";
+					next;
+					continue;
+				}
+
+				.@write = query_sql(
+					"INSERT INTO grassro_mvp_resets " +
+					"(reset_scope, target_char_id, through_kill_id, reset_by, reset_at) " +
+					"VALUES ('character', " + .@target_id + ", " +
+					.@cutoff[0] + ", " + getcharid(3) +
+					", UTC_TIMESTAMP())"
+				);
+
+				if (.@write < 0) {
+					mes "Database error. Reset not completed.";
+					next;
+					continue;
+				}
+
+				.@action$ = "reset_character";
+				.@details$ = "Character=" + .@target_name$ +
+					"; through_kill_id=" + .@cutoff[0];
+				.@changed = 1;
+			}
+
+			// Exclude a character from public rankings.
+			else if (.@gm_action == 3) {
+				.@exists = query_sql(
+					"SELECT 1 FROM grassro_mvp_exclusions " +
+					"WHERE char_id = " + .@target_id + " LIMIT 1",
+					.@existing
+				);
+
+				if (.@exists < 0) {
+					mes "Unable to check exclusion status.";
+					next;
+					continue;
+				}
+
+				if (.@exists > 0) {
+					mes "This character is already excluded.";
+					next;
+					continue;
+				}
+
+				mes "[Exclude Character]";
+				mes "Character: " + .@target_name$;
+				mes "Enter an exclusion reason.";
+				input .@reason$;
+
+				// Treat empty or whitespace-only reasons as blank.
+				if (getstrlen(replacestr(.@reason$, " ", "")) == 0)
+					.@reason$ = "Manual GM exclusion";
+
+				.@reason$ = substr(.@reason$, 0, 180);
+
+				mes "Exclude " + .@target_name$ + " from rankings?";
+
+				if (select("Cancel:Confirm Exclusion") != 2) {
+					mes "Cancelled.";
+					next;
+					continue;
+				}
+
+				.@write = query_sql(
+					"INSERT INTO grassro_mvp_exclusions " +
+					"(char_id, char_name, excluded_by, excluded_at, reason) " +
+					"VALUES (" + .@target_id + ", '" +
+					escape_sql(.@target_name$) + "', " +
+					getcharid(3) + ", UTC_TIMESTAMP(), '" +
+					escape_sql(.@reason$) + "')"
+				);
+
+				if (.@write < 0) {
+					mes "Database error. Exclusion not completed.";
+					next;
+					continue;
+				}
+
+				.@action$ = "exclude_character";
+				.@details$ = "Character=" + .@target_name$ +
+					"; Reason=" + .@reason$;
+				.@changed = 1;
+			}
+
+			// Restore a character's leaderboard eligibility.
+			else if (.@gm_action == 4) {
+				.@exists = query_sql(
+					"SELECT 1 FROM grassro_mvp_exclusions " +
+					"WHERE char_id = " + .@target_id + " LIMIT 1",
+					.@existing
+				);
+
+				if (.@exists < 0) {
+					mes "Unable to check exclusion status.";
+					next;
+					continue;
+				}
+
+				if (.@exists == 0) {
+					mes "This character is not excluded.";
+					next;
+					continue;
+				}
+
+				mes "[Restore Character]";
+				mes "Character: " + .@target_name$;
+
+				if (select("Cancel:Confirm Restoration") != 2) {
+					mes "Cancelled.";
+					next;
+					continue;
+				}
+
+				.@write = query_sql(
+					"DELETE FROM grassro_mvp_exclusions " +
+					"WHERE char_id = " + .@target_id
+				);
+
+				if (.@write < 0) {
+					mes "Database error. Restoration not completed.";
+					next;
+					continue;
+				}
+
+				.@action$ = "restore_character";
+				.@details$ = "Character=" + .@target_name$;
+				.@changed = 1;
+			}
+
+			// Read the ten most recent administrative actions.
+			else if (.@gm_action == 5) {
+				.@history = query_sql(
+					"SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s'), " +
+					"gm_char_id, action, COALESCE(target_char_id, 0), " +
+					"COALESCE(details, '') " +
+					"FROM grassro_mvp_gm_audit " +
+					"ORDER BY id DESC LIMIT 10",
+					.@dates$, .@gm_ids, .@actions$,
+					.@targets, .@notes$
+				);
+
+				mes "[GM Audit History]";
+
+				if (.@history < 0) {
+					mes "Audit database unavailable.";
+				}
+				else if (.@history == 0) {
+					mes "No administrative actions recorded.";
+				}
+				else {
+					for (.@i = 0; .@i < .@history; .@i++) {
+						if (.@i > 0 && .@i % 3 == 0) {
+							next;
+							mes "[GM Audit History]";
+						}
+
+						mes "^0000FF" + .@actions$[.@i] + "^000000";
+						mes "GM Character ID: " + .@gm_ids[.@i];
+						mes "Target ID: " + .@targets[.@i];
+						mes .@dates$[.@i] + " UTC";
+						mes .@notes$[.@i];
+					}
+				}
+
+				next;
+				continue;
+			}
+
+			// Record successfully completed administrative changes.
+			if (.@changed) {
+				.@audit = query_sql(
+					"INSERT INTO grassro_mvp_gm_audit " +
+					"(gm_account_id, gm_char_id, action, target_char_id, details, created_at) " +
+					"VALUES (" + getcharid(3) + ", " +
+					getcharid(0) + ", '" + .@action$ + "', " +
+					.@target_sql$ + ", '" +
+					escape_sql(.@details$) +
+					"', UTC_TIMESTAMP())"
+				);
+
+				mes "[GM Administration]";
+				mes "^008800Action completed.^000000";
+
+				if (.@audit < 0)
+					mes "^FF0000Warning: GM audit logging failed.^000000";
+			}
+
+			next;
 		}
 
 		close;
