@@ -493,7 +493,7 @@ DEFINE_PACKET_HEADER( HC_DELETE_CHAR3_RESERVED, 0x828 );
 struct PACKET_CH_DELETE_CHAR3{
 	int16 packetType;
 	uint32 CID;
-	char birthdate[6];
+	char name[NAME_LENGTH];
 } __attribute__((packed));
 DEFINE_PACKET_HEADER( CH_DELETE_CHAR3, 0x829 );
 
