@@ -442,14 +442,20 @@ S_StartManual:
 	}
 	.@wantsExp = (.@manualMask == 1 || .@manualMask == 3);
 	.@wantsDrop = (.@manualMask == 2 || .@manualMask == 3);
-	// Preflight both categories before changing either one.
-	if (.@wantsExp && !callsub(S_CheckManualRates,0)) {
-		debugmes "[GR_FLOAT_DIAG] manual_reject exp_preflight";
-		return 0;
+	// rAthena evaluates both operands of &&: never put callsub() on the
+	// right side of a category guard, or an unselected category is activated.
+	// Separate conditionals keep EXP-only and Drops-only truly independent.
+	if (.@wantsExp) {
+		if (!callsub(S_CheckManualRates,0)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject exp_preflight";
+			return 0;
+		}
 	}
-	if (.@wantsDrop && !callsub(S_CheckManualRates,1)) {
-		debugmes "[GR_FLOAT_DIAG] manual_reject drop_preflight";
-		return 0;
+	if (.@wantsDrop) {
+		if (!callsub(S_CheckManualRates,1)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject drop_preflight";
+			return 0;
+		}
 	}
 	// Server-local midnight. Recompute on actual activation,
 	// not at the beginning of a GM dialog that can remain open for minutes.
@@ -459,15 +465,19 @@ S_StartManual:
 		debugmes "[GR_FLOAT_DIAG] manual_reject deadline_invalid seconds=" + .@secondsToMidnight + " deadline=" + .@manualDeadline;
 		return 0;
 	}
-	if (.@wantsExp && !callsub(S_BeginOverride,0,.@manualDeadline)) {
-		debugmes "[GR_FLOAT_DIAG] manual_reject exp_override_begin";
-		return 0;
+	if (.@wantsExp) {
+		if (!callsub(S_BeginOverride,0,.@manualDeadline)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject exp_override_begin";
+			return 0;
+		}
 	}
-	if (.@wantsDrop && !callsub(S_BeginOverride,1,.@manualDeadline)) {
-		debugmes "[GR_FLOAT_DIAG] manual_reject drop_override_begin";
-		// Roll back EXP activation before returning a failed transaction.
-		if (.@wantsExp) callsub S_EndOverride,0;
-		return 0;
+	if (.@wantsDrop) {
+		if (!callsub(S_BeginOverride,1,.@manualDeadline)) {
+			debugmes "[GR_FLOAT_DIAG] manual_reject drop_override_begin";
+			// Roll back EXP activation before returning a failed transaction.
+			if (.@wantsExp) callsub S_EndOverride,0;
+			return 0;
+		}
 	}
 	.ManualActive = 1;
 	.ManualUntil = .@manualDeadline;
